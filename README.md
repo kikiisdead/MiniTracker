@@ -1,9 +1,3 @@
 # MiniTracker
 
-## Author
-
-<!-- Insert Your Name Here -->
-
-## Description
-
-<!-- Describe your example here -->
+a handheld hardware tracker using the Daisy Seed inspired by Renoise.
