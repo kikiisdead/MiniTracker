@@ -234,11 +234,11 @@ build/MiniTracker.o: MiniTracker.cpp \
  ../DaisyExamples/DaisySP//Source/Utility/metro.h \
  ../DaisyExamples/DaisySP//Source/Utility/samplehold.h \
  ../DaisyExamples/DaisySP//Source/Utility/smooth_random.h \
- src/UI/sequencer.h src/UI/menu.h src/UI/../audio/instrumentHandler.h \
- src/UI/../audio/instrument.h src/UI/../audio/../UI/sequencer.h \
- src/UI/../audio/../UI/step.h src/UI/step.h \
- ../DaisyExamples/libDaisy//src/dev/oled_ssd130x.h src/UI/button.h \
- src/samples/cowbell.h src/audio/sampleplayer.h
+ src/UI/sequencer.h src/UI/buttonInterface.h \
+ src/UI/../audio/instrumentHandler.h src/UI/../audio/instrument.h \
+ src/UI/../audio/../UI/sequencer.h src/UI/../audio/../UI/step.h \
+ src/UI/step.h ../DaisyExamples/libDaisy//src/dev/oled_ssd130x.h \
+ src/UI/button.h src/samples/cowbell.h src/audio/sampleplayer.h
 ../DaisyExamples/libDaisy//Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h7xx.h:
 ../DaisyExamples/libDaisy//Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h750xx.h:
 ../DaisyExamples/libDaisy//Drivers/CMSIS/Include/core_cm7.h:
@@ -475,7 +475,7 @@ build/MiniTracker.o: MiniTracker.cpp \
 ../DaisyExamples/DaisySP//Source/Utility/samplehold.h:
 ../DaisyExamples/DaisySP//Source/Utility/smooth_random.h:
 src/UI/sequencer.h:
-src/UI/menu.h:
+src/UI/buttonInterface.h:
 src/UI/../audio/instrumentHandler.h:
 src/UI/../audio/instrument.h:
 src/UI/../audio/../UI/sequencer.h:

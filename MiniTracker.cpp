@@ -35,36 +35,36 @@ std::vector<Instrument*> instruments;
 
 bool shift;
 
-Menu* menu;
+buttonInterface* control;
 
-/** Button Press Callback functions (needed to be static and change as menu pointer changed) */
+/** Button Press Callback functions (needed to be static and change as control pointer changed) */
 void APress() {
-  if (shift) menu->AltAButton();
-  else menu->AButton();
+  if (shift) control->AltAButton();
+  else control->AButton();
 }
 void BPress() {
-  if (shift) menu->AltBButton();
-  else menu->BButton();
+  if (shift) control->AltBButton();
+  else control->BButton();
 }
 void PlayPress() {
-  if (shift) menu->AltPlayButton();
-  else menu->PlayButton();
+  if (shift) control->AltPlayButton();
+  else control->PlayButton();
 }
 void UpPress() {
-  if (shift) menu->AltUpButton();
-  else menu->UpButton();
+  if (shift) control->AltUpButton();
+  else control->UpButton();
 }
 void DownPress() {
-  if (shift) menu->AltDownButton();
-  else menu->DownButton();
+  if (shift) control->AltDownButton();
+  else control->DownButton();
 }
 void LeftPress() {
-  if (shift) menu->AltLeftButton();
-  else menu->LeftButton();
+  if (shift) control->AltLeftButton();
+  else control->LeftButton();
 }
 void RightPress() {
-  if (shift) menu->AltRightButton();
-  else menu->RightButton();
+  if (shift) control->AltRightButton();
+  else control->RightButton();
 }
 
 Button A;
@@ -176,7 +176,7 @@ int main(void)
     instruments.back()->Init(samplerate);
   }
   
-  menu = &sequencer;
+  control = &sequencer;
 
   hw.StartAudio(AudioCallback);
   

@@ -12,6 +12,7 @@ public:
     int fx;
     int fxAmount;
     bool selected;
+    int index;
     // bool active;
     param paramEdit;
 

@@ -93,7 +93,7 @@ build/sequencer.o: src/UI/sequencer.cpp \
  ../DaisyExamples/libDaisy//Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_ll_usb.h \
  ../DaisyExamples/libDaisy//Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_pcd_ex.h \
  ../DaisyExamples/libDaisy//Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_hcd.h \
- src/UI/sequencer.h src/UI/menu.h \
+ src/UI/sequencer.h src/UI/buttonInterface.h \
  ../DaisyExamples/libDaisy//src/daisy_seed.h \
  ../DaisyExamples/libDaisy//src/daisy.h \
  ../DaisyExamples/libDaisy//src/daisy_core.h \
@@ -333,7 +333,7 @@ build/sequencer.o: src/UI/sequencer.cpp \
 ../DaisyExamples/libDaisy//Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_pcd_ex.h:
 ../DaisyExamples/libDaisy//Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_hcd.h:
 src/UI/sequencer.h:
-src/UI/menu.h:
+src/UI/buttonInterface.h:
 ../DaisyExamples/libDaisy//src/daisy_seed.h:
 ../DaisyExamples/libDaisy//src/daisy.h:
 ../DaisyExamples/libDaisy//src/daisy_core.h:

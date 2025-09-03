@@ -1,7 +1,7 @@
 #ifndef sequencer_h
 #define sequencer_h
 
-#include "menu.h"
+#include "buttonInterface.h"
 #include "daisy_seed.h"
 #include "../audio/instrumentHandler.h"
 #include "step.h"
@@ -17,22 +17,27 @@ using MyOledDisplay = OledDisplay<SSD130xI2c128x64Driver>;
 struct Lane {
     std::vector<Step*> sequence;
     int length;
+    int index;
 };
 
 struct Pattern {
-    Lane* lanes[4];
+    std::vector<Lane*> lanes;
     int numLanes;
     int index;
 };
 
-class Sequencer : public Menu {
+class Sequencer : public buttonInterface {
 private:
     MyOledDisplay* display_;
     InstrumentHandler* handler_;
     std::vector<Pattern*> patterns; // holds all the possible patterns made
     std::vector<int> songOrder; // holds the order of the patterns
     Pattern* activePattern;
-    int selector[3]; //selector[0] is index of pattern in song order, selector[1] is lane, selector[2] is step
+
+    Step* currentStep;
+    Lane* currentLane;
+    int currentPattern;
+
     bool playing_;
     bool stepEdit_;
     bool song_;
@@ -48,7 +53,7 @@ private:
     void DrawArrow(int x, int y, int direction); 
     void GetNoteString(char* strbuff, int note);
     void GetFxString(char* strbuff, int fx, int fxAmount);
-    void InitStep(Step* step);
+    void InitStep(Step* step, int index);
 
     void NextStep();
     void PreviousStep();
@@ -81,9 +86,7 @@ public:
         stepEdit_ = false;
         song_ = false;
         songOrder.push_back(0);
-        selector[0] = 0;
-        selector[1] = 0;
-        selector[2] = 0;
+        currentPattern = 0;
         tick.Init(1.0f, samplerate);
         SetBPM(128);
         NewPattern();
