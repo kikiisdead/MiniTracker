@@ -29,7 +29,7 @@ struct Pattern {
 class Sequencer : public buttonInterface {
 private:
     MyOledDisplay* display_;
-    InstrumentHandler* handler_;
+    std::vector<InstrumentHandler*> handler_;
     std::vector<Pattern*> patterns; // holds all the possible patterns made
     std::vector<int> songOrder; // holds the order of the patterns
     Pattern* activePattern;
@@ -79,7 +79,7 @@ public:
     
     // Initializes the sequencer
     // will need to be passed 
-    void Init(MyOledDisplay* display, InstrumentHandler* handler, float samplerate) {
+    void Init(MyOledDisplay* display, std::vector<InstrumentHandler*> handler, float samplerate) {
         display_ = display;
         handler_ = handler;
         playing_ = false;
@@ -103,8 +103,8 @@ public:
     void RightButton();
     void PlayButton();
 
-    void AltAButton(){};
-    void AltBButton(){};
+    void AltAButton();
+    void AltBButton();
     void AltUpButton();
     void AltDownButton();
     void AltLeftButton();

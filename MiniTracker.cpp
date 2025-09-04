@@ -29,7 +29,7 @@ MyOledDisplay display;
 
 Sequencer sequencer;
 
-InstrumentHandler* handler;
+std::vector<InstrumentHandler*> handler;
 
 std::vector<Instrument*> instruments;
 
@@ -91,18 +91,14 @@ void InputHandle() {
 void AudioCallback(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, size_t size) 
 {
   float outBuff = 0;
-
-  InputHandle();
   
   for (size_t i = 0; i < size; i++)
   {
     sequencer.Update();
+    InputHandle();
 
-    outBuff = 0;
+    outBuff = handler.at(0)->Process();
 
-    for (int j = 0; j < 4; j ++) {
-      outBuff += handler[j].Process();
-    }
     out[0][i] = outBuff;
     out[1][i] = outBuff;
   }
@@ -126,10 +122,20 @@ int main(void)
   /** And Initialize */
   display.Init(disp_cfg);
 
-  hw.SetAudioBlockSize(8); // number of samples handled per callback
+  hw.SetAudioBlockSize(16); // number of samples handled per callback
   // hw.SetAudioSampleRate(SaiHandle::Config::SampleRate::SAI_48KHZ);
-  
+
   float samplerate = hw.AudioSampleRate();
+
+  for (int i = 0; i < 4; i ++) {
+    handler.push_back(new InstrumentHandler);
+    handler[i]->Init(&instruments);
+  }
+
+  for (int i = 0; i < 4; i++) {
+    instruments.push_back(new Instrument);
+    instruments.back()->Init(samplerate);
+  }
 
   sequencer.Init(&display, handler, samplerate);
   
@@ -166,16 +172,6 @@ int main(void)
   // LeftShoulder.Init(hw.GetPin(LeftShoulderPin), samplerate);
   // RightShoulder.Init(hw.GetPin(RightShoulderPin), samplerate);
 
-  for (int i = 0; i < 4; i ++) {
-    handler[i] = InstrumentHandler();
-    handler[i].Init(&instruments);
-  }
-
-  for (int i = 0; i < 4; i++) {
-    instruments.push_back(new Instrument);
-    instruments.back()->Init(samplerate);
-  }
-  
   control = &sequencer;
 
   hw.StartAudio(AudioCallback);

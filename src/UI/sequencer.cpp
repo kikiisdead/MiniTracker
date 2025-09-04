@@ -233,22 +233,22 @@ void Sequencer::UpdateDisplay() {
     display_->WriteString(strbuff, Font_4x6, true);
 
     // Drawing Pattern Arrangement
-    if (currentPattern - 2 >= 0) DrawSquare(112, 23, false);
-    if (currentPattern - 1 >= 0) DrawSquare(112, 31, false);
-    DrawSquare(112, 39, true);
-    if (currentPattern + 1 < (int) songOrder.size()) DrawSquare(112, 47, false);
-    if (currentPattern + 2 < (int) songOrder.size()) DrawSquare(112, 55, false);
-
     for (int i = 0; i < 5; i++) {
         int offset = currentPattern + (i - 2);
-        if (offset < 0)                         continue; 
-        else if (offset > (int) songOrder.size() - 1) continue;
-        else if (songOrder[offset] < 0)         continue;
+        if (offset < 0)                                 continue; 
+        else if (offset > (int) songOrder.size() - 1)   continue;
+        else if (songOrder[offset] < 0)                 continue;
         else {
             display_->SetCursor(114, (24 + (8 * i)));
             sprintf(strbuff, "%d", songOrder[offset]);
-            if (offset == currentPattern) display_->WriteString(strbuff, Font_4x6, false);
-            else display_->WriteString(strbuff, Font_4x6, true);
+            if (offset == currentPattern) {
+                DrawSquare(112, 23 + (8 * i), true);
+                display_->WriteString(strbuff, Font_4x6, false);
+            }
+            else {
+                DrawSquare(112, 23 + (8 * i), false);
+                display_->WriteString(strbuff, Font_4x6, true);
+            }
         }
     }
 
@@ -264,9 +264,10 @@ void Sequencer::Update() {
     if (playing_) {
         if (tick.Process()) {
             NextStep();
-            for (int i = 0; i < 4; i++) {
-                handler_[i].Update(activePattern->lanes[i]->sequence.at(currentStep->index));
-            }
+            handler_.at(0)->Update(currentStep);
+            // for (Lane* lane : activePattern->lanes) {
+            //     handler_[lane->index]->Update(lane->sequence.at(currentStep->index)); 
+            // }
         }
     }
 }
@@ -442,4 +443,23 @@ void Sequencer::AltRightButton() {
 void Sequencer::AltPlayButton() {
     playing_ = (playing_) ? false : true;
     song_ = (song_) ? false : true;
+}
+
+void Sequencer::AltAButton() {
+    for (Lane* lane : activePattern->lanes) {
+        lane->length += 1;
+        lane->sequence.push_back(new Step);
+        InitStep(lane->sequence.back(), lane->length - 1);
+    }
+    UpdateDisplay();
+}
+
+void Sequencer::AltBButton() {
+    if (currentLane->length <= 1) return;
+    if (currentStep->index >= currentLane->length - 1) currentStep = currentLane->sequence.at(currentStep->index - 1);
+    for (Lane* lane : activePattern->lanes) {
+        lane->length -= 1;
+        lane->sequence.erase(--lane->sequence.end()); //get rid of last
+    }
+    UpdateDisplay();
 }

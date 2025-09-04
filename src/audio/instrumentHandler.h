@@ -14,26 +14,33 @@ class InstrumentHandler {
 private:
     Instrument* activeInst;
     std::vector<Instrument*>* instVector;
+    bool active;
 
 public:
     InstrumentHandler(){}
 
     void Init(std::vector<Instrument*>* instVector_) {
         instVector = instVector_;
+        active = false;
     }
 
     float Process() {
+        if (!active) return 0.0f;
         return activeInst->Process();
     }
 
     // only triggered when changing next note occurs
     void Update(Step* step) {
         if (step->instrument >= 0) {
-            if (step->note < 0) activeInst->Release();
-            else {
-                activeInst = instVector->at(step->instrument);
-                activeInst->Trigger(step->note);
-            }
+            activeInst = instVector->at(step->instrument);
+            active = true;
+            activeInst->Trigger(step->note);
+            // if (step->note < 0) activeInst->Release();
+            // else {
+            //     activeInst = instVector->at(step->instrument);
+            //     active = true;
+            //     activeInst->Trigger(step->note);
+            // }
         }
     }
 };

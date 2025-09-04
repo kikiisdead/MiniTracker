@@ -1,4 +1,4 @@
-ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 1
+ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s 			page 1
 
 
    1              		.cpu cortex-m7
@@ -58,7 +58,7 @@ ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 1
   40              		.loc 1 13 5 is_stmt 1 view .LVU4
   41              		.loc 1 14 5 view .LVU5
   42              		.loc 1 14 15 is_stmt 0 view .LVU6
-ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 2
+ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s 			page 2
 
 
   43 0006 8382     		strh	r3, [r0, #20]	@ movhi
@@ -118,7 +118,7 @@ ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 1
   27:src/audio/sampleplayer.cpp ****     int32_t pos_integral   = static_cast<int32_t>(pos_);
   89              		.loc 1 27 5 view .LVU12
   28:src/audio/sampleplayer.cpp ****     float   pos_fractional = pos_ - static_cast<float>(pos_integral);
-ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 3
+ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s 			page 3
 
 
   29:src/audio/sampleplayer.cpp **** 
@@ -178,7 +178,7 @@ ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 1
  120 002a 1A44     		add	r2, r2, r3
  121              	.LVL5:
   28:src/audio/sampleplayer.cpp **** 
-ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 4
+ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s 			page 4
 
 
  122              		.loc 1 28 37 view .LVU25
@@ -238,7 +238,7 @@ ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 1
   34:src/audio/sampleplayer.cpp ****     const float c     = (x1 - xm1) * 0.5f;
  160              		.loc 1 34 5 is_stmt 1 view .LVU42
   35:src/audio/sampleplayer.cpp ****     const float v     = x0 - x1;
-ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 5
+ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s 			page 5
 
 
  161              		.loc 1 35 5 view .LVU43
@@ -298,7 +298,7 @@ ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 1
  198              		.loc 1 38 5 is_stmt 1 view .LVU60
   38:src/audio/sampleplayer.cpp ****     const float b_neg = w + a;
  199              		.loc 1 38 43 is_stmt 0 view .LVU61
-ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 6
+ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s 			page 6
 
 
  200 00a6 04EE102A 		vmov	s8, r2	@ int
@@ -358,7 +358,7 @@ ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 1
   10:../DaisyExamples/libDaisy//src/daisy_core.h **** #define FORCE_INLINE inline __attribute__((always_inline)) /**< & */
   11:../DaisyExamples/libDaisy//src/daisy_core.h **** #pragma clang diagnostic ignored "-Wduplicate-decl-specifier"
   12:../DaisyExamples/libDaisy//src/daisy_core.h **** #elif defined(__GNUC__)
-ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 7
+ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s 			page 7
 
 
   13:../DaisyExamples/libDaisy//src/daisy_core.h **** #define FORCE_INLINE inline __attribute__((always_inline)) /**< & */
@@ -418,7 +418,7 @@ ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 1
   67:../DaisyExamples/libDaisy//src/daisy_core.h ****     \return x ^ 3
   68:../DaisyExamples/libDaisy//src/daisy_core.h **** */
   69:../DaisyExamples/libDaisy//src/daisy_core.h **** FORCE_INLINE float cube(float x)
-ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 8
+ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s 			page 8
 
 
   70:../DaisyExamples/libDaisy//src/daisy_core.h **** {
@@ -478,7 +478,7 @@ ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 1
  234 00d2 17EE902A 		vmov	r2, s15	@ int
  235              	.LBE17:
  236              	.LBE16:
-ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 9
+ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s 			page 9
 
 
  237              		.loc 1 44 5 view .LVU76
@@ -538,7 +538,7 @@ ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 1
   50:src/audio/sampleplayer.cpp ****     if (pos_ > size_) pos_ = 0.0;
  263              		.loc 1 50 20 view .LVU87
  264 00f0 90ED0A6A 		vldr.32	s12, [r0, #40]
-ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 10
+ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s 			page 10
 
 
  265              	.LVL24:
@@ -598,7 +598,7 @@ ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 1
  309              		.cfi_restore 14
  122:../DaisyExamples/libDaisy//src/daisy_core.h **** }
  310              		.loc 2 122 23 view .LVU100
-ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 11
+ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s 			page 11
 
 
  311 011c 7047     		bx	lr
@@ -658,7 +658,7 @@ ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 1
  359              		.cfi_offset 10, -12
  360              		.cfi_offset 11, -8
  361              		.cfi_offset 14, -4
-ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 12
+ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s 			page 12
 
 
  362 0004 0446     		mov	r4, r0
@@ -718,7 +718,7 @@ ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 1
   63:src/audio/sampleplayer.cpp ****     float   pos_fractional = pos_ - static_cast<float>(pos_integral);
  402              		.loc 1 63 5 is_stmt 1 view .LVU121
  403 0030 AAF10408 		sub	r8, r10, #4
-ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 13
+ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s 			page 13
 
 
  404              	.LBB32:
@@ -778,7 +778,7 @@ ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 1
   67:src/audio/sampleplayer.cpp ****         int32_t     x0    = wave->sample[i][(t) % size_];
  446              		.loc 1 67 53 is_stmt 0 view .LVU134
  447 005c B6FBF3F1 		udiv	r1, r6, r3
-ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 14
+ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s 			page 14
 
 
  448 0060 03FB1166 		mls	r6, r3, r1, r6
@@ -838,7 +838,7 @@ ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 1
   71:src/audio/sampleplayer.cpp ****         const float v     = x0 - x1;
  486              		.loc 1 71 9 discriminator 2 view .LVU151
   71:src/audio/sampleplayer.cpp ****         const float v     = x0 - x1;
-ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 15
+ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s 			page 15
 
 
  487              		.loc 1 71 33 is_stmt 0 discriminator 2 view .LVU152
@@ -898,7 +898,7 @@ ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 1
  524              	.LVL51:
   74:src/audio/sampleplayer.cpp ****         const float a     = w + v + (x2 - x0) * 0.5f;
  525              		.loc 1 74 9 is_stmt 1 discriminator 2 view .LVU168
-ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 16
+ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s 			page 16
 
 
   74:src/audio/sampleplayer.cpp ****         const float a     = w + v + (x2 - x0) * 0.5f;
@@ -958,7 +958,7 @@ ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 1
   83:src/audio/sampleplayer.cpp ****     } else {
   84:src/audio/sampleplayer.cpp ****         outL = s242f(interp[0]);
  568              		.loc 1 84 9 view .LVU186
-ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 17
+ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s 			page 17
 
 
  569              	.LVL59:
@@ -1018,7 +1018,7 @@ ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 1
  616              		.loc 2 141 12 view .LVU199
  617 0128 07EE903A 		vmov	s15, r3	@ int
  618              	.LBE44:
-ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 18
+ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s 			page 18
 
 
  619              	.LBE51:
@@ -1078,7 +1078,7 @@ ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 1
  663              		.loc 1 91 14 view .LVU217
  664 0150 B8EE666B 		vcvt.f64.u32	d6, s13
   90:src/audio/sampleplayer.cpp ****     if (pos_ > size_) pos_ = 0.0;
-ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 19
+ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s 			page 19
 
 
  665              		.loc 1 90 18 view .LVU218
@@ -1138,7 +1138,7 @@ ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 1
  711              	.LBB65:
  712              	.LBB57:
  713 0188 B8EEC77A 		vcvt.f32.s32	s14, s14
-ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 20
+ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s 			page 20
 
 
  714              	.LBE57:
@@ -1198,7 +1198,7 @@ ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 1
  759 01ac 00000034 		.word	872415232
  760 01b0 00000038 		.word	939524096
  761              		.cfi_endproc
-ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 21
+ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s 			page 21
 
 
  762              	.LFE2578:
@@ -1239,20 +1239,20 @@ ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 1
  798              		.file 35 "/Library/DaisyToolchain/0.2.0/arm/arm-none-eabi/include/c++/10.3.1/new"
  799              		.file 36 "<built-in>"
  800              		.file 37 "../DaisyExamples/libDaisy//src/dev/sr_595.h"
-ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s 			page 22
+ARM GAS  /var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s 			page 22
 
 
 DEFINED SYMBOLS
                             *ABS*:0000000000000000 sampleplayer.cpp
-/var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s:19     .text._ZN5daisy12SamplePlayer4InitEPKjf:0000000000000000 $t
-/var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s:26     .text._ZN5daisy12SamplePlayer4InitEPKjf:0000000000000000 _ZN5daisy12SamplePlayer4InitEPKjf
-/var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s:50     .text._ZN5daisy12SamplePlayer12DeinterleaveEv:0000000000000000 $t
-/var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s:57     .text._ZN5daisy12SamplePlayer12DeinterleaveEv:0000000000000000 _ZN5daisy12SamplePlayer12DeinterleaveEv
-/var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s:71     .text._ZN5daisy12SamplePlayer7ProcessERf:0000000000000000 $t
-/var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s:78     .text._ZN5daisy12SamplePlayer7ProcessERf:0000000000000000 _ZN5daisy12SamplePlayer7ProcessERf
-/var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s:335    .text._ZN5daisy12SamplePlayer7ProcessERfS1_:0000000000000000 $t
-/var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s:342    .text._ZN5daisy12SamplePlayer7ProcessERfS1_:0000000000000000 _ZN5daisy12SamplePlayer7ProcessERfS1_
-/var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//ccRbB4Lt.s:759    .text._ZN5daisy12SamplePlayer7ProcessERfS1_:00000000000001ac $d
+/var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s:19     .text._ZN5daisy12SamplePlayer4InitEPKjf:0000000000000000 $t
+/var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s:26     .text._ZN5daisy12SamplePlayer4InitEPKjf:0000000000000000 _ZN5daisy12SamplePlayer4InitEPKjf
+/var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s:50     .text._ZN5daisy12SamplePlayer12DeinterleaveEv:0000000000000000 $t
+/var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s:57     .text._ZN5daisy12SamplePlayer12DeinterleaveEv:0000000000000000 _ZN5daisy12SamplePlayer12DeinterleaveEv
+/var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s:71     .text._ZN5daisy12SamplePlayer7ProcessERf:0000000000000000 $t
+/var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s:78     .text._ZN5daisy12SamplePlayer7ProcessERf:0000000000000000 _ZN5daisy12SamplePlayer7ProcessERf
+/var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s:335    .text._ZN5daisy12SamplePlayer7ProcessERfS1_:0000000000000000 $t
+/var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s:342    .text._ZN5daisy12SamplePlayer7ProcessERfS1_:0000000000000000 _ZN5daisy12SamplePlayer7ProcessERfS1_
+/var/folders/41/s_9r3f9s4p3_9jgx7wszdkhh0000gn/T//cco5lEF9.s:759    .text._ZN5daisy12SamplePlayer7ProcessERfS1_:00000000000001ac $d
 
 UNDEFINED SYMBOLS
 _Znaj
