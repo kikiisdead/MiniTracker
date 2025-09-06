@@ -1,3 +1,3 @@
 // Audio data converted from WAV file by wav2sketch
 
-extern unsigned int cowbell[5825];
+extern unsigned int collins[22081];

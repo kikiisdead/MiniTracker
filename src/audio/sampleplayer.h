@@ -22,7 +22,9 @@ struct WavFile
 {
     WAV_FormatTypeDef format;               /**< Raw wav data */
     char              name[WAV_FILENAME_MAX]; /**< Wav filename */
-    int32_t           **sample; // use a 2D array instead to deal with any num channels
+    // int32_t           **sample; // use a 2D array instead to deal with any num channels
+    void*             start; // start index in buffer
+    size_t            size; // end index in buffer
 };
 
 /* 
@@ -37,12 +39,12 @@ class SamplePlayer
     ~SamplePlayer() {}
 
     /** Initializes the SamplePlayer, loading up to max_files of wav files from an SD Card. */
-    void Init(const unsigned int* sample, float samplerate_);
+    void Init(WavFile* wave_, float samplerate_);
 
     /** \return the next sample played interpolated 
      * does logic based on number of channels
     */
-    void Process(float& out);
+    float Process();
 
     /** stereo out same as above except with 2 channels */
     void Process(float& outL, float& outR);
@@ -73,19 +75,19 @@ class SamplePlayer
     */
     inline void SetPitch(float pitch_) { 
       pitch = pitch_; 
-      samplePerStep = (((double) wave->format.SampleRate) / ((double) samplerate)) / pow(2.0, (pitch / 2.0)); 
+      samplePerStep = (((double) wave->format.SampleRate) / ((double) samplerate)) / pow(2.0f, (pitch / 12.0f)); 
     } 
 
     /** \return the pitch it plays at */
     inline float GetPitch() const { return pitch; }
+
+    inline bool IsPlaying() { return playing_; }
 
   private:
 
     /** splits interleaved buff if interleaved */
     void Deinterleave();
     WavFile                 *wave;
-    int32_t                 **buff_; // use a 2D array instead to deal with any num channels
-    char                    *byte_buff_; // same as byte
     int                     numChannels;
     uint32_t                size_;
     bool                    looping_, playing_;

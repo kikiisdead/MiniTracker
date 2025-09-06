@@ -1,92 +1,98 @@
 #include <cstring>
 #include "sampleplayer.h"
 
-// to add more f=lexibility to the thing I need to add support for 24 bit wave files as well as pithch changing
+// to add more flexibility to the thing I need to add support for 24 bit wave files as well as pithch changing
 
 using namespace daisy;
 
-void SamplePlayer::Init(const unsigned int* sample, float samplerate_)
+void SamplePlayer::Init(WavFile* wave_, float samplerate_)
 {
     // First check for all .wav files, and add them to the list until its full or there are no more.
     // Only checks '/'
     samplerate = samplerate_;
+    wave = wave_;
+    size_ = wave->size;
     playing_  = false;
     looping_  = false;
+    samplePerStep = (float) wave->format.SampleRate / samplerate;
+
 }
 
 void SamplePlayer::Deinterleave() {
 
 }
 
-void SamplePlayer::Process(float& out) {
+float SamplePlayer::Process() {
 
+    pos_ = (pos_ + samplePerStep);
+    if (pos_ > wave->size) {
+        pos_ = 0.0; 
+        if (!looping_) {
+            Stop();
+        }
+    }
     if (!playing_) {
-        return; // if its not playing then do nothing
+        return 0.0f; // if its not playing then do nothing
     }
 
-    int32_t pos_integral   = static_cast<int32_t>(pos_);
-    float   pos_fractional = pos_ - static_cast<float>(pos_integral);
+    int32_t pos_integral   = static_cast<int32_t>(pos_); // rounding float pos into int
+    float   pos_fractional = pos_ - static_cast<float>(pos_integral); // getting difference between the two
 
-    int32_t     t     = (pos_integral + size_);
-    int32_t     xm1   = wave->sample[0][(t - 1) % size_];
-    int32_t     x0    = wave->sample[0][(t) % size_];
-    int32_t     x1    = wave->sample[0][(t + 1) % size_];
-    int32_t     x2    = wave->sample[0][(t + 2) % size_];
+    int32_t t  =  (pos_integral);
+    int16_t xm1 = *(static_cast<int16_t*>(wave->start) + ((t - 1) % wave->size)); // casting into short int
+    int16_t x0  = *(static_cast<int16_t*>(wave->start) + ((t    ) % wave->size));
+    int16_t x1  = *(static_cast<int16_t*>(wave->start) + ((t + 1) % wave->size)); // casting into short int
+    int16_t x2  = *(static_cast<int16_t*>(wave->start) + ((t + 2) % wave->size));
+
     const float c     = (x1 - xm1) * 0.5f;
     const float v     = x0 - x1;
     const float w     = c + v;
     const float a     = w + v + (x2 - x0) * 0.5f;
     const float b_neg = w + a;
     const float f     = pos_fractional;
+    int16_t interpolated = (((a * f) - b_neg) * f + c) * f + x0;
 
-    int32_t interpolated = (((a * f) - b_neg) * f + c) * f + x0;
 
     if (wave->format.BitPerSample == 16) {
-        out = s162f(static_cast<int16_t>(interpolated));
+        return s162f(interpolated);
     } else {
-        out = s242f(interpolated);
+        return s242f(interpolated);
     }
 
-    pos_ = (pos_ + samplePerStep);
-    if (pos_ > size_) pos_ = 0.0;
 }
 
 void SamplePlayer::Process(float& outL, float& outR) {
 
-    int32_t *interp = new int32_t[2];
-
-    if (!playing_) {
-        return; // if its not playing then do nothing
-    }
+    // if (!playing_) {
+    //     outL = 0.0f;
+    //     outR = 0.0f;
+    //     return; // if its not playing then do nothing
+    // }
     
-    int32_t pos_integral   = static_cast<int32_t>(pos_);
-    float   pos_fractional = pos_ - static_cast<float>(pos_integral);
+    // int32_t pos_integral   = static_cast<int32_t>(pos_);
+    // float   pos_fractional = pos_ - static_cast<float>(pos_integral);
 
-    for (int i = 0; i < 2; i++) {
-        int32_t     t     = (pos_integral + size_);
-        int32_t     xm1   = wave->sample[i][(t - 1) % size_];
-        int32_t     x0    = wave->sample[i][(t) % size_];
-        int32_t     x1    = wave->sample[i][(t + 1) % size_];
-        int32_t     x2    = wave->sample[i][(t + 2) % size_];
-        const float c     = (x1 - xm1) * 0.5f;
-        const float v     = x0 - x1;
-        const float w     = c + v;
-        const float a     = w + v + (x2 - x0) * 0.5f;
-        const float b_neg = w + a;
-        const float f     = pos_fractional;
-        interp[i] = (((a * f) - b_neg) * f + c) * f + x0;
-    }
+    // int32_t     t     = (pos_integral + size_);
+    // int32_t     xm1   = (wave->start + ((t - 1) % wave->size));
+    // int32_t     x0    = (wave->start + ((t    ) % wave->size));
+    // int32_t     x1    = (wave->start + ((t + 1) % wave->size));
+    // int32_t     x2    = (wave->start + ((t + 2) % wave->size));
+    // const float c     = (x1 - xm1) * 0.5f;
+    // const float v     = x0 - x1;
+    // const float w     = c + v;
+    // const float a     = w + v + (x2 - x0) * 0.5f;
+    // const float b_neg = w + a;
+    // const float f     = pos_fractional;
+    // int32_t interpolated = (((a * f) - b_neg) * f + c) * f + x0;
 
-    if (wave->format.BitPerSample == 16) {
-        outL = s162f(static_cast<int16_t>(interp[0]));
-        outR = s162f(static_cast<int16_t>(interp[1]));
-    } else {
-        outL = s242f(interp[0]);
-        outR = s242f(interp[1]);
-    }
+    // if (wave->format.BitPerSample == 16) {
+    //     outL = s162f(static_cast<int16_t>(interpolated));
+    //     outR = s162f(static_cast<int16_t>(interpolated));
+    // } else {
+    //     outL = s242f(interpolated);
+    //     outR = s242f(interpolated);
+    // }
 
-    delete[] interp;
-
-    pos_ = (pos_ + samplePerStep);
-    if (pos_ > size_) pos_ = 0.0;
+    // pos_ = (pos_ + samplePerStep);
+    // if (pos_ > wave->size) pos_ = 0.0;
 }

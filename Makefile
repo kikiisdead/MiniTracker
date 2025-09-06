@@ -4,10 +4,12 @@ TARGET = MiniTracker
 # Sources
 CPP_SOURCES = MiniTracker.cpp
 CPP_SOURCES += src/UI/sequencer.cpp
+CPP_SOURCES += src/UI/display.cpp
 CPP_SOURCES += src/audio/sampleplayer.cpp
 CPP_SOURCES += src/audio/instrument.cpp
 CPP_SOURCES += src/samples/cowbell.cpp
-CPP_SOURCES += src/UI/display.cpp
+CPP_SOURCES += src/samples/collins.cpp
+CPP_SOURCES += src/audio/mulaw.cpp
 
 # Bootload into QSPI Flash instead of ARM Chip Flash
 APP_TYPE = BOOT_QSPI

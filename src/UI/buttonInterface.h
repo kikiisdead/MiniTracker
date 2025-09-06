@@ -22,6 +22,8 @@ public:
     virtual void AltLeftButton() = 0;
     virtual void AltRightButton() = 0;
     virtual void AltPlayButton() = 0;
+
+    virtual void UpdateDisplay() = 0;
     
 };
 

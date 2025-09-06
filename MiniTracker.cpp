@@ -1,12 +1,14 @@
 #include "daisy_seed.h"
 #include "daisysp.h"
+#include "src/audio/mulaw.h"
 #include "fatfs.h"
 #include "src/UI/sequencer.h"
-#include "src/UI/display.h"
 #include "src/UI/button.h"
 #include "dev/oled_ssd130x.h"
 #include "src/samples/cowbell.h"
+#include "src/samples/collins.h"
 #include "src/audio/sampleplayer.h"
+#include "src/UI/display.h"
 #include <vector>
 
 #define UpPin 18
@@ -41,12 +43,15 @@ std::vector<Instrument*> instruments;
 
 bool shift;
 
+WavFile sample;
+
+Display screen;
 
 // Will use as a buffer for samples
 // 
 #define CUSTOM_POOL_SIZE (48*1024*1024)
 
-DSY_SDRAM_BSS float sample_buffer[CUSTOM_POOL_SIZE];
+DSY_SDRAM_BSS char sample_buffer[CUSTOM_POOL_SIZE];
 
 size_t buffer_index = 0;
 int allocation_count = 0;
@@ -63,8 +68,7 @@ void* sample_buffer_allocate(size_t size)
   return ptr;
 }
 
-
-
+SamplePlayer samplePlayer;
 
 buttonInterface* control;
 
@@ -111,6 +115,9 @@ Button Right;
 
 std::vector<Button*> buttons;
 
+uint32_t refreshTime;
+uint32_t lastUpdate;
+
 void InputHandle() {  
   shift = Shift.RawState();
   for (uint16_t i = 0; i < buttons.size(); i++) {
@@ -136,9 +143,15 @@ void AudioCallback(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, s
     sequencer.Update();
 
     // if (tick.Process()) {
-    //   display.Update();
+    //   if (samplePlayer.IsPlaying()) {
+    //     samplePlayer.Stop();
+    //   } else {
+    //     samplePlayer.Play();
+    //   }
     // }
     
+    // outBuff = samplePlayer.Process();
+
     for (InstrumentHandler* hand : handler) {
       outBuff += hand->Process() * 0.2;
     }
@@ -167,6 +180,7 @@ int main(void)
   /** And Initialize */
   display.Init(disp_cfg);
 
+  
   // #endif
 
   // // Init SD Card
@@ -181,9 +195,35 @@ int main(void)
   // f_mount(&fsi.GetSDFileSystem(), "/", 1);
 
   hw.SetAudioBlockSize(8); // number of samples handled per callback
-  hw.SetAudioSampleRate(SaiHandle::Config::SampleRate::SAI_48KHZ);
+  hw.SetAudioSampleRate(SaiHandle::Config::SampleRate::SAI_96KHZ);
 
   float samplerate = hw.AudioSampleRate();
+
+  // move to sample loader eventually
+  // load into sample buffer get pointer to beginning of sub array and size
+  sample.format.AudioFormat = WAVE_FORMAT_ULAW;
+  sample.format.BitPerSample = 16;
+  sample.format.SampleRate = 44100;
+  sample.format.NbrChannels = 1;
+  sample.size = sizeof(collins);
+  sample.start = sample_buffer_allocate(sample.size * sizeof(int16_t));
+
+  void* readPtr = &collins[0];
+  
+  void* writePtr = sample.start;
+
+  size_t readIndex = 0;
+
+  while (readIndex < sample.size) {
+    int16_t val = MuLaw2Lin((*(static_cast<uint8_t*>(readPtr)) * -1) - 1); // get the sample and convert
+
+    readPtr = static_cast<uint8_t*>(readPtr) + 1;
+    readIndex += 1;
+    *(static_cast<int16_t*>(writePtr)) = val;
+    writePtr = static_cast<int16_t*>(writePtr) + 1;
+  }
+
+  samplePlayer.Init(&sample, samplerate);
 
   for (int i = 0; i < 4; i++) {
     instruments.push_back(new Instrument);
@@ -233,9 +273,12 @@ int main(void)
 
   control = &sequencer;
 
-  tick.Init(0.5, samplerate);
+  screen.Init(&sequencer, &display);
 
   hw.StartAudio(AudioCallback);
-  
-  while(1) {}
+
+  for (;;) {
+    screen.Update();
+    System::Delay(10);
+  }
 }

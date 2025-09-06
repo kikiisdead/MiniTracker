@@ -37,7 +37,7 @@ public:
         } else if (pressed && (System::GetNow() > (timeAtPress + delay))) {
             buttonCallback();
             timeAtPress = System::GetNow();
-            delay = 15;
+            delay = 40;
         } else if (button.FallingEdge()) {
             pressed = false;
         }

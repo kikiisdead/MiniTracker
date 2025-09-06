@@ -28,7 +28,7 @@ struct Pattern {
 };
 
 class Sequencer : public buttonInterface {
-public:
+private:
     MyOledDisplay* display_;
     std::vector<InstrumentHandler*> handler_;
     std::vector<Pattern*> patterns; // holds all the possible patterns made
@@ -52,9 +52,8 @@ public:
     
     void DrawStep(int x, int y, Step* step);
     void DrawSquare(int x, int y, bool fill);
-
-    // 1 = left, 2 = right, 3 = up, 4 = down
-    void DrawArrow(int x, int y, int direction); 
+    void DrawArrow(int x, int y, int direction); // 1 = left, 2 = right, 3 = up, 4 = down
+    void WriteString(char* strbuff, int x, int y, bool on);
     void GetNoteString(char* strbuff, int note);
     void GetFxString(char* strbuff, int fx, int fxAmount);
     void InitStep(Step* step, int index);
@@ -70,7 +69,7 @@ public:
 
     void NewPattern();
 
-//public:
+public:
     Sequencer(){};
 
     // to be called continuously from the audio callback

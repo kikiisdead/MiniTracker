@@ -173,6 +173,11 @@ void Sequencer::GetNoteString(char* strbuff, int note) {
     }
 }
 
+void Sequencer::WriteString(char* strbuff, int x, int y, bool on) {
+    display_->SetCursor(x, y);
+    display_->WriteString(strbuff, Font_4x6, on);
+}
+
 void Sequencer::UpdateDisplay() {
     #if SCREEN_ON
     // Clear
@@ -197,9 +202,8 @@ void Sequencer::UpdateDisplay() {
                 else {
                     DrawStep(((43 * x) + 14), (9 * y), *offset);
                     if ((*offset)->index % 4 == 0 && x == 0) {
-                        display_->SetCursor(0, ((9 * y) + 2));
                         sprintf(strbuff, "%3d", (*offset)->index);
-                        display_->WriteString(strbuff, Font_4x6, true);
+                        WriteString(strbuff, 0, ((9 * y) + 2), true);
                     }
                 }
             }
@@ -208,31 +212,30 @@ void Sequencer::UpdateDisplay() {
     }
     
     //Drawing Sidebar
-    display_->SetCursor(101, 1);
     sprintf(strbuff, "BPM");
-    display_->WriteString(strbuff, Font_4x6, true);
+    WriteString(strbuff, 101, 1, true);
 
-    display_->SetCursor(114, 1);
+    
     sprintf(strbuff, "%3d", (int) bpm);
-    display_->WriteString(strbuff, Font_4x6, true);
+    WriteString(strbuff, 114, 1, true);
 
-    display_->SetCursor(101, 8);
+    
     sprintf(strbuff, "LANE");
-    display_->WriteString(strbuff, Font_4x6, true);
+    WriteString(strbuff, 101, 8, true);
 
-    display_->SetCursor(118, 8);
+    
     if (songOrder[currentPattern] > -1) sprintf(strbuff, "%2d", currentLane->index + 1);
     else sprintf(strbuff, " ");
-    display_->WriteString(strbuff, Font_4x6, true);
+    WriteString(strbuff, 118, 8, true);
 
-    display_->SetCursor(101, 15);
+    
     sprintf(strbuff, "LEN");
-    display_->WriteString(strbuff, Font_4x6, true);
+    WriteString(strbuff, 101, 15, true);
 
-    display_->SetCursor(114, 15);
+
     if (songOrder[currentPattern] > -1) sprintf(strbuff, "%3d", currentLane->length);
     else sprintf(strbuff, " ");
-    display_->WriteString(strbuff, Font_4x6, true);
+    WriteString(strbuff, 114, 15, true);
 
     // Drawing Pattern Arrangement
     for (int i = 0; i < 5; i++) {
@@ -241,15 +244,15 @@ void Sequencer::UpdateDisplay() {
         else if (offset > (int) songOrder.size() - 1)   continue;
         else if (songOrder[offset] < 0)                 continue;
         else {
-            display_->SetCursor(114, (24 + (8 * i)));
+            
             sprintf(strbuff, "%d", songOrder[offset]);
             if (offset == currentPattern) {
                 DrawSquare(112, 23 + (8 * i), true);
-                display_->WriteString(strbuff, Font_4x6, false);
+                WriteString(strbuff, 114, (24 + (8 * i)), false);
             }
             else {
                 DrawSquare(112, 23 + (8 * i), false);
-                display_->WriteString(strbuff, Font_4x6, true);
+                WriteString(strbuff, 114, (24 + (8 * i)), true);
             }
         }
     }
@@ -259,7 +262,7 @@ void Sequencer::UpdateDisplay() {
     DrawArrow(103, 38, 3);
     DrawArrow(103, 46, 4);
 
-    display_->Update();
+    // display_->Update();
 
     #endif
 
