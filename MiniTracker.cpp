@@ -1,6 +1,8 @@
 #include "daisy_seed.h"
 #include "daisysp.h"
+#include "fatfs.h"
 #include "src/UI/sequencer.h"
+#include "src/UI/display.h"
 #include "src/UI/button.h"
 #include "dev/oled_ssd130x.h"
 #include "src/samples/cowbell.h"
@@ -25,6 +27,10 @@ using MyOledDisplay = OledDisplay<SSD130xI2c128x64Driver>;
 
 DaisySeed hw;
 
+SdmmcHandler   sd;
+FatFSInterface fsi;
+FIL            SDFile;
+
 MyOledDisplay display;
 
 Sequencer sequencer;
@@ -34,6 +40,31 @@ std::vector<InstrumentHandler*> handler;
 std::vector<Instrument*> instruments;
 
 bool shift;
+
+
+// Will use as a buffer for samples
+// 
+#define CUSTOM_POOL_SIZE (48*1024*1024)
+
+DSY_SDRAM_BSS float sample_buffer[CUSTOM_POOL_SIZE];
+
+size_t buffer_index = 0;
+int allocation_count = 0;
+
+// allocating space in buffer
+void* sample_buffer_allocate(size_t size)
+{
+  if (buffer_index + size >= CUSTOM_POOL_SIZE)
+  {
+    return 0;
+  }
+  void* ptr = &sample_buffer[buffer_index];
+  buffer_index += size;
+  return ptr;
+}
+
+
+
 
 buttonInterface* control;
 
@@ -87,17 +118,30 @@ void InputHandle() {
   }
 }
 
+Metro tick;
+
 /** LOOP */
 void AudioCallback(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, size_t size) 
 {
   float outBuff = 0;
   
+  InputHandle(); 
+
+  // weird cutouts coming from updating display, seems as though updating the display in anyway pauses the whole program
+  
   for (size_t i = 0; i < size; i++)
   {
-    sequencer.Update();
-    InputHandle();
+    outBuff = 0;
 
-    outBuff = handler.at(0)->Process();
+    sequencer.Update();
+
+    // if (tick.Process()) {
+    //   display.Update();
+    // }
+    
+    for (InstrumentHandler* hand : handler) {
+      outBuff += hand->Process() * 0.2;
+    }
 
     out[0][i] = outBuff;
     out[1][i] = outBuff;
@@ -109,6 +153,7 @@ int main(void)
 {
   hw.Init();
   
+  // #if SCREEN_ON
   /** Configure the Display */
   MyOledDisplay::Config disp_cfg;
   
@@ -122,20 +167,34 @@ int main(void)
   /** And Initialize */
   display.Init(disp_cfg);
 
-  hw.SetAudioBlockSize(16); // number of samples handled per callback
-  // hw.SetAudioSampleRate(SaiHandle::Config::SampleRate::SAI_48KHZ);
+  // #endif
+
+  // // Init SD Card
+  // SdmmcHandler::Config sd_cfg;
+  // sd_cfg.Defaults();
+  // sd.Init(sd_cfg);
+
+  // // FatFS Interface
+  // fsi.Init(FatFSInterface::Config::MEDIA_SD);
+
+  // // Mount SD Card
+  // f_mount(&fsi.GetSDFileSystem(), "/", 1);
+
+  hw.SetAudioBlockSize(8); // number of samples handled per callback
+  hw.SetAudioSampleRate(SaiHandle::Config::SampleRate::SAI_48KHZ);
 
   float samplerate = hw.AudioSampleRate();
+
+  for (int i = 0; i < 4; i++) {
+    instruments.push_back(new Instrument);
+    instruments.back()->Init(samplerate);
+  }
 
   for (int i = 0; i < 4; i ++) {
     handler.push_back(new InstrumentHandler);
     handler[i]->Init(&instruments);
   }
 
-  for (int i = 0; i < 4; i++) {
-    instruments.push_back(new Instrument);
-    instruments.back()->Init(samplerate);
-  }
 
   sequencer.Init(&display, handler, samplerate);
   
@@ -173,6 +232,8 @@ int main(void)
   // RightShoulder.Init(hw.GetPin(RightShoulderPin), samplerate);
 
   control = &sequencer;
+
+  tick.Init(0.5, samplerate);
 
   hw.StartAudio(AudioCallback);
   

@@ -16,8 +16,8 @@ class Instrument {
 private:
     // float* sampleData;
     Oscillator osc;
-    // Adsr env;
-    // float env_out;
+    Adsr env;
+    float env_out;
     bool playing;
 
 public:
@@ -32,6 +32,10 @@ public:
     void Trigger(int note);
 
     void Release();
+
+    bool isPlaying() {
+        return playing;
+    }
 };
 
 #endif

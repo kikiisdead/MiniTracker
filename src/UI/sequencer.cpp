@@ -12,7 +12,7 @@ void Sequencer::NewPattern() {
     for (int i = 0; i < activePattern->numLanes; i ++) {
         activePattern->lanes.push_back(new Lane);
         currentLane = activePattern->lanes[i];
-        currentLane->length = 32;
+        currentLane->length = 4;
         currentLane->index = i;
         for (int j = 0; j < activePattern->lanes[i]->length; j++) {
             currentLane->sequence.push_back(new Step);
@@ -22,6 +22,8 @@ void Sequencer::NewPattern() {
 
     currentLane = activePattern->lanes[0];
     currentStep = currentLane->sequence.at(0);
+    activePattern->lanes[0]->sequence.at(0)->instrument = 0;
+    activePattern->lanes[0]->sequence.at(2)->instrument = -2;
 }
 
 void Sequencer::InitStep(Step* step, int index) {
@@ -37,14 +39,15 @@ void Sequencer::InitStep(Step* step, int index) {
 void Sequencer::DrawStep(int x, int y, Step* step) {
     // Writing instrument
     display_->SetCursor(x + 2, y + 2);
-    if (step->instrument < 0 || step->note < 0) sprintf(strbuff, "--");
+    if (step->instrument < 0) sprintf(strbuff, "--");
     else if (step->instrument < 10) sprintf(strbuff, "0%d", step->instrument);
     else sprintf(strbuff, "%d", step->instrument);
     display_->WriteString(strbuff, Font_4x6, true);
 
     // Writing note
     display_->SetCursor(x + 13, y + 2);
-    if (step->instrument < 0) sprintf(strbuff, "---");
+    if (step->instrument == -1) sprintf(strbuff, "---");
+    else if (step->instrument == -2) sprintf(strbuff, "OFF");
     else GetNoteString(strbuff, step->note);
     display_->WriteString(strbuff, Font_4x6, true);
 
@@ -171,10 +174,9 @@ void Sequencer::GetNoteString(char* strbuff, int note) {
 }
 
 void Sequencer::UpdateDisplay() {
+    #if SCREEN_ON
     // Clear
     display_->Fill(false);
-
-    if (song_) display_->DrawPixel(0, 0, true);
 
     if (songOrder[currentPattern] > -1) {
         // Drawing Steps
@@ -258,16 +260,19 @@ void Sequencer::UpdateDisplay() {
     DrawArrow(103, 46, 4);
 
     display_->Update();
+
+    #endif
+
 }
 
 void Sequencer::Update() {
     if (playing_) {
         if (tick.Process()) {
+            //lastTrigger = System::GetNow();
             NextStep();
-            handler_.at(0)->Update(currentStep);
-            // for (Lane* lane : activePattern->lanes) {
-            //     handler_[lane->index]->Update(lane->sequence.at(currentStep->index)); 
-            // }
+            for (Lane* lane : activePattern->lanes) {
+                handler_[lane->index]->Update(lane->sequence.at(currentStep->index)); 
+            }
         }
     }
 }
@@ -275,6 +280,12 @@ void Sequencer::Update() {
 void Sequencer::PlayButton() {
     playing_ = (playing_) ? false : true;
     song_ = false;
+    if (playing_) {
+        lastTrigger = System::GetNow();
+        for (Lane* lane : activePattern->lanes) {
+            handler_[lane->index]->Update(lane->sequence.at(currentStep->index)); 
+        }
+    }
 }
 
 void Sequencer::AButton() {

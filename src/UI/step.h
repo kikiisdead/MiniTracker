@@ -34,8 +34,8 @@ public:
     }
 
     void Decrement () {
-        if (paramEdit == i) instrument = (instrument <= -1) ? -1 : instrument - 1;
-        else if (paramEdit == n) note = (note <= -1) ? -1 : note - 1;
+        if (paramEdit == i) instrument = (instrument <= -2) ? -2 : instrument - 1;
+        else if (paramEdit == n) note = (note <= 0) ? 0 : note - 1;
         else if (paramEdit == f) fx = (fx <= 0) ? 0 : fx - 1;
         else if (paramEdit == fa) fxAmount = (fxAmount <= 0) ? 0 : fxAmount - 1;
     }

@@ -7,6 +7,7 @@ CPP_SOURCES += src/UI/sequencer.cpp
 CPP_SOURCES += src/audio/sampleplayer.cpp
 CPP_SOURCES += src/audio/instrument.cpp
 CPP_SOURCES += src/samples/cowbell.cpp
+CPP_SOURCES += src/UI/display.cpp
 
 # Bootload into QSPI Flash instead of ARM Chip Flash
 APP_TYPE = BOOT_QSPI

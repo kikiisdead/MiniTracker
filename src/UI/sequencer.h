@@ -7,9 +7,10 @@
 #include "step.h"
 #include "dev/oled_ssd130x.h"
 #include <vector>
-#include <list>
 
 #define OFF -1
+
+#define SCREEN_ON true
 
 using namespace daisy;
 using MyOledDisplay = OledDisplay<SSD130xI2c128x64Driver>;
@@ -27,7 +28,7 @@ struct Pattern {
 };
 
 class Sequencer : public buttonInterface {
-private:
+public:
     MyOledDisplay* display_;
     std::vector<InstrumentHandler*> handler_;
     std::vector<Pattern*> patterns; // holds all the possible patterns made
@@ -45,10 +46,13 @@ private:
     float timePerTick;
     char strbuff[20];
     int laneOffset;
+    uint32_t lastTrigger;
+    uint32_t triggerTime;
     Metro tick;
     
     void DrawStep(int x, int y, Step* step);
     void DrawSquare(int x, int y, bool fill);
+
     // 1 = left, 2 = right, 3 = up, 4 = down
     void DrawArrow(int x, int y, int direction); 
     void GetNoteString(char* strbuff, int note);
@@ -66,7 +70,7 @@ private:
 
     void NewPattern();
 
-public:
+//public:
     Sequencer(){};
 
     // to be called continuously from the audio callback
@@ -75,6 +79,7 @@ public:
     void SetBPM(float bpm_) {
         bpm = bpm_;
         tick.SetFreq((bpm / 60.0f) * 4.0f);
+        triggerTime = (1.0f / ((bpm / 60.0f) * 4.0f)) * 1000;
     }
     
     // Initializes the sequencer
@@ -88,8 +93,9 @@ public:
         songOrder.push_back(0);
         currentPattern = 0;
         tick.Init(1.0f, samplerate);
-        SetBPM(128);
+        SetBPM(128.0f);
         NewPattern();
+        lastTrigger = 0;
         laneOffset = 0;
         UpdateDisplay();
     }
