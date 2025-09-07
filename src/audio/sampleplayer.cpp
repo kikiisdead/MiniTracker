@@ -18,10 +18,6 @@ void SamplePlayer::Init(WavFile* wave_, float samplerate_)
 
 }
 
-void SamplePlayer::Deinterleave() {
-
-}
-
 float SamplePlayer::Process() {
 
     pos_ = (pos_ + samplePerStep);
@@ -39,10 +35,10 @@ float SamplePlayer::Process() {
     float   pos_fractional = pos_ - static_cast<float>(pos_integral); // getting difference between the two
 
     int32_t t  =  (pos_integral);
-    int16_t xm1 = *(static_cast<int16_t*>(wave->start) + ((t - 1) % wave->size)); // casting into short int
-    int16_t x0  = *(static_cast<int16_t*>(wave->start) + ((t    ) % wave->size));
-    int16_t x1  = *(static_cast<int16_t*>(wave->start) + ((t + 1) % wave->size)); // casting into short int
-    int16_t x2  = *(static_cast<int16_t*>(wave->start) + ((t + 2) % wave->size));
+    int16_t xm1 = *(static_cast<int16_t*>(wave->start) + ((t - 1) % size_)); // casting into short int
+    int16_t x0  = *(static_cast<int16_t*>(wave->start) + ((t    ) % size_));
+    int16_t x1  = *(static_cast<int16_t*>(wave->start) + ((t + 1) % size_)); // casting into short int
+    int16_t x2  = *(static_cast<int16_t*>(wave->start) + ((t + 2) % size_));
 
     const float c     = (x1 - xm1) * 0.5f;
     const float v     = x0 - x1;
@@ -59,6 +55,28 @@ float SamplePlayer::Process() {
         return s242f(interpolated);
     }
 
+}
+
+uint16_t* SamplePlayer::GetVisual(int size) {
+    uint16_t* visual = new uint16_t[size];
+    
+    size_t stepSize = size_/size;
+
+    for (int i = 0; i < size; i++) {
+
+        uint16_t max = 0;
+
+        for (size_t j = 0; j < stepSize; j++) {
+            uint16_t step = abs(*(static_cast<int16_t*>(wave->start) + (i * stepSize) + j));
+            if (step > max) {
+                max = step;
+            }
+        }
+
+        visual[i] = max;
+    }
+
+    return visual;
 }
 
 void SamplePlayer::Process(float& outL, float& outR) {

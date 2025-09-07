@@ -4,7 +4,7 @@ TARGET = MiniTracker
 # Sources
 CPP_SOURCES = MiniTracker.cpp
 CPP_SOURCES += src/UI/sequencer.cpp
-CPP_SOURCES += src/UI/display.cpp
+CPP_SOURCES += src/UI/instDisplay.cpp
 CPP_SOURCES += src/audio/sampleplayer.cpp
 CPP_SOURCES += src/audio/instrument.cpp
 CPP_SOURCES += src/samples/cowbell.cpp

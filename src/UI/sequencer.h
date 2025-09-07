@@ -10,8 +10,6 @@
 
 #define OFF -1
 
-#define SCREEN_ON true
-
 using namespace daisy;
 using MyOledDisplay = OledDisplay<SSD130xI2c128x64Driver>;
 
@@ -65,8 +63,6 @@ private:
     void NextPattern();
     void PreviousPattern();
 
-    void UpdateDisplay();
-
     void NewPattern();
 
 public:
@@ -81,8 +77,12 @@ public:
         triggerTime = (1.0f / ((bpm / 60.0f) * 4.0f)) * 1000;
     }
     
-    // Initializes the sequencer
-    // will need to be passed 
+    /**
+     * Initializes display
+     * \param display to write to
+     * \param handler voice for each lane
+     * \param samplerate samplerate to intialize Metro object
+     */
     void Init(MyOledDisplay* display, std::vector<InstrumentHandler*> handler, float samplerate) {
         display_ = display;
         handler_ = handler;
@@ -96,10 +96,17 @@ public:
         NewPattern();
         lastTrigger = 0;
         laneOffset = 0;
-        UpdateDisplay();
     }
     
-    // sequencer controls
+
+    /**
+     * Called by the Display object to refresh the screen, not called internally because it interupts audio playback 
+     */
+    void UpdateDisplay();
+
+    /**
+     * Implementations of virtual parent functions.
+     */
     void AButton();
     void BButton();
     void UpButton();

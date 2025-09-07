@@ -8,7 +8,7 @@
 #include "src/samples/cowbell.h"
 #include "src/samples/collins.h"
 #include "src/audio/sampleplayer.h"
-#include "src/UI/display.h"
+#include "src/UI/instDisplay.h"
 #include <vector>
 
 #define UpPin 18
@@ -19,8 +19,8 @@
 #define BPin 20
 #define ShiftPin 21
 #define PlayPin 22
-#define LeftShoulderPin 23
-#define RightShoulderPin 24
+#define LeftShoulderPin 13
+#define RightShoulderPin 14
 
 using namespace daisy;
 using namespace daisysp;
@@ -35,8 +35,6 @@ FIL            SDFile;
 
 MyOledDisplay display;
 
-Sequencer sequencer;
-
 std::vector<InstrumentHandler*> handler;
 
 std::vector<Instrument*> instruments;
@@ -45,10 +43,10 @@ bool shift;
 
 WavFile sample;
 
-Display screen;
 
-// Will use as a buffer for samples
-// 
+/**
+ * SDRAM STUFF
+ */
 #define CUSTOM_POOL_SIZE (48*1024*1024)
 
 DSY_SDRAM_BSS char sample_buffer[CUSTOM_POOL_SIZE];
@@ -68,38 +66,65 @@ void* sample_buffer_allocate(size_t size)
   return ptr;
 }
 
-SamplePlayer samplePlayer;
+/**
+ * USER INTERFACES
+ */
+std::vector<buttonInterface*> interfaces;
 
-buttonInterface* control;
+std::vector<buttonInterface*>::iterator userInterface;
 
-/** Button Press Callback functions (needed to be static and change as control pointer changed) */
+Sequencer sequencer;
+
+InstrumentDisplay instDisplay;
+
+
+/**
+ * BUTTONS
+ * Callbacks
+ * Objects
+ * and Vectors
+*/
 void APress() {
-  if (shift) control->AltAButton();
-  else control->AButton();
+  if (shift) (*userInterface)->AltAButton();
+  else (*userInterface)->AButton();
 }
 void BPress() {
-  if (shift) control->AltBButton();
-  else control->BButton();
+  if (shift) (*userInterface)->AltBButton();
+  else (*userInterface)->BButton();
 }
 void PlayPress() {
-  if (shift) control->AltPlayButton();
-  else control->PlayButton();
+  if (shift) (*userInterface)->AltPlayButton();
+  else (*userInterface)->PlayButton();
 }
 void UpPress() {
-  if (shift) control->AltUpButton();
-  else control->UpButton();
+  if (shift) (*userInterface)->AltUpButton();
+  else (*userInterface)->UpButton();
 }
 void DownPress() {
-  if (shift) control->AltDownButton();
-  else control->DownButton();
+  if (shift) (*userInterface)->AltDownButton();
+  else (*userInterface)->DownButton();
 }
 void LeftPress() {
-  if (shift) control->AltLeftButton();
-  else control->LeftButton();
+  if (shift) (*userInterface)->AltLeftButton();
+  else (*userInterface)->LeftButton();
 }
 void RightPress() {
-  if (shift) control->AltRightButton();
-  else control->RightButton();
+  if (shift) (*userInterface)->AltRightButton();
+  else (*userInterface)->RightButton();
+}
+void LeftShoulderPress() {
+  if (userInterface == interfaces.begin()) {
+    userInterface = interfaces.end() - 1;
+  } else {
+    userInterface--;
+  }
+}
+void RightShoulderPress() {
+  if (userInterface != interfaces.end() - 1) {
+    userInterface++;
+  } else {
+    userInterface = interfaces.begin();
+  }
 }
 
 Button A;
@@ -110,13 +135,10 @@ Button Up;
 Button Down;
 Button Left;
 Button Right;
-// Switch LeftShoulder;
-// Switch RightShoulder;
+Button LeftShoulder;
+Button RightShoulder;
 
 std::vector<Button*> buttons;
-
-uint32_t refreshTime;
-uint32_t lastUpdate;
 
 void InputHandle() {  
   shift = Shift.RawState();
@@ -124,8 +146,6 @@ void InputHandle() {
     buttons.at(i)->Update();
   }
 }
-
-Metro tick;
 
 /** LOOP */
 void AudioCallback(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, size_t size) 
@@ -142,16 +162,6 @@ void AudioCallback(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, s
 
     sequencer.Update();
 
-    // if (tick.Process()) {
-    //   if (samplePlayer.IsPlaying()) {
-    //     samplePlayer.Stop();
-    //   } else {
-    //     samplePlayer.Play();
-    //   }
-    // }
-    
-    // outBuff = samplePlayer.Process();
-
     for (InstrumentHandler* hand : handler) {
       outBuff += hand->Process() * 0.2;
     }
@@ -166,7 +176,6 @@ int main(void)
 {
   hw.Init();
   
-  // #if SCREEN_ON
   /** Configure the Display */
   MyOledDisplay::Config disp_cfg;
   
@@ -180,8 +189,6 @@ int main(void)
   /** And Initialize */
   display.Init(disp_cfg);
 
-  
-  // #endif
 
   // // Init SD Card
   // SdmmcHandler::Config sd_cfg;
@@ -194,10 +201,15 @@ int main(void)
   // // Mount SD Card
   // f_mount(&fsi.GetSDFileSystem(), "/", 1);
 
+  /**
+   * Initializing Seed Audio
+   */
   hw.SetAudioBlockSize(8); // number of samples handled per callback
   hw.SetAudioSampleRate(SaiHandle::Config::SampleRate::SAI_96KHZ);
 
   float samplerate = hw.AudioSampleRate();
+
+
 
   // move to sample loader eventually
   // load into sample buffer get pointer to beginning of sub array and size
@@ -223,11 +235,9 @@ int main(void)
     writePtr = static_cast<int16_t*>(writePtr) + 1;
   }
 
-  samplePlayer.Init(&sample, samplerate);
-
   for (int i = 0; i < 4; i++) {
     instruments.push_back(new Instrument);
-    instruments.back()->Init(samplerate);
+    instruments.back()->Init(samplerate, &sample);
   }
 
   for (int i = 0; i < 4; i ++) {
@@ -236,8 +246,10 @@ int main(void)
   }
 
 
-  sequencer.Init(&display, handler, samplerate);
-  
+  /**
+   * Initializing Buttons
+   * sending callbacks and adding to buttons vector
+   */
   A.Init(hw.GetPin(APin), samplerate);
   A.CallbackHandler(APress);
   buttons.push_back(&A);
@@ -268,17 +280,31 @@ int main(void)
   Down.CallbackHandler(DownPress);
   buttons.push_back(&Down);
 
-  // LeftShoulder.Init(hw.GetPin(LeftShoulderPin), samplerate);
-  // RightShoulder.Init(hw.GetPin(RightShoulderPin), samplerate);
+  LeftShoulder.Init(hw.GetPin(LeftShoulderPin), samplerate);
+  LeftShoulder.CallbackHandler(LeftShoulderPress);
+  buttons.push_back(&LeftShoulder);
 
-  control = &sequencer;
+  RightShoulder.Init(hw.GetPin(RightShoulderPin), samplerate);
+  RightShoulder.CallbackHandler(RightShoulderPress);
+  buttons.push_back(&RightShoulder);
 
-  screen.Init(&sequencer, &display);
+  /**
+   * Initializing UI objects
+   * and adding to interfaces vector
+   */
+  sequencer.Init(&display, handler, samplerate);
+  instDisplay.Init(&display, instruments);
+
+  interfaces.push_back(&sequencer);
+  interfaces.push_back(&instDisplay);
+
+  userInterface = interfaces.begin();
 
   hw.StartAudio(AudioCallback);
 
   for (;;) {
-    screen.Update();
+    (*userInterface)->UpdateDisplay();
+    display.Update();
     System::Delay(10);
   }
 }

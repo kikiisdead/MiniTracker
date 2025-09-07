@@ -10,6 +10,8 @@
 #include "util/wav_format.h"
 #include "ff.h"
 
+
+
 #define WAV_FILENAME_MAX \
     256 /**< Maximum LFN (set to same in FatFs (ffconf.h) */
 
@@ -62,6 +64,8 @@ class SamplePlayer
     /** \return position of the play head */
     double GetPos() { return pos_; }
 
+    uint32_t GetSize() { return size_; }
+
     /** Sets whether or not the current file will repeat after completing playback. 
     \param loop To loop or not to loop.
     */
@@ -75,7 +79,7 @@ class SamplePlayer
     */
     inline void SetPitch(float pitch_) { 
       pitch = pitch_; 
-      samplePerStep = (((double) wave->format.SampleRate) / ((double) samplerate)) / pow(2.0f, (pitch / 12.0f)); 
+      samplePerStep = (((double) wave->format.SampleRate) / ((double) samplerate)) * pow(2.0f, (pitch / 12.0f)); 
     } 
 
     /** \return the pitch it plays at */
@@ -83,10 +87,10 @@ class SamplePlayer
 
     inline bool IsPlaying() { return playing_; }
 
+    uint16_t* GetVisual (int length);
+
   private:
 
-    /** splits interleaved buff if interleaved */
-    void Deinterleave();
     WavFile                 *wave;
     int                     numChannels;
     uint32_t                size_;
@@ -97,6 +101,6 @@ class SamplePlayer
     float                   pitch;
 };
 
-} // namespace daisy
+} 
 
 #endif

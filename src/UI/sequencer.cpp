@@ -7,12 +7,12 @@ void Sequencer::NewPattern() {
     songOrder[currentPattern] = patterns.back()->index;
 
     activePattern = patterns.at(songOrder[currentPattern]);
-    activePattern->numLanes = 4;
+    activePattern->numLanes = handler_.size();
 
     for (int i = 0; i < activePattern->numLanes; i ++) {
         activePattern->lanes.push_back(new Lane);
         currentLane = activePattern->lanes[i];
-        currentLane->length = 4;
+        currentLane->length = 16;
         currentLane->index = i;
         for (int j = 0; j < activePattern->lanes[i]->length; j++) {
             currentLane->sequence.push_back(new Step);
@@ -22,8 +22,8 @@ void Sequencer::NewPattern() {
 
     currentLane = activePattern->lanes[0];
     currentStep = currentLane->sequence.at(0);
-    activePattern->lanes[0]->sequence.at(0)->instrument = 0;
-    activePattern->lanes[0]->sequence.at(2)->instrument = -2;
+    // activePattern->lanes[0]->sequence.at(0)->instrument = 0;
+    // activePattern->lanes[0]->sequence.at(2)->instrument = -2;
 }
 
 void Sequencer::InitStep(Step* step, int index) {
@@ -179,7 +179,6 @@ void Sequencer::WriteString(char* strbuff, int x, int y, bool on) {
 }
 
 void Sequencer::UpdateDisplay() {
-    #if SCREEN_ON
     // Clear
     display_->Fill(false);
 
@@ -262,10 +261,6 @@ void Sequencer::UpdateDisplay() {
     DrawArrow(103, 38, 3);
     DrawArrow(103, 46, 4);
 
-    // display_->Update();
-
-    #endif
-
 }
 
 void Sequencer::Update() {
@@ -293,12 +288,10 @@ void Sequencer::PlayButton() {
 
 void Sequencer::AButton() {
     stepEdit_ = true;
-    UpdateDisplay();   
 }
 
 void Sequencer::BButton() {
     stepEdit_ = false;
-    UpdateDisplay();
 }
 
 void Sequencer::PreviousStep() {
@@ -308,13 +301,11 @@ void Sequencer::PreviousStep() {
     } else {
         currentStep = currentLane->sequence.at(currentLane->length - 1);
     }
-    UpdateDisplay();
 }
 
 void Sequencer::UpButton() {
     if (!playing_ && !stepEdit_ && songOrder[currentPattern] > -1) PreviousStep();
     else if (stepEdit_ && songOrder[currentPattern] > -1) currentStep->Increment();
-    UpdateDisplay();
 }
 
 void Sequencer::NextStep() {
@@ -327,13 +318,11 @@ void Sequencer::NextStep() {
         }
         currentStep = currentLane->sequence.at(0);
     }
-    UpdateDisplay();
 }
 
 void Sequencer::DownButton() {
     if (!playing_ && !stepEdit_ && songOrder[currentPattern] > -1) NextStep();
     else if (stepEdit_ && songOrder[currentPattern] > -1) currentStep->Decrement();
-    UpdateDisplay();
 }
 
 void Sequencer::PreviousLane() {
@@ -343,13 +332,11 @@ void Sequencer::PreviousLane() {
         currentStep = currentLane->sequence.at(currentStep->index);
         if (currentLane->index < 2) laneOffset = currentLane->index;
     } 
-    UpdateDisplay();
 }
 
 void Sequencer::LeftButton() {
     if (!stepEdit_ && songOrder[currentPattern] > -1) PreviousLane();
     else if (songOrder[currentPattern] > -1) currentStep->PrevParam();
-    UpdateDisplay();
 }
 
 void Sequencer::NextLane() {
@@ -359,13 +346,11 @@ void Sequencer::NextLane() {
         currentStep = currentLane->sequence.at(currentStep->index);
         if (currentLane->index > 1) laneOffset = currentLane->index - 1;
     }
-    UpdateDisplay();
 }
 
 void Sequencer::RightButton() {
     if (!stepEdit_ && songOrder[currentPattern] > -1) NextLane();
     else if (songOrder[currentPattern] > -1) currentStep->NextParam();
-    UpdateDisplay();
 }
 
 void Sequencer::NextPattern() {
@@ -373,7 +358,6 @@ void Sequencer::NextPattern() {
     currentPattern = (currentPattern >= (int) songOrder.size() - 1) ? 0 : currentPattern + 1;
     activePattern = patterns.at(songOrder[currentPattern]);
     currentStep->selected = true;
-    UpdateDisplay();
 }
 
 void Sequencer::PreviousPattern() {
@@ -385,7 +369,6 @@ void Sequencer::PreviousPattern() {
         activePattern = patterns.at(songOrder[currentPattern]);
         currentStep->selected = true;
     }
-    UpdateDisplay();
 }
 
 void Sequencer::AltUpButton() {
@@ -410,7 +393,6 @@ void Sequencer::AltUpButton() {
         currentLane = activePattern->lanes[0];
         currentStep = currentLane->sequence.at(0);
     }
-    UpdateDisplay();
 }
 
 void Sequencer::AltDownButton() {
@@ -429,7 +411,6 @@ void Sequencer::AltDownButton() {
         currentLane = activePattern->lanes[0];
         currentStep = currentLane->sequence.at(0);
     }
-    UpdateDisplay();
 }
 
 void Sequencer::AltLeftButton() {
@@ -441,7 +422,6 @@ void Sequencer::AltLeftButton() {
         currentLane = activePattern->lanes[0];
         currentStep = currentLane->sequence.at(0);
     }
-    UpdateDisplay();
 }
 
 void Sequencer::AltRightButton() {
@@ -451,7 +431,6 @@ void Sequencer::AltRightButton() {
     activePattern = patterns.at(songOrder[currentPattern]);
     currentLane = activePattern->lanes[0];
     currentStep = currentLane->sequence.at(0);
-    UpdateDisplay();
 }
 
 void Sequencer::AltPlayButton() {
@@ -465,7 +444,6 @@ void Sequencer::AltAButton() {
         lane->sequence.push_back(new Step);
         InitStep(lane->sequence.back(), lane->length - 1);
     }
-    UpdateDisplay();
 }
 
 void Sequencer::AltBButton() {
@@ -475,5 +453,4 @@ void Sequencer::AltBButton() {
         lane->length -= 1;
         lane->sequence.erase(--lane->sequence.end()); //get rid of last
     }
-    UpdateDisplay();
 }
