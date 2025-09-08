@@ -9,7 +9,8 @@
 using namespace daisy;
 using namespace daisysp;
 
-#define WAVEDISPLAY 96
+#define WAVEWIDTH 96
+#define WAVEHEIGHT 49
 
 /* 
 This class will have all the audio objects for each individual object (FX, slicepoints, pitch, etc. )
@@ -17,18 +18,11 @@ Will have a public process function which will get called if its playing. pointe
 */
 
 class Instrument {
-private:
-    // float* sampleData;
-    SamplePlayer samplePlayer;
-    Adsr env;
-    std::vector<double> slices;
-    float env_out;
-    double volume;
-    size_t currentSlice;
-    bool playing;
+
 
 public:
-    
+    enum param { p, a, d, s, r };
+
     Instrument(){};
 
     /**
@@ -50,14 +44,52 @@ public:
 
     bool IsPlaying() { return playing; }
 
-    void SetVolume(double vol) { volume = pow(2.0f, vol / 6.0f); } // volume in dB to constant
+    /**
+     * Getters and Setters
+     */
 
-    double GetVolume() { return log2(volume) * 6.0f; } //volume in constant to dB
+    std::vector<double> GetSlices() { return slices; }
+
+    uint32_t GetSize() { return samplePlayer.GetSize(); }
+
+    float GetPitch() { return pitch; }
+
+    float GetAttack() { return att; }
+
+    float GetDecay() { return dec; }
+
+    float GetSustain() {return sus; }
+
+    float GetRelease() {return rel; }
+
+    char* GetName() { return samplePlayer.GetName(); }
+
+    param GetEdit() { return edit; }
+
+    void NextParam();
+    void PrevParam();
+    void Increment();
+    void Decrement();
+
 
     /**
      * array of averages from the sample for display
      */
     uint16_t* visual;
+
+    std::vector<double> slices;
+
+private:
+    SamplePlayer samplePlayer;
+    Adsr env;
+    float env_out;
+    double volume;
+    size_t currentSlice;
+    bool playing;
+    float att, dec, sus, rel, pitch;
+    param edit;
+
+    float Scaling(float num) { return pow(num, ((num / 5.0f) + 1.0f) / 2.0f) / 10.0f; }
 };
 
 #endif

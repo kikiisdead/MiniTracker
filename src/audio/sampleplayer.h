@@ -36,7 +36,7 @@ TODO:
 
 class SamplePlayer
 {
-  public:
+public:
     SamplePlayer() {}
     ~SamplePlayer() {}
 
@@ -89,7 +89,9 @@ class SamplePlayer
 
     uint16_t* GetVisual (int length);
 
-  private:
+    char* GetName() { return wave->name; }
+
+private:
 
     WavFile                 *wave;
     int                     numChannels;

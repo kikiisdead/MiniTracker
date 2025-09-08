@@ -92,7 +92,7 @@ public:
         songOrder.push_back(0);
         currentPattern = 0;
         tick.Init(1.0f, samplerate);
-        SetBPM(128.0f);
+        SetBPM(178.0f);
         NewPattern();
         lastTrigger = 0;
         laneOffset = 0;

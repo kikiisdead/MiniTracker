@@ -32,12 +32,12 @@ public:
         if (button.RisingEdge()) {
             buttonCallback();
             timeAtPress = System::GetNow();
-            delay = 150;
+            delay = 200;
             pressed = true;
         } else if (pressed && (System::GetNow() > (timeAtPress + delay))) {
             buttonCallback();
             timeAtPress = System::GetNow();
-            delay = 40;
+            delay = 50;
         } else if (button.FallingEdge()) {
             pressed = false;
         }

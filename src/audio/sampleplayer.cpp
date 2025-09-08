@@ -14,7 +14,7 @@ void SamplePlayer::Init(WavFile* wave_, float samplerate_)
     size_ = wave->size;
     playing_  = false;
     looping_  = false;
-    samplePerStep = (float) wave->format.SampleRate / samplerate;
+    SetPitch(0.0);
 
 }
 

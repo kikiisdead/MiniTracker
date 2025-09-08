@@ -22,8 +22,6 @@ void Sequencer::NewPattern() {
 
     currentLane = activePattern->lanes[0];
     currentStep = currentLane->sequence.at(0);
-    // activePattern->lanes[0]->sequence.at(0)->instrument = 0;
-    // activePattern->lanes[0]->sequence.at(2)->instrument = -2;
 }
 
 void Sequencer::InitStep(Step* step, int index) {

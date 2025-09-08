@@ -2,7 +2,7 @@
 #define instrumentHandler_h
 
 #include "instrument.h"
-#include "../UI/sequencer.h"
+// #include "../UI/sequencer.h"
 #include "../UI/step.h"
 
 /*
@@ -37,6 +37,11 @@ public:
                 activeInst->Trigger(step->note);
             }
         }
+    }
+
+    void Preview(Instrument* inst, int note) {
+        activeInst = inst;
+        activeInst->Trigger(note);
     }
 };
 

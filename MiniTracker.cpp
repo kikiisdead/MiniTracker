@@ -42,6 +42,7 @@ std::vector<Instrument*> instruments;
 bool shift;
 
 WavFile sample;
+WavFile sample2;
 
 
 /**
@@ -163,7 +164,7 @@ void AudioCallback(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, s
     sequencer.Update();
 
     for (InstrumentHandler* hand : handler) {
-      outBuff += hand->Process() * 0.2;
+      outBuff += hand->Process() * 0.5;
     }
 
     out[0][i] = outBuff;
@@ -219,6 +220,8 @@ int main(void)
   sample.format.NbrChannels = 1;
   sample.size = sizeof(collins);
   sample.start = sample_buffer_allocate(sample.size * sizeof(int16_t));
+  
+  sprintf(sample.name, "COLLINS");
 
   void* readPtr = &collins[0];
   
@@ -235,10 +238,36 @@ int main(void)
     writePtr = static_cast<int16_t*>(writePtr) + 1;
   }
 
-  for (int i = 0; i < 4; i++) {
-    instruments.push_back(new Instrument);
-    instruments.back()->Init(samplerate, &sample);
+  sample2.format.AudioFormat = WAVE_FORMAT_ULAW;
+  sample2.format.BitPerSample = 16;
+  sample2.format.SampleRate = 44100;
+  sample2.format.NbrChannels = 1;
+  sample2.size = sizeof(cowbell);
+  sample2.start = sample_buffer_allocate(sample2.size * sizeof(int16_t));
+  
+  sprintf(sample2.name, "COWBELL");
+
+  readPtr = &cowbell[0];
+  
+  writePtr = sample2.start;
+
+  readIndex = 0;
+
+  while (readIndex < sample2.size) {
+    int16_t val = MuLaw2Lin((*(static_cast<uint8_t*>(readPtr)) * -1) - 1); // get the sample and convert
+
+    readPtr = static_cast<uint8_t*>(readPtr) + 1;
+    readIndex += 1;
+    *(static_cast<int16_t*>(writePtr)) = val;
+    writePtr = static_cast<int16_t*>(writePtr) + 1;
   }
+
+
+  instruments.push_back(new Instrument);
+  instruments.back()->Init(samplerate, &sample);
+
+  instruments.push_back(new Instrument);
+  instruments.back()->Init(samplerate, &sample2);
 
   for (int i = 0; i < 4; i ++) {
     handler.push_back(new InstrumentHandler);
@@ -293,7 +322,7 @@ int main(void)
    * and adding to interfaces vector
    */
   sequencer.Init(&display, handler, samplerate);
-  instDisplay.Init(&display, instruments);
+  instDisplay.Init(&display, instruments, handler.at(0));
 
   interfaces.push_back(&sequencer);
   interfaces.push_back(&instDisplay);
