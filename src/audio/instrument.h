@@ -1,5 +1,5 @@
-#ifndef instrument_h
-#define instrument_h
+#ifndef INSTRUMENT_H
+#define INSTRUMENT_H
 
 #include "daisy_seed.h"
 #include "daisysp.h"

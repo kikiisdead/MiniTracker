@@ -1,6 +1,6 @@
 #include "daisy_seed.h"
 #include "daisysp.h"
-#include "src/audio/mulaw.h"
+#include "src/audio/decode.h"
 #include "fatfs.h"
 #include "src/UI/sequencer.h"
 #include "src/UI/button.h"
@@ -9,7 +9,10 @@
 #include "src/samples/collins.h"
 #include "src/audio/sampleplayer.h"
 #include "src/UI/instDisplay.h"
+#include "src/UI/fxDisplay.h"
 #include <vector>
+
+#define LANE_NUMBER 4
 
 #define UpPin 18
 #define DownPin 17
@@ -21,6 +24,8 @@
 #define PlayPin 22
 #define LeftShoulderPin 13
 #define RightShoulderPin 14
+
+#define USE_DAISYSP_LGPL 1
 
 using namespace daisy;
 using namespace daisysp;
@@ -77,6 +82,8 @@ std::vector<buttonInterface*>::iterator userInterface;
 Sequencer sequencer;
 
 InstrumentDisplay instDisplay;
+
+FXDisplay fxDisplay;
 
 
 /**
@@ -197,10 +204,10 @@ int main(void)
   // sd.Init(sd_cfg);
 
   // // FatFS Interface
-  // fsi.Init(FatFSInterface::Config::MEDIA_SD);
-
-  // // Mount SD Card
-  // f_mount(&fsi.GetSDFileSystem(), "/", 1);
+  // if (fsi.Init(FatFSInterface::Config::MEDIA_SD) == FR_OK) {
+  //   // Mount SD Card
+  //   f_mount(&fsi.GetSDFileSystem(), "/", 1);
+  // }
 
   /**
    * Initializing Seed Audio
@@ -269,11 +276,16 @@ int main(void)
   instruments.push_back(new Instrument);
   instruments.back()->Init(samplerate, &sample2);
 
-  for (int i = 0; i < 4; i ++) {
-    handler.push_back(new InstrumentHandler);
-    handler[i]->Init(&instruments);
-  }
+  // for (int i = 0; i < LANE_NUMBER; i ++) {
+  //   effects.push_back(new std::vector<EffectHandler*>);
+  //   effects.back()->push_back(new EffectHandler);
+  //   effects.back()->back()->Init(samplerate);
+  // }
 
+  for (int i = 0; i < LANE_NUMBER; i ++) {
+    handler.push_back(new InstrumentHandler);
+    handler[i]->Init(&instruments, samplerate);
+  }
 
   /**
    * Initializing Buttons
@@ -321,18 +333,20 @@ int main(void)
    * Initializing UI objects
    * and adding to interfaces vector
    */
-  sequencer.Init(&display, handler, samplerate);
-  instDisplay.Init(&display, instruments, handler.at(0));
+  sequencer.Init(handler, samplerate);
+  instDisplay.Init(instruments, handler.at(0));
+  fxDisplay.Init(samplerate, handler);
 
   interfaces.push_back(&sequencer);
   interfaces.push_back(&instDisplay);
+  interfaces.push_back(&fxDisplay);
 
   userInterface = interfaces.begin();
 
   hw.StartAudio(AudioCallback);
 
   for (;;) {
-    (*userInterface)->UpdateDisplay();
+    (*userInterface)->UpdateDisplay(display);
     display.Update();
     System::Delay(10);
   }

@@ -1,5 +1,5 @@
-#ifndef instDisplay_h
-#define instDosplay_h
+#ifndef INST_DISPLAY_H
+#define INST_DISPLAY_H
 
 #include "buttonInterface.h"
 #include "../audio/instrumentHandler.h"
@@ -16,7 +16,7 @@ public:
     InstrumentDisplay(){};
     ~InstrumentDisplay(){};
 
-    void Init(MyOledDisplay* display_, std::vector<Instrument*> instruments_, InstrumentHandler* handler_);
+    void Init(std::vector<Instrument*> instruments_, InstrumentHandler* handler_);
 
     void AButton();
     void BButton();
@@ -34,10 +34,10 @@ public:
     void AltRightButton();
     void AltPlayButton();
 
-    void UpdateDisplay();
+    void UpdateDisplay(MyOledDisplay &display);
 
 private:
-    MyOledDisplay* display;
+    // MyOledDisplay* display;
     std::vector<Instrument*> instruments;
     InstrumentHandler* handler; 
     std::vector<Instrument*>::iterator activeInst;
@@ -45,8 +45,8 @@ private:
     char strbuff[256];
     bool sliceEdit;
 
-    void WriteString(uint16_t x, uint16_t y, bool on);
-    void DrawArrow(int x, int y);
+    void WriteString(MyOledDisplay &display, uint16_t x, uint16_t y, bool on);
+    void DrawArrow(MyOledDisplay &display, int x, int y);
 };
 
 #endif

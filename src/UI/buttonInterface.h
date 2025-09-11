@@ -1,5 +1,12 @@
-#ifndef buttonInterface_h
-#define buttonInterface_h
+#ifndef BUTTON_INTERFACE_H
+#define BUTTON_INTERFACE_H
+
+#include "daisy_seed.h"
+#include "dev/oled_ssd130x.h"
+
+using namespace daisy;
+
+using MyOledDisplay = OledDisplay<SSD130xI2c128x64Driver>;
 
 /*
 buttonInterface is an abstract class that all the displays will implement. Creates common HID functions between everything.
@@ -23,7 +30,7 @@ public:
     virtual void AltRightButton() = 0;
     virtual void AltPlayButton() = 0;
 
-    virtual void UpdateDisplay() = 0;
+    virtual void UpdateDisplay(MyOledDisplay &display) = 0;
     
 };
 

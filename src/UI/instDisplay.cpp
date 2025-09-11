@@ -1,7 +1,7 @@
 #include "instDisplay.h"
 
-void InstrumentDisplay::Init(MyOledDisplay* display_, std::vector<Instrument*> instruments_, InstrumentHandler* handler_) {
-    display = display_;
+void InstrumentDisplay::Init(std::vector<Instrument*> instruments_, InstrumentHandler* handler_) {
+    //display = display_;
     instruments = instruments_;
     handler = handler_;
     activeInst = instruments.begin();
@@ -9,10 +9,8 @@ void InstrumentDisplay::Init(MyOledDisplay* display_, std::vector<Instrument*> i
     sliceEdit = true;
 }
 
-void InstrumentDisplay::UpdateDisplay() {
-    display->Fill(false);
-
-    
+void InstrumentDisplay::UpdateDisplay(MyOledDisplay &display) {
+    display.Fill(false);
 
     /**
      * Drawing selector for current slice being edited
@@ -25,15 +23,15 @@ void InstrumentDisplay::UpdateDisplay() {
     } else {
         selEnd = WAVEWIDTH - 1;
     }
-    display->DrawRect(selBeg, 0, selEnd, WAVEHEIGHT, true, true);
+    display.DrawRect(selBeg, 0, selEnd, WAVEHEIGHT, true, true);
 
     /**
      * Drawing slice lines
      */
     for (double slice : (*activeInst)->slices) {
         int x = slice * WAVEWIDTH;
-        if (x > selBeg && x <= selEnd) display->DrawLine(x, 0, x, WAVEHEIGHT, false);
-        else display->DrawLine(x, 0, x, WAVEHEIGHT, true);
+        if (x > selBeg && x <= selEnd) display.DrawLine(x, 0, x, WAVEHEIGHT, false);
+        else display.DrawLine(x, 0, x, WAVEHEIGHT, true);
     }
 
     /**
@@ -44,8 +42,8 @@ void InstrumentDisplay::UpdateDisplay() {
         range = (*activeInst)->visual[i] * ((double) WAVEHEIGHT / (double) 0x8FFF);
         y0 = (range / 2) + (WAVEHEIGHT / 2);
         y1 = y0 - range;
-        if (i >= selBeg && i < selEnd) display->DrawLine(i, y0, i, y1, false);
-        else display->DrawLine(i, y0, i, y1, true);
+        if (i >= selBeg && i < selEnd) display.DrawLine(i, y0, i, y1, false);
+        else display.DrawLine(i, y0, i, y1, true);
     }
 
     /**
@@ -53,37 +51,37 @@ void InstrumentDisplay::UpdateDisplay() {
      */
     Instrument::param edit = (*activeInst)->GetEdit();
 
-    if (!sliceEdit) DrawArrow(((int)edit * 20) + 13, 53);
+    if (!sliceEdit) DrawArrow(display, ((int)edit * 20) + 13, 53);
 
     sprintf(strbuff, "PIT");
-    WriteString(0, 51, true);
+    WriteString(display, 0, 51, true);
     sprintf(strbuff, "%dST", static_cast<int>((*activeInst)->GetPitch()));
-    WriteString(0, 58, true);
+    WriteString(display, 0, 58, true);
 
     sprintf(strbuff, "ATT");
-    WriteString(20, 51, true);
+    WriteString(display, 20, 51, true);
 
     sprintf(strbuff, "%dMS", static_cast<int>((*activeInst)->GetAttack() * 1000.0f));
-    WriteString(20, 58, true);
+    WriteString(display, 20, 58, true);
 
     sprintf(strbuff, "DEC");
-    WriteString(40, 51, true);
+    WriteString(display, 40, 51, true);
 
     sprintf(strbuff, "%dMS", static_cast<int>((*activeInst)->GetDecay() * 1000.0f));
-    WriteString(40, 58, true);
+    WriteString(display, 40, 58, true);
 
     sprintf(strbuff, "SUS");
-    WriteString(60, 51, true);
+    WriteString(display, 60, 51, true);
 
 
     sprintf(strbuff, "%d", static_cast<int>((*activeInst)->GetSustain() * 100.0f));
-    WriteString(60, 58, true);
+    WriteString(display, 60, 58, true);
 
     sprintf(strbuff, "REL");
-    WriteString(80, 51, true);
+    WriteString(display, 80, 51, true);
 
     sprintf(strbuff, "%dMS", static_cast<int>((*activeInst)->GetRelease() * 1000.0f));
-    WriteString(80, 58, true);
+    WriteString(display, 80, 58, true);
 
     /**
      * Drawing Instruments
@@ -92,25 +90,25 @@ void InstrumentDisplay::UpdateDisplay() {
     for (Instrument* inst : instruments) {
         sprintf(strbuff, "%s", inst->GetName());
         if (inst == (*activeInst)) {
-            display->DrawRect(96, yOffset - 1, 128, yOffset + 5, true, true);
-            WriteString(98, yOffset, false);
+            display.DrawRect(96, yOffset - 1, 128, yOffset + 5, true, true);
+            WriteString(display, 98, yOffset, false);
         } else {
-            WriteString(98, yOffset, true);
+            WriteString(display, 98, yOffset, true);
         }
         yOffset += 8;
     }
     
 }
 
-void InstrumentDisplay::WriteString(uint16_t x, uint16_t y, bool on) {
-    display->SetCursor(x, y);
-    display->WriteString(strbuff, Font_4x6, on);
+void InstrumentDisplay::WriteString(MyOledDisplay &display, uint16_t x, uint16_t y, bool on) {
+    display.SetCursor(x, y);
+    display.WriteString(strbuff, Font_4x6, on);
 }
 
-void InstrumentDisplay::DrawArrow(int x, int y) {
-    display->DrawPixel(x, y, true);
-    display->DrawPixel(x + 1, y - 1, true);
-    display->DrawPixel(x + 1, y + 1, true);
+void InstrumentDisplay::DrawArrow(MyOledDisplay &display, int x, int y) {
+    display.DrawPixel(x, y, true);
+    display.DrawPixel(x + 1, y - 1, true);
+    display.DrawPixel(x + 1, y + 1, true);
 }
 
 
@@ -134,7 +132,9 @@ void InstrumentDisplay::BButton(){
     std::advance(it, currentSlice);
     if ((*activeInst)->slices.size() > 1) {
         (*activeInst)->slices.erase(it);
-        if ((*activeInst)->slices.size() == 0) {
+        if (currentSlice > 0) {
+            currentSlice -= 1;
+        } else {
             currentSlice = 0;
         }
     }

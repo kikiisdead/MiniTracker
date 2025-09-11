@@ -1,5 +1,5 @@
-#ifndef button_h
-#define button_h
+#ifndef BUTTON_H
+#define BUTTON_H
 
 #include "daisy_seed.h"
 #include "daisysp.h"

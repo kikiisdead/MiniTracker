@@ -1,5 +1,5 @@
-#ifndef sequencer_h
-#define sequencer_h
+#ifndef SEQUENCER_H
+#define SEQUENCER_H
 
 #include "buttonInterface.h"
 #include "daisy_seed.h"
@@ -13,13 +13,29 @@
 using namespace daisy;
 using MyOledDisplay = OledDisplay<SSD130xI2c128x64Driver>;
 
-struct Lane {
+class Lane {
+public:
+    Lane(){}
+    ~Lane(){
+        for (Step* step : sequence) {
+            delete step;
+        }
+        delete &sequence;
+    }
     std::vector<Step*> sequence;
     int length;
     int index;
 };
 
-struct Pattern {
+class Pattern {
+public:
+    Pattern(){}
+    ~Pattern(){
+        for (Lane* lane : lanes) {
+            delete lane;
+        }
+        delete &lanes;
+    }
     std::vector<Lane*> lanes;
     int numLanes;
     int index;
@@ -27,7 +43,7 @@ struct Pattern {
 
 class Sequencer : public buttonInterface {
 private:
-    MyOledDisplay* display_;
+    // MyOledDisplay* display_;
     std::vector<InstrumentHandler*> handler_;
     std::vector<Pattern*> patterns; // holds all the possible patterns made
     std::vector<int> songOrder; // holds the order of the patterns
@@ -48,10 +64,10 @@ private:
     uint32_t triggerTime;
     Metro tick;
     
-    void DrawStep(int x, int y, Step* step);
-    void DrawSquare(int x, int y, bool fill);
-    void DrawArrow(int x, int y, int direction); // 1 = left, 2 = right, 3 = up, 4 = down
-    void WriteString(char* strbuff, int x, int y, bool on);
+    void DrawStep(MyOledDisplay &display, int x, int y, Step* step);
+    void DrawSquare(MyOledDisplay &display, int x, int y, bool fill);
+    void DrawArrow(MyOledDisplay &display, int x, int y, int direction); // 1 = left, 2 = right, 3 = up, 4 = down
+    void WriteString(MyOledDisplay &display, char* strbuff, int x, int y, bool on);
     void GetNoteString(char* strbuff, int note);
     void GetFxString(char* strbuff, int fx, int fxAmount);
     void InitStep(Step* step, int index);
@@ -83,8 +99,8 @@ public:
      * \param handler voice for each lane
      * \param samplerate samplerate to intialize Metro object
      */
-    void Init(MyOledDisplay* display, std::vector<InstrumentHandler*> handler, float samplerate) {
-        display_ = display;
+    void Init(std::vector<InstrumentHandler*> handler, float samplerate) {
+        //display_ = display;
         handler_ = handler;
         playing_ = false;
         stepEdit_ = false;
@@ -102,7 +118,7 @@ public:
     /**
      * Called by the Display object to refresh the screen, not called internally because it interupts audio playback 
      */
-    void UpdateDisplay();
+    void UpdateDisplay(MyOledDisplay &display);
 
     /**
      * Implementations of virtual parent functions.

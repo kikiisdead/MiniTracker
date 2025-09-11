@@ -1,4 +1,4 @@
-#include "mulaw.h"
+#include "decode.h"
 
 /* extern */
 const int16_t ulawDecodeTable[256] = {
