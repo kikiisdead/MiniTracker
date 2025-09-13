@@ -171,7 +171,7 @@ void AudioCallback(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, s
     sequencer.Update();
 
     for (InstrumentHandler* hand : handler) {
-      outBuff += hand->Process() * 0.5;
+      outBuff = hand->Process();
     }
 
     out[0][i] = outBuff;
