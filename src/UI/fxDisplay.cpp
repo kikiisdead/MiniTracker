@@ -45,6 +45,10 @@ void FXDisplay::UpdateDisplay(cLayer* display) {
         sprintf(strbuff, "DISTORTION");
         if (type == 2) WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 3, MAIN);
         else           WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 3, MAIN);
+
+        sprintf(strbuff, "COMPRESSOR");
+        if (type == 3) WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 4, MAIN);
+        else           WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 4, MAIN);
     }
 
 }
@@ -83,7 +87,7 @@ void FXDisplay::DownButton(){
     if (!changeEffect) CURRENT_EFFECT->NextParam();
     else {
         type += 1;
-        if (type > 2) type = 2;
+        if (type > 3) type = 3;
     }
 }
 

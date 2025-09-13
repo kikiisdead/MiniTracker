@@ -3,21 +3,21 @@
 
 #include "daisy_seed.h"
 #include "daisysp.h"
-#include "dev/oled_ssd130x.h"
+#include "../../../DaisySeedGFX2/cDisplay.h"
+#include "../../UI/util/colors.h"
 
 using namespace daisy;
 using namespace daisysp;
+using namespace DadGFX;
 
 #define FX_HEIGHT 210
 #define FX_WIDTH 100
 #define FX_BUFFER 5
 #define EFFECT_NUMBER 2;
 
-using MyOledDisplay = OledDisplay<SSD130xI2c128x64Driver>;
-
 class Effect {
 public:
-    enum EFFECT_TYPE { NOFX, FILTER, DISTORTION };
+    enum EFFECT_TYPE { NOFX, FILTER, DISTORTION, COMPRESSION };
 
     bool selected;
     EFFECT_TYPE effectType;

@@ -346,6 +346,8 @@ void Sequencer::NextPattern() {
     currentStep->selected = false;
     currentPattern = (currentPattern >= (int) songOrder.size() - 1) ? 0 : currentPattern + 1;
     activePattern = patterns.at(songOrder[currentPattern]);
+    currentLane = activePattern->lanes.at(currentLane->index);
+    currentStep = currentLane->sequence.at(0);
     currentStep->selected = true;
 }
 
@@ -356,6 +358,8 @@ void Sequencer::PreviousPattern() {
         playing_ = false;
     } else {
         activePattern = patterns.at(songOrder[currentPattern]);
+        currentLane = activePattern->lanes.at(currentLane->index);
+        currentStep = currentLane->sequence.at(0);
         currentStep->selected = true;
     }
 }

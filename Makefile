@@ -1,6 +1,8 @@
 # Project Name
 TARGET = MiniTracker
 
+USE_DAISYSP_LGPL=1
+
 LDFLAGS = -u _printf_float
 
 # Sources

@@ -8,6 +8,7 @@
 #include "fx/effect.h"
 #include "fx/filter.h"
 #include "fx/distortion.h"
+#include "fx/compression.h"
 #include "dev/oled_ssd130x.h"
 
 using MyOledDisplay = OledDisplay<SSD130xI2c128x64Driver>;
@@ -123,10 +124,11 @@ public:
     }
 
     Effect* GetEffect(Effect::EFFECT_TYPE type) {
-        if (type == Effect::NOFX)        return new NoEffect;
-        else if (type == Effect::FILTER) return new Filter;
-        else if (type == Effect::DISTORTION) return new Distortion;
-        else                     return new NoEffect;
+        if (type == Effect::NOFX)             return new NoEffect;
+        else if (type == Effect::FILTER)      return new Filter;
+        else if (type == Effect::DISTORTION)  return new Distortion;
+        else if (type == Effect::COMPRESSION) return new Compression;
+        else                                  return new NoEffect;
     }
 
 };

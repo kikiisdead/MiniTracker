@@ -3,6 +3,7 @@
 
 #include "effect.h"
 
+
 class Filter : public Effect {
 public:
 
@@ -56,26 +57,27 @@ public:
         if (selected) display->drawRect(x + FX_BUFFER, y + FX_BUFFER, FX_WIDTH, FX_HEIGHT, 1, ACCENT2);
         else display->drawRect(x + FX_BUFFER, y + FX_BUFFER, FX_WIDTH, FX_HEIGHT, 1, ACCENT1);
 
+        sColor color = (selected) ? ACCENT2 : ACCENT1;
+
         if (filterMode == LOWPASS) {
-            display->drawArc(x + FX_BUFFER + FX_WIDTH / 2, y + FX_BUFFER + 28, 20, 0, 90, ACCENT1);
-            display->drawLine(x + FX_BUFFER + 8, y + FX_BUFFER + 8, x + FX_BUFFER + FX_WIDTH / 2, y + FX_BUFFER + 8, ACCENT1);
+            display->drawArc(x + FX_BUFFER + FX_WIDTH / 2, y + FX_BUFFER + 28, 20, 0, 90, color);
+            display->drawLine(x + FX_BUFFER + 8, y + FX_BUFFER + 8, x + FX_BUFFER + FX_WIDTH / 2, y + FX_BUFFER + 8, color);
         } else if (filterMode == HIGHPASS) {
-            display->drawArc(x + FX_BUFFER + FX_WIDTH / 2, y + FX_BUFFER + 28, 20, 270, 360, ACCENT1);
-            display->drawLine(x + FX_BUFFER + FX_WIDTH / 2, y + FX_BUFFER + 8, x + FX_BUFFER + FX_WIDTH - 8, y + FX_BUFFER + 8, ACCENT1);
+            display->drawArc(x + FX_BUFFER + FX_WIDTH / 2, y + FX_BUFFER + 28, 20, 270, 360, color);
+            display->drawLine(x + FX_BUFFER + FX_WIDTH / 2, y + FX_BUFFER + 8, x + FX_BUFFER + FX_WIDTH - 8, y + FX_BUFFER + 8, color);
         } else if (filterMode == BANDPASS) {
-            display->drawArc(x + FX_BUFFER + FX_WIDTH / 2, y + FX_BUFFER + 28, 20, 270, 90, ACCENT1);
+            display->drawArc(x + FX_BUFFER + FX_WIDTH / 2, y + FX_BUFFER + 28, 20, 270, 90, color);
         } else if (filterMode == NOTCH) {
-            display->drawArc(x + FX_BUFFER + (FX_WIDTH / 2) + 20, y + FX_BUFFER + 28, 20, 270, 360, ACCENT1);
-            display->drawLine(x + FX_BUFFER + (FX_WIDTH / 2) + 20, y + FX_BUFFER + 8, x + FX_BUFFER + FX_WIDTH - 8, y + FX_BUFFER + 8, ACCENT1);
-            display->drawArc(x + FX_BUFFER + (FX_WIDTH / 2) - 20, y + FX_BUFFER + 28, 20, 0, 90, ACCENT1);
-            display->drawLine(x + FX_BUFFER + 8, y + FX_BUFFER + 8, x + FX_BUFFER + (FX_WIDTH / 2) - 20, y + FX_BUFFER + 8, ACCENT1);
+            display->drawArc(x + FX_BUFFER + (FX_WIDTH / 2) + 20, y + FX_BUFFER + 28, 20, 270, 360, color);
+            display->drawLine(x + FX_BUFFER + (FX_WIDTH / 2) + 20, y + FX_BUFFER + 8, x + FX_BUFFER + FX_WIDTH - 8, y + FX_BUFFER + 8, color);
+            display->drawArc(x + FX_BUFFER + (FX_WIDTH / 2) - 20, y + FX_BUFFER + 28, 20, 0, 90, color);
+            display->drawLine(x + FX_BUFFER + 8, y + FX_BUFFER + 8, x + FX_BUFFER + (FX_WIDTH / 2) - 20, y + FX_BUFFER + 8, color);
         }
 
 
 
         sprintf(strbuff, "TYPE");
-        if (selected) WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 1 * (CHAR_HEIGHT + 4), ACCENT2);
-        else          WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 1 * (CHAR_HEIGHT + 4), ACCENT1);
+        WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 1 * (CHAR_HEIGHT + 4), color);
 
         if      (filterMode == LOWPASS)  sprintf(strbuff, "LOWPASS");
         else if (filterMode == HIGHPASS) sprintf(strbuff, "HIGHPASS");
@@ -86,8 +88,7 @@ public:
 
 
         sprintf(strbuff, "FREQ");
-        if (selected) WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 3 * (CHAR_HEIGHT + 4), ACCENT2);
-        else          WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 3 * (CHAR_HEIGHT + 4), ACCENT1);
+        WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 3 * (CHAR_HEIGHT + 4), color);
 
         if (freq < 100.0f) sprintf(strbuff, "%.2fhz", freq);
         else if (freq < 1000.0f) sprintf(strbuff, "%.1fhz", freq);
@@ -97,8 +98,7 @@ public:
 
 
         sprintf(strbuff, "RESON");
-        if (selected) WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 5 * (CHAR_HEIGHT + 4), ACCENT2);
-        else          WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 5 * (CHAR_HEIGHT + 4), ACCENT1);
+        WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 5 * (CHAR_HEIGHT + 4), color);
 
         sprintf(strbuff, "%.2f", res);
         if (param == 2 && selected) WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 6 * (CHAR_HEIGHT + 4), ACCENT1);
@@ -106,8 +106,7 @@ public:
 
 
         sprintf(strbuff, "DRIVE");
-        if (selected) WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 7 * (CHAR_HEIGHT + 4), ACCENT2);
-        else          WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 7 * (CHAR_HEIGHT + 4), ACCENT1);
+        WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 7 * (CHAR_HEIGHT + 4), color);
 
         sprintf(strbuff, "%.2f", drive);
         if (param == 3 && selected) WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 8 * (CHAR_HEIGHT + 4), ACCENT1);

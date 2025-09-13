@@ -24,7 +24,39 @@ public:
     }
 
     void Display(cLayer *display, int x, int y) {
-        
+        if (selected) display->drawRect(x + FX_BUFFER, y + FX_BUFFER, FX_WIDTH, FX_HEIGHT, 1, ACCENT2);
+        else display->drawRect(x + FX_BUFFER, y + FX_BUFFER, FX_WIDTH, FX_HEIGHT, 1, ACCENT1);
+
+        int centerX = x + FX_BUFFER + FX_WIDTH / 2;
+        int centerY = y + FX_BUFFER + FX_HEIGHT / 2;
+
+        sColor color = (selected) ? ACCENT2 : ACCENT1;
+
+        float deg = (270.0f * drive);
+        float degOffset = (90.0f + 45.0f);
+
+        display->drawCircle(centerX, centerY, 30, color);
+
+        float arcX = cos((deg + degOffset) * (PI_F / 180.0f));
+        float arcY = sin((deg + degOffset) * (PI_F / 180.0f));
+
+        if ( drive < 0.80 ) display->drawLine(centerX + arcX * 27, centerY + arcY * 27, centerX + arcX * 15, centerY + arcY * 15, color);
+        else display->drawLine(centerX + arcX * 15, centerY + arcY * 15, centerX + arcX * 27.0f, centerY + arcY * 27.0f, color);
+
+        sprintf(strbuff, "OVER");
+        WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + CHAR_HEIGHT + 8, color);
+        sprintf(strbuff, "DRIVE");
+        WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 2 * (CHAR_HEIGHT + 4) + 4, color);
+
+        for (int i = 0; i < 11; i ++) {
+            deg = 270.0f * ((float) i / 10.0f);
+            degOffset = (90.0f + 45.0f);
+            arcX = cos((deg + degOffset) * (PI_F / 180.0f));
+            arcY = sin((deg + degOffset) * (PI_F / 180.0f));
+
+            sprintf(strbuff, "%d", i);
+            WriteString(display, strbuff, centerX + arcX * 40 - (CHAR_WIDTH / 2), centerY + arcY * 40 + (CHAR_HEIGHT / 2), MAIN);
+        }
     }
 
     void Increment() {
