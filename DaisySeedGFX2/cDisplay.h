@@ -19,7 +19,7 @@ namespace DadGFX {
 // Macro utility
 //***********************************************************************************
 #define DECLARE_DISPLAY(DisplayName)\
-DadGFX::sFIFO_Data   DMA_BUFFER_MEM_SECTION  DisplayName##FIFO;									 /*FIFO pour émission SPI en DMA*/\
+DadGFX::sFIFO_Data                           DisplayName##FIFO;									 /*FIFO pour émission SPI en SRAM*/\
 DadGFX::sColor       DSY_SDRAM_BSS           DisplayName##BlocFrame[BLOC_HEIGHT][BLOC_WIDTH];    /* Frame Blocs*/\
 DadGFX::cDisplay 				 			 DisplayName;					                     /* Screen */
 

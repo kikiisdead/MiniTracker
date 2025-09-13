@@ -698,11 +698,36 @@ bool cDisplay::sendDMA() {
     // CASET (Column Address Set) command is sent first
     // - The callback function `sendCASETDMAData` will handle subsequent steps
     // - `this` provides context to the callback for handling other DMA stages
-     __disable_irq();
-    SendDMACommand(&m_pFIFO->m_CmdCASET[m_FIFO_out].m_Commande, 
-                   cDisplay::sendCASETDMAData, 
-                   this);
-    __enable_irq();
+
+    // Going to try to make into a blacking transmit instead
+    //  __disable_irq();
+    // SendDMACommand(&m_pFIFO->m_CmdCASET[m_FIFO_out].m_Commande, 
+    //                cDisplay::sendCASETDMAData, 
+    //                this);
+    // __enable_irq();
+    while (m_Busy) {
+        SendCommand(m_pFIFO->m_CmdCASET[m_FIFO_out].m_Commande);
+        SendData(m_pFIFO->m_CmdCASET[m_FIFO_out].m_Data, 4);
+        SendCommand(m_pFIFO->m_CmdRASET[m_FIFO_out].m_Commande);
+        SendData(m_pFIFO->m_CmdRASET[m_FIFO_out].m_Data, 4);
+        SendCommand(m_pFIFO->m_CmdRAWWR[m_FIFO_out].m_Commande);
+        SendData(m_pFIFO->m_CmdRAWWR[m_FIFO_out].m_Data, TAILLE_BLOC);
+
+        m_FIFO_out++;
+        if (m_FIFO_out >= SIZE_FIFO) {
+            m_FIFO_out = 0;  // Wrap the index around if it exceeds the FIFO size
+        }
+        m_FIFO_NbElements -= 1;  // Decrease the number of elements in the FIFO
+
+        if (m_FIFO_NbElements != 0) {
+            m_Busy = true;
+        } else {
+            // If the FIFO is empty, mark the display as no longer busy
+            m_Busy = false;
+        }
+    }
+
+
     // Return true to indicate that transmission was successfully started
     return true;
 }
