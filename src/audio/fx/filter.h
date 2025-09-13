@@ -11,7 +11,7 @@ public:
 
     enum FILTERMODE { LOWPASS, HIGHPASS, BANDPASS, NOTCH };
 
-    void Init(float samplerate) {
+    void Init(float samplerate, cFont* MainFont) {
         filterL.Init(samplerate);
         filterR.Init(samplerate);
 
@@ -29,6 +29,7 @@ public:
         param = 0;
         selected = false;
         effectType = FILTER;
+        this->MainFont = MainFont;
     }
 
     void Process(float& left, float& right) {
@@ -50,69 +51,67 @@ public:
         }
     }
 
-    void Display(MyOledDisplay& display, int x, int y){
-        // drawing box
-        display.DrawRect(x, y, x + FX_WIDTH, y + FX_HEIGHT, true, selected);
-        double x_off = ((log10f(freq) - 1.3f)/3.0f);
+    void Display(cLayer* display, int x, int y){
+
+        if (selected) display->drawRect(x + FX_BUFFER, y + FX_BUFFER, FX_WIDTH, FX_HEIGHT, 1, ACCENT2);
+        else display->drawRect(x + FX_BUFFER, y + FX_BUFFER, FX_WIDTH, FX_HEIGHT, 1, ACCENT1);
 
         if (filterMode == LOWPASS) {
-            display.DrawArc(x + (x_off * (FX_WIDTH - 10)), y + 11, 8, 90, -90, !selected);
-            display.DrawLine(x + 2, y + 3, x + (x_off * (FX_WIDTH - 10)), y + 3, !selected);
+            display->drawArc(x + FX_BUFFER + FX_WIDTH / 2, y + FX_BUFFER + 28, 20, 0, 90, ACCENT1);
+            display->drawLine(x + FX_BUFFER + 8, y + FX_BUFFER + 8, x + FX_BUFFER + FX_WIDTH / 2, y + FX_BUFFER + 8, ACCENT1);
         } else if (filterMode == HIGHPASS) {
-            display.DrawArc(x + (x_off * (FX_WIDTH - 10) + 10), y + 11, 8, 90, 90, !selected);
-            display.DrawLine(x + FX_WIDTH - 2, y + 3, x + (x_off * (FX_WIDTH - 10) + 10), y + 3, !selected);
+            display->drawArc(x + FX_BUFFER + FX_WIDTH / 2, y + FX_BUFFER + 28, 20, 270, 360, ACCENT1);
+            display->drawLine(x + FX_BUFFER + FX_WIDTH / 2, y + FX_BUFFER + 8, x + FX_BUFFER + FX_WIDTH - 8, y + FX_BUFFER + 8, ACCENT1);
         } else if (filterMode == BANDPASS) {
-            display.DrawArc(x + (x_off * (FX_WIDTH - 20) + 10), y + 11, 8, 0, 180, !selected);
+            display->drawArc(x + FX_BUFFER + FX_WIDTH / 2, y + FX_BUFFER + 28, 20, 270, 90, ACCENT1);
         } else if (filterMode == NOTCH) {
-            double d = (x_off * ((double) FX_WIDTH)) - 1;
-            
-            if (d - 8 < 0) {
-                double theta = acos((8.0f - d)/8.0f);
-                int degree = theta * 57.3f;
-                display.DrawArc(x + (x_off * (FX_WIDTH)) - 8, y + 11, 8, degree, -degree, !selected);
-            }
-            else {
-                display.DrawArc(x + (x_off * (FX_WIDTH)) - 8, y + 11, 8, 90, -90, !selected);
-                display.DrawLine(x + 2, y + 3, x + (x_off * (FX_WIDTH)) - 8, y + 3, !selected);
-            }
-
-            d = ((double) FX_WIDTH) - (x_off * ((double) FX_WIDTH));
-            if (d <= 8) {
-                double theta = acos((8.0f - d)/8.0f);
-                int degree = theta * 57.3f;
-                display.DrawArc(x + (x_off * (FX_WIDTH)) + 8, y + 11, 8, 180 - degree, degree, !selected);
-            } else {
-                display.DrawArc(x + (x_off * (FX_WIDTH)) + 8, y + 11, 8, 90, 90, !selected);
-                display.DrawLine(x + FX_WIDTH - 2, y + 3, x + (x_off * (FX_WIDTH)) + 9, y + 3, !selected);
-            }
+            display->drawArc(x + FX_BUFFER + (FX_WIDTH / 2) + 20, y + FX_BUFFER + 28, 20, 270, 360, ACCENT1);
+            display->drawLine(x + FX_BUFFER + (FX_WIDTH / 2) + 20, y + FX_BUFFER + 8, x + FX_BUFFER + FX_WIDTH - 8, y + FX_BUFFER + 8, ACCENT1);
+            display->drawArc(x + FX_BUFFER + (FX_WIDTH / 2) - 20, y + FX_BUFFER + 28, 20, 0, 90, ACCENT1);
+            display->drawLine(x + FX_BUFFER + 8, y + FX_BUFFER + 8, x + FX_BUFFER + (FX_WIDTH / 2) - 20, y + FX_BUFFER + 8, ACCENT1);
         }
 
-        display.SetCursor(x + 3, y + 12);
+
+
+        sprintf(strbuff, "TYPE");
+        if (selected) WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 1 * (CHAR_HEIGHT + 4), ACCENT2);
+        else          WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 1 * (CHAR_HEIGHT + 4), ACCENT1);
+
+        if      (filterMode == LOWPASS)  sprintf(strbuff, "LOWPASS");
+        else if (filterMode == HIGHPASS) sprintf(strbuff, "HIGHPASS");
+        else if (filterMode == BANDPASS) sprintf(strbuff, "BANDPASS");
+        else if (filterMode == NOTCH)    sprintf(strbuff, "NOTCH");
+        if (param == 0 && selected) WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 2 * (CHAR_HEIGHT + 4), ACCENT1);
+        else                        WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 2 * (CHAR_HEIGHT + 4), MAIN);
+
+
         sprintf(strbuff, "FREQ");
-        display.WriteString(strbuff, Font_4x6, !selected);
+        if (selected) WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 3 * (CHAR_HEIGHT + 4), ACCENT2);
+        else          WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 3 * (CHAR_HEIGHT + 4), ACCENT1);
 
-        display.SetCursor(x + 3, y + 18);
-        if (freq < 1000.0f) sprintf(strbuff, "%.2fHZ", freq);
-        else sprintf(strbuff, "%.2fKHZ", freq / 1000.0f);
-        display.WriteString(strbuff, Font_4x6, !selected);
+        if (freq < 100.0f) sprintf(strbuff, "%.2fhz", freq);
+        else if (freq < 1000.0f) sprintf(strbuff, "%.1fhz", freq);
+        else sprintf(strbuff, "%.2fkhz", freq / 1000.0f);
+        if (param == 1 && selected) WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 4 * (CHAR_HEIGHT + 4), ACCENT1);
+        else                        WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 4 * (CHAR_HEIGHT + 4), MAIN);
 
-        display.SetCursor(x + 3, y + 26);
-        sprintf(strbuff, "RESO");
-        display.WriteString(strbuff, Font_4x6, !selected);
 
-        display.SetCursor(x + 3, y + 32);
+        sprintf(strbuff, "RESON");
+        if (selected) WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 5 * (CHAR_HEIGHT + 4), ACCENT2);
+        else          WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 5 * (CHAR_HEIGHT + 4), ACCENT1);
+
         sprintf(strbuff, "%.2f", res);
-        display.WriteString(strbuff, Font_4x6, !selected);
+        if (param == 2 && selected) WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 6 * (CHAR_HEIGHT + 4), ACCENT1);
+        else                        WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 6 * (CHAR_HEIGHT + 4), MAIN);
 
-        display.SetCursor(x + 3, y + 40);
+
         sprintf(strbuff, "DRIVE");
-        display.WriteString(strbuff, Font_4x6, !selected);
+        if (selected) WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 7 * (CHAR_HEIGHT + 4), ACCENT2);
+        else          WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 7 * (CHAR_HEIGHT + 4), ACCENT1);
 
-        display.SetCursor(x + 3, y + 46);
         sprintf(strbuff, "%.2f", drive);
-        display.WriteString(strbuff, Font_4x6, !selected);
-
-        if (param != 0 && selected) DrawArrow(display, x + 24, y + (14 * param), 0, !selected);
+        if (param == 3 && selected) WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 8 * (CHAR_HEIGHT + 4), ACCENT1);
+        else                        WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 8 * (CHAR_HEIGHT + 4), MAIN);
 
     }
 

@@ -35,105 +35,85 @@ void Sequencer::InitStep(Step* step, int index) {
     step->index = index;
 }
 
-void Sequencer::DrawStep(MyOledDisplay &display, int x, int y, Step* step) {
-    // Writing instrument
-    display.SetCursor(x + 2, y + 2);
-    if (step->instrument < 0) sprintf(strbuff, "--");
-    else if (step->instrument < 10) sprintf(strbuff, "0%d", step->instrument);
-    else sprintf(strbuff, "%d", step->instrument);
-    display.WriteString(strbuff, Font_4x6, true);
-
-    // Writing note
-    display.SetCursor(x + 13, y + 2);
-    if (step->instrument == -1) sprintf(strbuff, "---");
-    else if (step->instrument == -2) sprintf(strbuff, "OFF");
-    else GetNoteString(strbuff, step->note);
-    display.WriteString(strbuff, Font_4x6, true);
-
-    // Writing fx
-    display.SetCursor(x + 28, y + 2);
-    if (step->instrument < 0 || step->note < 0) sprintf(strbuff, "---");
-    else GetFxString(strbuff, step->fx, step->fxAmount);
-    display.WriteString(strbuff, Font_4x6, true);
+void Sequencer::DrawStep(cLayer* display, int x, int y, Step* step) {
 
     // Drawing select things
     if (step->selected) {
-        display.DrawPixel(x, y, true);
-        display.DrawPixel(x+1, y, true);
-        display.DrawPixel(x, y+1, true);
-
-        display.DrawPixel(x+40, y, true);
-        display.DrawPixel(x+39, y, true);
-        display.DrawPixel(x+40, y+1, true);
-
-        display.DrawPixel(x, y+8, true);
-        display.DrawPixel(x+1, y+8, true);
-        display.DrawPixel(x, y+7, true);
-
-        display.DrawPixel(x+40, y+8, true);
-        display.DrawPixel(x+39, y+8, true);
-        display.DrawPixel(x+40, y+7, true);
-
         if (stepEdit_) {
-            int xOffset = 0;
-            if (step->paramEdit == Step::i) xOffset = 5;
-            else if (step->paramEdit == Step::n) xOffset = 17;
-            else if (step->paramEdit == Step::f) xOffset = 29;
-            else if (step->paramEdit == Step::fa) xOffset = 35;
-
-            display.DrawPixel(x + xOffset, y - 1, true);
-            display.DrawPixel(x + xOffset + 1, y, true);
-            display.DrawPixel(x + xOffset - 1, y, true);
-
-            display.DrawPixel(x + xOffset, y + 9, true);
-            display.DrawPixel(x + xOffset + 1, y + 8, true);
-            display.DrawPixel(x + xOffset - 1, y + 8, true);
+            if      (step->paramEdit == Step::i) display->drawFillRect(x, y, 4 + CHAR_WIDTH * 2, CHAR_HEIGHT + 8, ACCENT1);
+            else if (step->paramEdit == Step::n) display->drawFillRect(x + (CHAR_WIDTH * 3), y, 4 + CHAR_WIDTH * 3, CHAR_HEIGHT + 8, ACCENT1);
+            else if (step->paramEdit == Step::f) display->drawFillRect(x + (CHAR_WIDTH * 7), y, 4 + CHAR_WIDTH, CHAR_HEIGHT + 8, ACCENT1);
+            else if (step->paramEdit == Step::fa) display->drawFillRect(x+ (CHAR_WIDTH * 8), y, 4 + CHAR_WIDTH * 2, CHAR_HEIGHT + 8, ACCENT1);
         }
+
+        display->drawFillRect(x, y, 5, 1, MAIN);
+        display->drawFillRect(x, y, 1, 5, MAIN);
+
+        display->drawFillRect(x + (10 * CHAR_WIDTH) - 1, y, 5, 1, MAIN);
+        display->drawFillRect(x + (10 * CHAR_WIDTH) + 3, y, 1, 5, MAIN);
+
+        display->drawFillRect(x, y + CHAR_HEIGHT + 6, 5, 1, MAIN);
+        display->drawFillRect(x, y + CHAR_HEIGHT + 2, 1, 5, MAIN);
+
+        display->drawFillRect(x + (10 * CHAR_WIDTH) - 1, y + CHAR_HEIGHT + 6, 5, 1, MAIN);
+        display->drawFillRect(x + (10 * CHAR_WIDTH) + 3, y + CHAR_HEIGHT + 2, 1, 5, MAIN);  
     }
+    
+    // Writing instrument
+    if (step->instrument < 0) sprintf(strbuff, "--");
+    else if (step->instrument < 10) sprintf(strbuff, "0%d", step->instrument);
+    else sprintf(strbuff, "%d", step->instrument);
+    if (step->selected && stepEdit_ && step->paramEdit == Step::i) WriteString(display, strbuff, x + 2, y + 2 + CHAR_HEIGHT, BACKGROUND);
+    else WriteString(display, strbuff, x + 2, y + 2 + CHAR_HEIGHT, MAIN);
+
+    // Writing note
+    if (step->instrument == -1) sprintf(strbuff, "---");
+    else if (step->instrument == -2) sprintf(strbuff, "OFF");
+    else GetNoteString(strbuff, step->note);
+    if (step->selected && stepEdit_ && step->paramEdit == Step::n) WriteString(display, strbuff, x + (CHAR_WIDTH * 3) + 2, y + 2 + CHAR_HEIGHT, BACKGROUND);
+    else WriteString(display, strbuff, x + (CHAR_WIDTH * 3) + 2, y + 2 + CHAR_HEIGHT, MAIN);
+
+    // Writing fx
+    if (step->instrument < 0) sprintf(strbuff, "-");
+    else GetFxString(strbuff, step->fx);
+    if (step->selected && stepEdit_ && step->paramEdit == Step::f) WriteString(display, strbuff, x + (CHAR_WIDTH * 7) + 2, y + 2 + CHAR_HEIGHT, BACKGROUND);
+    else WriteString(display, strbuff, x + (CHAR_WIDTH * 7) + 2, y + 2 + CHAR_HEIGHT, MAIN);
+
+     // Writing fx amount
+    if (step->instrument < 0 || step->fx <= 0) sprintf(strbuff, "--");
+    else if (step->fxAmount < 10) sprintf(strbuff, "0%d", step->fxAmount);
+    else sprintf(strbuff, "%d", step->fxAmount);
+    if (step->selected && stepEdit_ && step->paramEdit == Step::fa) WriteString(display, strbuff, x + (CHAR_WIDTH * 8) + 2, y + 2 + CHAR_HEIGHT, BACKGROUND);
+    else WriteString(display, strbuff, x + (CHAR_WIDTH * 8) + 2, y + 2 + CHAR_HEIGHT, MAIN);
 
 }
 
-void Sequencer::DrawSquare(MyOledDisplay &display, int x, int y, bool fill) {
+void Sequencer::DrawSquare(cLayer *display, int index, int x, int y, bool fill) {
+    sprintf(strbuff, "%d", index);
     if (fill) {
-        for (int i = x; i < x + 7; i++) {
-            for (int j = y; j < y + 7; j++) {
-                display.DrawPixel(i, j, true);
-            }
-        }
+        display->drawFillRect(x, y, 22, 22, ACCENT2);
+        if (index < 10) WriteString(display, strbuff, x + (22 - CHAR_WIDTH) / 2, y + CHAR_HEIGHT + (22 - CHAR_HEIGHT) / 2, MAIN);
+        else WriteString(display, strbuff, x + (22 - (CHAR_WIDTH * 2)) / 2, y + CHAR_HEIGHT + (22 - CHAR_HEIGHT) / 2, MAIN);
     } else {
-        display.DrawPixel(x, y, true);
-        display.DrawPixel(x+1, y, true);
-        display.DrawPixel(x, y+1, true);
-
-        display.DrawPixel(x+6, y, true);
-        display.DrawPixel(x+5, y, true);
-        display.DrawPixel(x+6, y+1, true);
-
-        display.DrawPixel(x, y+6, true);
-        display.DrawPixel(x+1, y+6, true);
-        display.DrawPixel(x, y+5, true);
-
-        display.DrawPixel(x+6, y+6, true);
-        display.DrawPixel(x+5, y+6, true);
-        display.DrawPixel(x+6, y+5, true);
+        display->drawFillRect(x, y, 22, 22, ALTACCENT2);
+        if (index < 10) WriteString(display, strbuff, x + (22 - CHAR_WIDTH) / 2, y + CHAR_HEIGHT + (22 - CHAR_HEIGHT) / 2, ALTMAIN);
+        else WriteString(display, strbuff, x + (22 - (CHAR_WIDTH * 2)) / 2, y + CHAR_HEIGHT + (22 - CHAR_HEIGHT) / 2, ALTMAIN);
     }
 }
 
-void Sequencer::DrawArrow(MyOledDisplay &display, int x, int y, int direction) {
-    for (int i = 0; i < 3; i++) {
-        if (direction == 1) {
-            display.DrawPixel(x + i, y + i, true);
-            display.DrawPixel(x + i, y - i, true);
-        } else if (direction == 2) {
-            display.DrawPixel(x - i, y + i, true);
-            display.DrawPixel(x - i, y - i, true);
-        } else if (direction == 3) {
-            display.DrawPixel(x + i, y + i, true);
-            display.DrawPixel(x - i, y + i, true);
-        } else if (direction == 4) {
-            display.DrawPixel(x + i, y - i, true);
-            display.DrawPixel(x - i, y - i, true);
-        }
+void Sequencer::DrawArrow(cLayer *display, int x, int y, int direction) {
+    if (direction == 1) {
+        display->drawLine(x, y, x + 5, y + 5, MAIN);
+        display->drawLine(x, y, x + 5, y - 5, MAIN);
+    } else if (direction == 2) {
+        display->drawLine(x, y, x - 5, y + 5, MAIN);
+        display->drawLine(x, y, x - 5, y - 5, MAIN);
+    } else if (direction == 3) {
+        display->drawLine(x, y, x + 5, y + 5, MAIN);
+        display->drawLine(x, y, x - 5, y + 5, MAIN);
+    } else if (direction == 4) {
+        display->drawLine(x, y, x + 5, y - 5, MAIN);
+        display->drawLine(x, y, x - 5, y - 5, MAIN);
     }
 }
 
@@ -149,6 +129,18 @@ void Sequencer::GetFxString(char* strbuff, int fx, int fxAmount) {
 
         if (fxAmount < 10) sprintf(strbuff + strlen(strbuff), "-%d", fxAmount);
         else sprintf(strbuff + strlen(strbuff), "%d", fxAmount);
+    }
+}
+
+void Sequencer::GetFxString(char* strbuff, int fx) {
+    if (fx == 0) sprintf(strbuff, "-");
+    else {
+        if (fx == 1) sprintf(strbuff, "R");
+        else if (fx == 2) sprintf(strbuff, "U");
+        else if (fx == 3) sprintf(strbuff, "D");
+        else if (fx == 4) sprintf(strbuff, "I");
+        else if (fx == 5) sprintf(strbuff, "O");
+        else sprintf(strbuff, "F");
     }
 }
 
@@ -172,25 +164,31 @@ void Sequencer::GetNoteString(char* strbuff, int note) {
     }
 }
 
-void Sequencer::WriteString(MyOledDisplay &display, char* strbuff, int x, int y, bool on) {
-    display.SetCursor(x, y);
-    display.WriteString(strbuff, Font_4x6, on);
+void Sequencer::WriteString(cLayer* display, char* strbuff, int x, int y, DadGFX::sColor color) {
+    display->setCursor(x, y);
+    display->setFont(MainFont);
+    display->setTextFrontColor(color);
+    display->drawText(strbuff);
 }
 
-void Sequencer::UpdateDisplay(MyOledDisplay &display) {
-    // Clear
-    display.Fill(false);
+void Sequencer::UpdateDisplay(cLayer *display) {
+    /**
+     * CLEAR
+     */
+    display->drawFillRect(0, 0, 320, 240, BACKGROUND);
 
+    /**
+     * Drawing Steps
+     */
     if (songOrder[currentPattern] > -1) {
-        // Drawing Steps
         currentStep->selected = true;
         auto laneIt = activePattern->lanes.begin();
         std::advance(laneIt, laneOffset);
         for (int x = 0; x < 2; x++) {
             auto stepIt = (*laneIt)->sequence.begin();
             std::advance(stepIt, currentStep->index);
-            for (int y = 0; y < 7; y++) {
-                auto offset = stepIt + (y - 3);
+            for (int y = 0; y < 12; y++) {
+                auto offset = stepIt + (y - 5);
                 if (offset < (*laneIt)->sequence.begin()) {
                     continue;
                 }
@@ -198,10 +196,11 @@ void Sequencer::UpdateDisplay(MyOledDisplay &display) {
                     continue;
                 }
                 else {
-                    DrawStep(display, ((43 * x) + 14), (9 * y), *offset);
+                    DrawStep(display, (((CHAR_WIDTH * 12) * x) + (CHAR_WIDTH * 4)), ((CHAR_HEIGHT + 8) * y), *offset);
                     if ((*offset)->index % 4 == 0 && x == 0) {
                         sprintf(strbuff, "%3d", (*offset)->index);
-                        WriteString(display, strbuff, 0, ((9 * y) + 2), true);
+                        if ((*offset)->index % 16 == 0) WriteString(display, strbuff, 0, ((CHAR_HEIGHT + 8) * (y + 1) - (CHAR_HEIGHT / 2)), ACCENT2);
+                        else WriteString(display, strbuff, 0, ((CHAR_HEIGHT + 8) * (y + 1) - (CHAR_HEIGHT / 2)), ACCENT1);
                     }
                 }
             }
@@ -209,56 +208,47 @@ void Sequencer::UpdateDisplay(MyOledDisplay &display) {
         } 
     }
     
-    //Drawing Sidebar
-    sprintf(strbuff, "BPM");
-    WriteString(display, strbuff, 101, 1, true);
+    /**
+     * Drawing Sidebar
+     */
+    sprintf(strbuff, "BPM %3d", (int) bpm);
+    WriteString(display, strbuff, 320 - (CHAR_WIDTH * 7), CHAR_HEIGHT + 4, ACCENT1);
 
     
-    sprintf(strbuff, "%3d", (int) bpm);
-    WriteString(display, strbuff, 114, 1, true);
+    if (songOrder[currentPattern] > -1) sprintf(strbuff, "LANE%3d", currentLane->index + 1);
+    else sprintf(strbuff, "LANE");
+    WriteString(display, strbuff, 320 - (CHAR_WIDTH * 7), (CHAR_HEIGHT + 4) * 2, ACCENT1);
 
     
-    sprintf(strbuff, "LANE");
-    WriteString(display, strbuff, 101, 8, true);
+    if (songOrder[currentPattern] > -1) sprintf(strbuff, "LEN%4d", currentLane->length);
+    else sprintf(strbuff, "LEN");
+    WriteString(display, strbuff, 320 - (CHAR_WIDTH * 7), (CHAR_HEIGHT + 4) * 3, ACCENT1);
 
-    
-    if (songOrder[currentPattern] > -1) sprintf(strbuff, "%2d", currentLane->index + 1);
-    else sprintf(strbuff, " ");
-    WriteString(display, strbuff, 118, 8, true);
-
-    
-    sprintf(strbuff, "LEN");
-    WriteString(display, strbuff, 101, 15, true);
-
-
-    if (songOrder[currentPattern] > -1) sprintf(strbuff, "%3d", currentLane->length);
-    else sprintf(strbuff, " ");
-    WriteString(display, strbuff, 114, 15, true);
-
-    // Drawing Pattern Arrangement
-    for (int i = 0; i < 5; i++) {
-        int offset = currentPattern + (i - 2);
-        if (offset < 0)                                 continue; 
-        else if (offset > (int) songOrder.size() - 1)   continue;
-        else if (songOrder[offset] < 0)                 continue;
+    /**
+     * Drawing Pattern arrangement
+     */
+    auto it = songOrder.begin() + currentPattern;
+    for (int i = 0; i < 7; i++) {
+        auto offset = it + (i - 3);
+        if (offset < songOrder.begin())     continue; 
+        else if (offset >= songOrder.end()) continue;
+        else if (*offset < 0)               continue;
         else {
             
-            sprintf(strbuff, "%d", songOrder[offset]);
-            if (offset == currentPattern) {
-                DrawSquare(display, 112, 23 + (8 * i), true);
-                WriteString(display, strbuff, 114, (24 + (8 * i)), false);
+            sprintf(strbuff, "%d", *offset);
+            if (offset == songOrder.begin() + currentPattern) {
+                DrawSquare(display, *offset, 320 - (CHAR_WIDTH * 4), (CHAR_HEIGHT + 4) * 4 + (28 * i), true);
             }
             else {
-                DrawSquare(display, 112, 23 + (8 * i), false);
-                WriteString(display, strbuff, 114, (24 + (8 * i)), true);
+                DrawSquare(display, *offset, 320 - (CHAR_WIDTH * 4), (CHAR_HEIGHT + 4) * 4 + (28 * i), false);
             }
         }
     }
 
-    DrawArrow(display, 122, 42, 2);
-    DrawArrow(display, 108, 42, 1);
-    DrawArrow(display, 103, 38, 3);
-    DrawArrow(display, 103, 46, 4);
+    DrawArrow(display, 320 - (CHAR_WIDTH * 4) + 7 + 24, (CHAR_HEIGHT + 4) * 4 + (28 * 3) + 11, 2);
+    DrawArrow(display, 320 - (CHAR_WIDTH * 4) - 11, (CHAR_HEIGHT + 4) * 4 + (28 * 3) + 11, 1);
+    DrawArrow(display, 320 - (CHAR_WIDTH * 7), (CHAR_HEIGHT + 4) * 4 + (28 * 3) - 9 + 11, 3);
+    DrawArrow(display, 320 - (CHAR_WIDTH * 7), (CHAR_HEIGHT + 4) * 4 + (28 * 3) + 9 + 11, 4);
 
 }
 

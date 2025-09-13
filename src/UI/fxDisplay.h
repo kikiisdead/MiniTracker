@@ -18,13 +18,14 @@ public:
     FXDisplay(){}
     ~FXDisplay(){}
 
-    void Init(float samplerate_, std::vector<InstrumentHandler*> handler_) {
+    void Init(float samplerate_, std::vector<InstrumentHandler*> handler_, cFont* MainFont) {
         handler = handler_;
         samplerate = samplerate_;
         currentLane = 0;
         currentEffect = 0;
         changeEffect = false;
         EffectNormal();
+        this->MainFont = MainFont;
     }
 
     void AButton();
@@ -43,7 +44,7 @@ public:
     void AltRightButton();
     void AltPlayButton();
 
-    void UpdateDisplay(MyOledDisplay &display);
+    void UpdateDisplay(cLayer* tft);
 
 private:
     float samplerate;
@@ -56,8 +57,15 @@ private:
     int param;
     bool changeEffect;
     int type;
+    cFont* MainFont;
 
-    void WriteString(MyOledDisplay &display, uint16_t x, uint16_t y, bool on);
+    void WriteString(MyOledDisplay &oled, uint16_t x, uint16_t y, bool on);
+    void WriteString(cLayer* display, char* strbuff, int x, int y, DadGFX::sColor color) {
+        display->setCursor(x, y);
+        display->setFont(MainFont);
+        display->setTextFrontColor(color);
+        display->drawText(strbuff);
+    }
     
     void EffectNormal() {
         CURRENT_EFFECT->selected = true;

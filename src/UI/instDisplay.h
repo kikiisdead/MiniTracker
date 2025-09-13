@@ -16,7 +16,7 @@ public:
     InstrumentDisplay(){};
     ~InstrumentDisplay(){};
 
-    void Init(std::vector<Instrument*> instruments_, InstrumentHandler* handler_);
+    void Init(std::vector<Instrument*> instruments_, InstrumentHandler* handler_, cFont *MainFont);
 
     void AButton();
     void BButton();
@@ -34,7 +34,7 @@ public:
     void AltRightButton();
     void AltPlayButton();
 
-    void UpdateDisplay(MyOledDisplay &display);
+    void UpdateDisplay(cLayer* tft);
 
 private:
     // MyOledDisplay* display;
@@ -44,8 +44,10 @@ private:
     size_t currentSlice;
     char strbuff[256];
     bool sliceEdit;
+    cFont* MainFont;
 
     void WriteString(MyOledDisplay &display, uint16_t x, uint16_t y, bool on);
+    void WriteString(cLayer* display, char* strbuff, int x, int y, DadGFX::sColor color);
     void DrawArrow(MyOledDisplay &display, int x, int y);
 };
 

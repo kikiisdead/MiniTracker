@@ -3,8 +3,14 @@
 
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
+#include "../../DaisySeedGFX2/cDisplay.h"
+#include "util/colors.h"
+
+#define CHAR_WIDTH 9
+#define CHAR_HEIGHT 12
 
 using namespace daisy;
+using namespace DadGFX;
 
 using MyOledDisplay = OledDisplay<SSD130xI2c128x64Driver>;
 
@@ -30,7 +36,7 @@ public:
     virtual void AltRightButton() = 0;
     virtual void AltPlayButton() = 0;
 
-    virtual void UpdateDisplay(MyOledDisplay &display) = 0;
+    virtual void UpdateDisplay(cLayer* tft) = 0;
     
 };
 

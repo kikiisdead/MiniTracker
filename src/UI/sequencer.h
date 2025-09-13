@@ -49,6 +49,8 @@ private:
     std::vector<int> songOrder; // holds the order of the patterns
     Pattern* activePattern;
 
+    cFont* MainFont;
+
     Step* currentStep;
     Lane* currentLane;
     int currentPattern;
@@ -64,12 +66,17 @@ private:
     uint32_t triggerTime;
     Metro tick;
     
-    void DrawStep(MyOledDisplay &display, int x, int y, Step* step);
-    void DrawSquare(MyOledDisplay &display, int x, int y, bool fill);
-    void DrawArrow(MyOledDisplay &display, int x, int y, int direction); // 1 = left, 2 = right, 3 = up, 4 = down
-    void WriteString(MyOledDisplay &display, char* strbuff, int x, int y, bool on);
+    void DrawStep( cLayer *display, int x, int y, Step* step);
+
+    void DrawSquare(cLayer *display, int index, int x, int y, bool fill);
+
+    void DrawArrow(cLayer *display, int x, int y, int direction); // 1 = left, 2 = right, 3 = up, 4 = down
+
+    void WriteString(cLayer* display, char* strbuff, int x, int y, DadGFX::sColor color);
+
     void GetNoteString(char* strbuff, int note);
     void GetFxString(char* strbuff, int fx, int fxAmount);
+    void GetFxString(char* strbuff, int fx);
     void InitStep(Step* step, int index);
 
     void NextStep();
@@ -99,7 +106,7 @@ public:
      * \param handler voice for each lane
      * \param samplerate samplerate to intialize Metro object
      */
-    void Init(std::vector<InstrumentHandler*> handler, float samplerate) {
+    void Init(std::vector<InstrumentHandler*> handler, float samplerate, cFont* MainFont) {
         //display_ = display;
         handler_ = handler;
         playing_ = false;
@@ -112,13 +119,14 @@ public:
         NewPattern();
         lastTrigger = 0;
         laneOffset = 0;
+        this->MainFont = MainFont;
     }
     
 
     /**
      * Called by the Display object to refresh the screen, not called internally because it interupts audio playback 
      */
-    void UpdateDisplay(MyOledDisplay &display);
+    void UpdateDisplay(cLayer *display);
 
     /**
      * Implementations of virtual parent functions.

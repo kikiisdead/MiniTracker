@@ -8,6 +8,7 @@ void Instrument::Init(float samplerate, WavFile* sample) {
     sus = 0.0;
     rel = 0.01;
     pitch = 0;
+    gain = 0;
     env.SetAttackTime(att);
     env.SetDecayTime(dec);
     env.SetSustainLevel(sus);
@@ -17,8 +18,11 @@ void Instrument::Init(float samplerate, WavFile* sample) {
     visual = samplePlayer.GetVisual(WAVEWIDTH);
 }
 
-float Instrument::Process() {
+void Instrument::Process(float& left, float& right) {
     env_out = env.Process(playing);
+
+    float _left = 0;
+    float _right = 0;
 
     if (!env.IsRunning() && samplePlayer.IsPlaying()) {
         samplePlayer.Stop(); // if the envelope has stopped and the sample is still playing: stop
@@ -26,8 +30,30 @@ float Instrument::Process() {
         if (samplePlayer.GetPos() >= slices.at(currentSlice + 1) * samplePlayer.GetSize()) {
             samplePlayer.Stop();
         }
-    } 
-    return samplePlayer.Process() * env_out;
+    }
+    samplePlayer.Process(_left, _right);
+
+    left = _left * env_out * pow(10.0f, gain / 10.0f);
+    right = _right * env_out * pow(10.0f, gain / 10.0f);
+}
+
+float Instrument::Process() {
+    env_out = env.Process(playing);
+
+    float _left = 0;
+    float _right = 0;
+
+    if (!env.IsRunning() && samplePlayer.IsPlaying()) {
+        samplePlayer.Stop(); // if the envelope has stopped and the sample is still playing: stop
+    } else if (currentSlice + 1 < slices.size()) {
+        if (samplePlayer.GetPos() >= slices.at(currentSlice + 1) * samplePlayer.GetSize()) {
+            samplePlayer.Stop();
+        }
+    }
+
+    samplePlayer.Process(_left, _right);
+
+    return _left * env_out * pow(10.0f, gain / 10.0f);
 }
 
 void Instrument::Trigger(int note) {
@@ -48,8 +74,8 @@ void Instrument::Release() {
 }
 
 void Instrument::NextParam() {
-    if ((int) edit < 4) edit = (param) ((int) edit + 1);
-    else edit = (param) 4;
+    if ((int) edit < 5) edit = (param) ((int) edit + 1);
+    else edit = (param) 5;
 }
 
 void Instrument::PrevParam() {
@@ -61,6 +87,8 @@ void Instrument::Increment() {
     if (edit == p) {
         pitch += 1;
         samplePlayer.SetPitch(pitch);
+    } else if (edit == g) {
+        gain += 0.25;
     } else if (edit == a) {
         att += Scaling(att);
         if (att > 5) att = 5;
@@ -84,6 +112,8 @@ void Instrument::Decrement() {
     if (edit == p) {
         pitch -= 1;
         samplePlayer.SetPitch(pitch);
+    } else if (edit == g) {
+        gain -= 0.25;
     } else if (edit == a) {
         att -= Scaling(att);
         if (att < 0) att = 0.001;

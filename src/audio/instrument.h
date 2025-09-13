@@ -9,8 +9,8 @@
 using namespace daisy;
 using namespace daisysp;
 
-#define WAVEWIDTH 96
-#define WAVEHEIGHT 49
+#define WAVEWIDTH 240
+#define WAVEHEIGHT 168
 
 /* 
 This class will have all the audio objects for each individual object (FX, slicepoints, pitch, etc. )
@@ -21,7 +21,7 @@ class Instrument {
 
 
 public:
-    enum param { p, a, d, s, r };
+    enum param { p, g, a, d, s, r };
 
     Instrument(){};
 
@@ -29,6 +29,11 @@ public:
      * Initializes the instrument with sample rate and sample. Each instrument will only have one sample
      */
     void Init(float samplerate, WavFile* sample);
+
+    /**
+     * Called in audioCallback to get next sample
+     */
+    void Process(float& left, float& right);
 
     /**
      * Called in audioCallback to get next sample
@@ -62,6 +67,8 @@ public:
 
     float GetRelease() {return rel; }
 
+    float GetGain() { return gain; }
+
     char* GetName() { return samplePlayer.GetName(); }
 
     param GetEdit() { return edit; }
@@ -86,10 +93,11 @@ private:
     double volume;
     size_t currentSlice;
     bool playing;
-    float att, dec, sus, rel, pitch;
+    float att, dec, sus, rel, pitch, gain;
     param edit;
 
     float Scaling(float num) { return pow(num, ((num / 5.0f) + 1.0f) / 2.0f) / 10.0f; }
+
 };
 
 #endif

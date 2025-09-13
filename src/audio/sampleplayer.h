@@ -10,7 +10,7 @@
 #include "util/wav_format.h"
 #include "ff.h"
 
-
+#define SAMP_POINTER static_cast<float*>(wave->start)
 
 #define WAV_FILENAME_MAX \
     256 /**< Maximum LFN (set to same in FatFs (ffconf.h) */
@@ -26,7 +26,7 @@ struct WavFile
     char              name[WAV_FILENAME_MAX]; /**< Wav filename */
     // int32_t           **sample; // use a 2D array instead to deal with any num channels
     void*             start; // start index in buffer
-    size_t            size; // end index in buffer
+    // size_t            size; // end index in buffer
 };
 
 /* 

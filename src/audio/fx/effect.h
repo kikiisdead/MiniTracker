@@ -8,22 +8,23 @@
 using namespace daisy;
 using namespace daisysp;
 
-#define FX_HEIGHT 53
-#define FX_WIDTH 39
+#define FX_HEIGHT 210
+#define FX_WIDTH 100
+#define FX_BUFFER 5
 #define EFFECT_NUMBER 2;
 
 using MyOledDisplay = OledDisplay<SSD130xI2c128x64Driver>;
 
 class Effect {
 public:
-    enum EFFECT_TYPE { NOFX, FILTER };
+    enum EFFECT_TYPE { NOFX, FILTER, DISTORTION };
 
     bool selected;
     EFFECT_TYPE effectType;
 
-    virtual void Init(float samplerate);
+    virtual void Init(float samplerate, cFont* MainFont) = 0;
     virtual void Process(float&, float&) = 0;
-    virtual void Display(MyOledDisplay&, int, int) = 0;
+    virtual void Display(cLayer*, int, int) = 0;
     virtual void Increment() = 0;
     virtual void Decrement() = 0;
     virtual void NextParam() = 0;
@@ -32,32 +33,13 @@ public:
 protected:
     char strbuff[20];
     int param;
-    
+    cFont* MainFont;
 
-    /**
-     * Common display functions
-     * \param direction 0 = left, 1 = up, 2 = right, 3 = down
-     */
-    void DrawArrow(MyOledDisplay& display, int x, int y, int direction, bool on) {
-        display.DrawPixel(x, y, on);
-        if (direction == 0) {
-            display.DrawPixel(x + 1, y - 1, on);
-            display.DrawPixel(x + 1, y + 1, on);
-        } else if (direction == 1) {
-            display.DrawPixel(x - 1, y - 1, on);
-            display.DrawPixel(x + 1, y - 1, on);
-        } else if (direction == 2) {
-            display.DrawPixel(x - 1, y - 1, on);
-            display.DrawPixel(x - 1, y + 1, on);
-        } else if (direction == 3) {
-            display.DrawPixel(x - 1, y + 1, on);
-            display.DrawPixel(x + 1, y + 1, on);
-        }
-    };
-
-    void WriteString(MyOledDisplay& display, int x, int y, bool on) {
-        display.SetCursor(x, y);
-        display.WriteString(strbuff, Font_4x6, on);
+    void WriteString(cLayer* display, char* strbuff, int x, int y, DadGFX::sColor color) {
+        display->setCursor(x, y);
+        display->setFont(MainFont);
+        display->setTextFrontColor(color);
+        display->drawText(strbuff);
     }
 };
 

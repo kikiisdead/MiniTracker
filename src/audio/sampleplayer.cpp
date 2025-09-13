@@ -3,6 +3,8 @@
 
 // to add more flexibility to the thing I need to add support for 24 bit wave files as well as pithch changing
 
+// maybe do all conversions before reading to SDRAM (use all floats in SDRAM?)
+
 using namespace daisy;
 
 void SamplePlayer::Init(WavFile* wave_, float samplerate_)
@@ -11,7 +13,7 @@ void SamplePlayer::Init(WavFile* wave_, float samplerate_)
     // Only checks '/'
     samplerate = samplerate_;
     wave = wave_;
-    size_ = wave->size;
+    size_ = wave->format.SubChunk2Size / wave->format.NbrChannels; // for interleaved
     playing_  = false;
     looping_  = false;
     SetPitch(0.0);
@@ -21,7 +23,7 @@ void SamplePlayer::Init(WavFile* wave_, float samplerate_)
 float SamplePlayer::Process() {
 
     pos_ = (pos_ + samplePerStep);
-    if (pos_ > wave->size) {
+    if (pos_ > size_) {
         pos_ = 0.0; 
         if (!looping_) {
             Stop();
@@ -35,10 +37,10 @@ float SamplePlayer::Process() {
     float   pos_fractional = pos_ - static_cast<float>(pos_integral); // getting difference between the two
 
     int32_t t  =  (pos_integral);
-    int16_t xm1 = *(static_cast<int16_t*>(wave->start) + ((t - 1) % size_)); // casting into short int
-    int16_t x0  = *(static_cast<int16_t*>(wave->start) + ((t    ) % size_));
-    int16_t x1  = *(static_cast<int16_t*>(wave->start) + ((t + 1) % size_)); // casting into short int
-    int16_t x2  = *(static_cast<int16_t*>(wave->start) + ((t + 2) % size_));
+    float  xm1 = *(SAMP_POINTER + ((t - 1) % size_)); // casting into float (not as memory efficient with ram usage but that's okay)
+    float  x0  = *(SAMP_POINTER + ((t    ) % size_));
+    float  x1  = *(SAMP_POINTER + ((t + 1) % size_));
+    float  x2  = *(SAMP_POINTER + ((t + 2) % size_));
 
     const float c     = (x1 - xm1) * 0.5f;
     const float v     = x0 - x1;
@@ -46,14 +48,10 @@ float SamplePlayer::Process() {
     const float a     = w + v + (x2 - x0) * 0.5f;
     const float b_neg = w + a;
     const float f     = pos_fractional;
-    int16_t interpolated = (((a * f) - b_neg) * f + c) * f + x0;
+    float interpolated = (((a * f) - b_neg) * f + c) * f + x0;
 
 
-    if (wave->format.BitPerSample == 16) {
-        return s162f(interpolated);
-    } else {
-        return s242f(interpolated);
-    }
+    return interpolated;
 
 }
 
@@ -64,16 +62,16 @@ uint16_t* SamplePlayer::GetVisual(int size) {
 
     for (int i = 0; i < size; i++) {
 
-        uint16_t max = 0;
+        float max = 0.0f;
 
         for (size_t j = 0; j < stepSize; j++) {
-            uint16_t step = abs(*(static_cast<int16_t*>(wave->start) + (i * stepSize) + j));
+            float step = abs(*(SAMP_POINTER + (i * stepSize) + j));
             if (step > max) {
                 max = step;
             }
         }
 
-        visual[i] = max;
+        visual[i] = f2s16(max);
     }
 
     return visual;
@@ -81,36 +79,43 @@ uint16_t* SamplePlayer::GetVisual(int size) {
 
 void SamplePlayer::Process(float& outL, float& outR) {
 
-    // if (!playing_) {
-    //     outL = 0.0f;
-    //     outR = 0.0f;
-    //     return; // if its not playing then do nothing
-    // }
+    pos_ = (pos_ + samplePerStep);
+    if (pos_ > size_) {
+        pos_ = 0.0; 
+        if (!looping_) {
+            Stop();
+        }
+    }
+    if (!playing_) {
+        outL = 0.0f; // if its not playing then do nothing
+        outR = 0.0f;
+        return;
+    }
+
+    int32_t pos_integral   = static_cast<int32_t>(pos_); // rounding float pos into int
+    float   pos_fractional = pos_ - static_cast<float>(pos_integral); // getting difference between the two
+
+    float interpolated[wave->format.NbrChannels];
+
+    for (uint16_t i = 0; i < wave->format.NbrChannels; i++) {
+        int32_t t  =  (pos_integral) + i;
+        float  xm1 = *(SAMP_POINTER + ((t - (1 * wave->format.NbrChannels)) % size_)); // casting into float
+        float  x0  = *(SAMP_POINTER + ((t   ) % size_));
+        float  x1  = *(SAMP_POINTER + ((t + (1 * wave->format.NbrChannels)) % size_)); 
+        float  x2  = *(SAMP_POINTER + ((t + (2 * wave->format.NbrChannels)) % size_));
+
+        const float c     = (x1 - xm1) * 0.5f;
+        const float v     = x0 - x1;
+        const float w     = c + v;
+        const float a     = w + v + (x2 - x0) * 0.5f;
+        const float b_neg = w + a;
+        const float f     = pos_fractional;
+
+        interpolated[i] = (((a * f) - b_neg) * f + c) * f + x0;
+    }
+
+    outL = interpolated[0];
+    if (wave->format.NbrChannels > 1) outR = interpolated[1];
+    else outR = interpolated[0];
     
-    // int32_t pos_integral   = static_cast<int32_t>(pos_);
-    // float   pos_fractional = pos_ - static_cast<float>(pos_integral);
-
-    // int32_t     t     = (pos_integral + size_);
-    // int32_t     xm1   = (wave->start + ((t - 1) % wave->size));
-    // int32_t     x0    = (wave->start + ((t    ) % wave->size));
-    // int32_t     x1    = (wave->start + ((t + 1) % wave->size));
-    // int32_t     x2    = (wave->start + ((t + 2) % wave->size));
-    // const float c     = (x1 - xm1) * 0.5f;
-    // const float v     = x0 - x1;
-    // const float w     = c + v;
-    // const float a     = w + v + (x2 - x0) * 0.5f;
-    // const float b_neg = w + a;
-    // const float f     = pos_fractional;
-    // int32_t interpolated = (((a * f) - b_neg) * f + c) * f + x0;
-
-    // if (wave->format.BitPerSample == 16) {
-    //     outL = s162f(static_cast<int16_t>(interpolated));
-    //     outR = s162f(static_cast<int16_t>(interpolated));
-    // } else {
-    //     outL = s242f(interpolated);
-    //     outR = s242f(interpolated);
-    // }
-
-    // pos_ = (pos_ + samplePerStep);
-    // if (pos_ > wave->size) pos_ = 0.0;
 }

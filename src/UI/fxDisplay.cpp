@@ -1,46 +1,50 @@
 #include "fxDisplay.h"
 
-void FXDisplay::UpdateDisplay(MyOledDisplay &display) {
-    display.Fill(false);
+void FXDisplay::UpdateDisplay(cLayer* display) {
+    display->drawFillRect(0, 0, 320, 240, BACKGROUND);
 
     for (size_t i = 0; i < handler.at(currentLane)->effects.size(); i++) {
-        handler.at(currentLane)->effects.at(i)->Display(display, 2 + i * (FX_WIDTH + 3), 9);
+        handler.at(currentLane)->effects.at(i)->Display(display, i * (FX_WIDTH + FX_BUFFER), 20);
     }
 
-    display.DrawRect(currentLane * 32, 0, currentLane * 32 + 31, 6, true, true);
+    display->drawFillRect(currentLane * (320 / 4), 0, 320/4, CHAR_HEIGHT + 7, ACCENT2);
 
-    display.SetCursor(1, 1);
     sprintf(strbuff, "LANE 1");
-    if (currentLane == 0) display.WriteString(strbuff, Font_4x6, false);
-    else display.WriteString(strbuff, Font_4x6, true);
+    if (currentLane == 0) WriteString(display, strbuff, 0 * (320 / 4) + 4, CHAR_HEIGHT + 2, MAIN);
+    else                  WriteString(display, strbuff, 0 * (320 / 4) + 4, CHAR_HEIGHT + 2, ACCENT1);
 
-    display.SetCursor(33, 1);
     sprintf(strbuff, "LANE 2");
-    if (currentLane == 1) display.WriteString(strbuff, Font_4x6, false);
-    else display.WriteString(strbuff, Font_4x6, true);
+    if (currentLane == 1) WriteString(display, strbuff, 1 * (320 / 4) + 4, CHAR_HEIGHT + 2, MAIN);
+    else                  WriteString(display, strbuff, 1 * (320 / 4) + 4, CHAR_HEIGHT + 2, ACCENT1);
 
-    display.SetCursor(65, 1);
     sprintf(strbuff, "LANE 3");
-    if (currentLane == 2) display.WriteString(strbuff, Font_4x6, false);
-    else display.WriteString(strbuff, Font_4x6, true);
+    if (currentLane == 2) WriteString(display, strbuff, 2 * (320 / 4) + 4, CHAR_HEIGHT + 2, MAIN);
+    else                  WriteString(display, strbuff, 2 * (320 / 4) + 4, CHAR_HEIGHT + 2, ACCENT1);
 
-    display.SetCursor(97, 1);
     sprintf(strbuff, "LANE 4");
-    if (currentLane == 3) display.WriteString(strbuff, Font_4x6, false);
-    else display.WriteString(strbuff, Font_4x6, true);
+    if (currentLane == 3) WriteString(display, strbuff, 3 * (320 / 4) + 4, CHAR_HEIGHT + 2, MAIN);
+    else                  WriteString(display, strbuff, 3 * (320 / 4) + 4, CHAR_HEIGHT + 2, ACCENT1);
 
     if (changeEffect) {
-        //turning pixels in right third of screen off
-        display.DrawRect(2 * (128 / 3), 0, 127, 63, false, true);
-        display.DrawLine(2 * (128 / 3), 0, 2 * (128 / 3), 63, true);
 
-        display.DrawRect(2 * (128 / 3), 7 * type + 1, 127, 7 * type + 7, true, true);
+        int xOffset = 2 * (320/3);
+        //turning pixels in right third of screen off
+        display->drawFillRect(xOffset, 0, 320/3, 240, BACKGROUND);
+        display->drawLine(xOffset, 0, 2 * (320/3), 240, ACCENT2);
+
+        display->drawFillRect(xOffset, (CHAR_HEIGHT + 4) * type + 3, 320/3, CHAR_HEIGHT + 4, ACCENT2);
 
         sprintf(strbuff, "--");
-        WriteString(display, 2 * (128 / 3) + 2, 2, !(type == 0));
+        if (type == 0) WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 1, MAIN);
+        else           WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 1, MAIN);
 
         sprintf(strbuff, "FILTER");
-        WriteString(display, 2 * (128 / 3) + 2, 9, !(type == 1));
+        if (type == 1) WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 2, MAIN);
+        else           WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 2, MAIN);
+
+        sprintf(strbuff, "DISTORTION");
+        if (type == 2) WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 3, MAIN);
+        else           WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 3, MAIN);
     }
 
 }
@@ -79,7 +83,7 @@ void FXDisplay::DownButton(){
     if (!changeEffect) CURRENT_EFFECT->NextParam();
     else {
         type += 1;
-        if (type > 1) type = 1;
+        if (type > 2) type = 2;
     }
 }
 

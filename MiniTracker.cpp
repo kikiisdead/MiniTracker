@@ -4,13 +4,21 @@
 #include "fatfs.h"
 #include "src/UI/sequencer.h"
 #include "src/UI/button.h"
-#include "dev/oled_ssd130x.h"
 #include "src/samples/cowbell.h"
 #include "src/samples/collins.h"
 #include "src/audio/sampleplayer.h"
 #include "src/UI/instDisplay.h"
 #include "src/UI/fxDisplay.h"
 #include <vector>
+#include <stdint.h>
+#include "DaisySeedGFX2/cDisplay.h"
+#include "src/UI/util/KodeMono_Regular20pt7b.h"
+#include "src/UI/util/KodeMono_Regular10pt7b.h"
+#include "src/UI/util/KodeMono_SemiBold10pt7b.h"
+#include "src/UI/util/KodeMono_SemiBold6pt7b.h"
+#include "src/UI/util/KodeMono_SemiBold8pt7b.h"
+#include "src/UI/util/KodeMono_Regular8pt7b.h"
+#include "src/UI/util/KodeMono_Bold10pt7b.h"
 
 #define LANE_NUMBER 4
 
@@ -27,10 +35,11 @@
 
 #define USE_DAISYSP_LGPL 1
 
+#define TOPI 6.283185307179
+
 using namespace daisy;
 using namespace daisysp;
-
-using MyOledDisplay = OledDisplay<SSD130xI2c128x64Driver>;
+using namespace DadGFX;
 
 DaisySeed hw;
 
@@ -38,7 +47,8 @@ SdmmcHandler   sd;
 FatFSInterface fsi;
 FIL            SDFile;
 
-MyOledDisplay display;
+DECLARE_DISPLAY(__Display)
+DECLARE_LAYER(MainLayer, 320, 240)
 
 std::vector<InstrumentHandler*> handler;
 
@@ -52,6 +62,7 @@ WavFile sample2;
 
 /**
  * SDRAM STUFF
+ * Make sure to not allocate the entire SDRAM because TFT relies on SDRAM for frame buffer
  */
 #define CUSTOM_POOL_SIZE (48*1024*1024)
 
@@ -158,24 +169,27 @@ void InputHandle() {
 /** LOOP */
 void AudioCallback(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, size_t size) 
 {
-  float outBuff = 0;
-  
+  float outL = 0;
+  float outR = 0;
   InputHandle(); 
-
-  // weird cutouts coming from updating display, seems as though updating the display in anyway pauses the whole program
   
   for (size_t i = 0; i < size; i++)
   {
-    outBuff = 0;
+    outL = 0;
+    outR = 0;
 
     sequencer.Update();
 
     for (InstrumentHandler* hand : handler) {
-      outBuff = hand->Process();
+      float tempL = 0.0f;
+      float tempR = 0.0f;
+      hand->Process(tempL, tempR);
+      outL += tempL * 0.5f;
+      outR += tempL * 0.5f;
     }
 
-    out[0][i] = outBuff;
-    out[1][i] = outBuff;
+    out[0][i] = outL;
+    out[1][i] = outR;
   }
 }
 
@@ -183,31 +197,30 @@ void AudioCallback(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, s
 int main(void) 
 {
   hw.Init();
-  
-  /** Configure the Display */
-  MyOledDisplay::Config disp_cfg;
-  
-  disp_cfg.driver_config.transport_config.i2c_config.address = 0x3C;
-  disp_cfg.driver_config.transport_config.i2c_config.periph = I2CHandle::Config::Peripheral::I2C_1;
-  disp_cfg.driver_config.transport_config.i2c_config.speed  = I2CHandle::Config::Speed::I2C_1MHZ;
-  disp_cfg.driver_config.transport_config.i2c_config.mode = I2CHandle::Config::Mode::I2C_MASTER;
-  disp_cfg.driver_config.transport_config.i2c_config.pin_config.scl = hw.GetPin(11);
-  disp_cfg.driver_config.transport_config.i2c_config.pin_config.sda = hw.GetPin(12);
-  
-  /** And Initialize */
-  display.Init(disp_cfg);
 
+  /**
+   * Configuring TFT Display
+   */
+  INIT_DISPLAY(__Display);
+  __Display.setOrientation(Rotation::Degre_90);
+  DadGFX::cLayer* pMain = ADD_LAYER(MainLayer, 0, 0, 1);
+  pMain->drawFillRect(0, 0, 320, 240, BACKGROUND);
+  __Display.flush();
 
-  // // Init SD Card
-  // SdmmcHandler::Config sd_cfg;
-  // sd_cfg.Defaults();
-  // sd.Init(sd_cfg);
+  DadGFX::cFont MainFont(&KodeMono_Regular8pt7b);
 
-  // // FatFS Interface
-  // if (fsi.Init(FatFSInterface::Config::MEDIA_SD) == FR_OK) {
-  //   // Mount SD Card
-  //   f_mount(&fsi.GetSDFileSystem(), "/", 1);
-  // }
+  /**
+   * Initialize SDIO
+   */
+  SdmmcHandler::Config sd_cfg;
+  sd_cfg.Defaults();
+  if (sd.Init(sd_cfg) == SdmmcHandler::Result::OK) {
+    // FatFS Interface
+    if (fsi.Init(FatFSInterface::Config::MEDIA_SD) == FatFSInterface::Result::OK) {
+      // Mount SD Card
+      f_mount(&fsi.GetSDFileSystem(), "/", 1);
+    }
+  }
 
   /**
    * Initializing Seed Audio
@@ -217,16 +230,14 @@ int main(void)
 
   float samplerate = hw.AudioSampleRate();
 
-
-
   // move to sample loader eventually
   // load into sample buffer get pointer to beginning of sub array and size
   sample.format.AudioFormat = WAVE_FORMAT_ULAW;
-  sample.format.BitPerSample = 16;
+  sample.format.BitPerSample = 8;
   sample.format.SampleRate = 44100;
   sample.format.NbrChannels = 1;
-  sample.size = sizeof(collins);
-  sample.start = sample_buffer_allocate(sample.size * sizeof(int16_t));
+  sample.format.SubChunk2Size = sizeof(collins);
+  sample.start = sample_buffer_allocate(sample.format.SubChunk2Size * sizeof(float));
   
   sprintf(sample.name, "COLLINS");
 
@@ -236,21 +247,21 @@ int main(void)
 
   size_t readIndex = 0;
 
-  while (readIndex < sample.size) {
+  while (readIndex < sample.format.SubChunk2Size) {
     int16_t val = MuLaw2Lin((*(static_cast<uint8_t*>(readPtr)) * -1) - 1); // get the sample and convert
-
+    float samp = s162f(val); // turn to float
     readPtr = static_cast<uint8_t*>(readPtr) + 1;
     readIndex += 1;
-    *(static_cast<int16_t*>(writePtr)) = val;
-    writePtr = static_cast<int16_t*>(writePtr) + 1;
+    *(static_cast<float*>(writePtr)) = samp;
+    writePtr = static_cast<float*>(writePtr) + 1;
   }
 
   sample2.format.AudioFormat = WAVE_FORMAT_ULAW;
-  sample2.format.BitPerSample = 16;
+  sample2.format.BitPerSample = 8;
   sample2.format.SampleRate = 44100;
   sample2.format.NbrChannels = 1;
-  sample2.size = sizeof(cowbell);
-  sample2.start = sample_buffer_allocate(sample2.size * sizeof(int16_t));
+  sample2.format.SubChunk2Size = sizeof(cowbell); // getting bytes
+  sample2.start = sample_buffer_allocate(sample2.format.SubChunk2Size * sizeof(float)); // because mulaw, each byte becomes 1 float
   
   sprintf(sample2.name, "COWBELL");
 
@@ -260,15 +271,14 @@ int main(void)
 
   readIndex = 0;
 
-  while (readIndex < sample2.size) {
+  while (readIndex < sample2.format.SubChunk2Size) {
     int16_t val = MuLaw2Lin((*(static_cast<uint8_t*>(readPtr)) * -1) - 1); // get the sample and convert
-
+    float samp = s162f(val);
     readPtr = static_cast<uint8_t*>(readPtr) + 1;
     readIndex += 1;
-    *(static_cast<int16_t*>(writePtr)) = val;
-    writePtr = static_cast<int16_t*>(writePtr) + 1;
+    *(static_cast<float*>(writePtr)) = samp;
+    writePtr = static_cast<float*>(writePtr) + 1;
   }
-
 
   instruments.push_back(new Instrument);
   instruments.back()->Init(samplerate, &sample);
@@ -276,15 +286,12 @@ int main(void)
   instruments.push_back(new Instrument);
   instruments.back()->Init(samplerate, &sample2);
 
-  // for (int i = 0; i < LANE_NUMBER; i ++) {
-  //   effects.push_back(new std::vector<EffectHandler*>);
-  //   effects.back()->push_back(new EffectHandler);
-  //   effects.back()->back()->Init(samplerate);
-  // }
-
+  /**
+   * Building instrument handlers
+   */
   for (int i = 0; i < LANE_NUMBER; i ++) {
     handler.push_back(new InstrumentHandler);
-    handler[i]->Init(&instruments, samplerate);
+    handler[i]->Init(&instruments, samplerate, &MainFont);
   }
 
   /**
@@ -333,9 +340,9 @@ int main(void)
    * Initializing UI objects
    * and adding to interfaces vector
    */
-  sequencer.Init(handler, samplerate);
-  instDisplay.Init(instruments, handler.at(0));
-  fxDisplay.Init(samplerate, handler);
+  sequencer.Init(handler, samplerate, &MainFont);
+  instDisplay.Init(instruments, handler.at(0), &MainFont);
+  fxDisplay.Init(samplerate, handler, &MainFont);
 
   interfaces.push_back(&sequencer);
   interfaces.push_back(&instDisplay);
@@ -346,8 +353,8 @@ int main(void)
   hw.StartAudio(AudioCallback);
 
   for (;;) {
-    (*userInterface)->UpdateDisplay(display);
-    display.Update();
+    (*userInterface)->UpdateDisplay(pMain); 
+    __Display.flush();
     System::Delay(10);
   }
 }

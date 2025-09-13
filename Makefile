@@ -1,8 +1,6 @@
 # Project Name
 TARGET = MiniTracker
 
-USE_DAISYSP_LGPL=1 
-
 LDFLAGS = -u _printf_float
 
 # Sources
@@ -15,6 +13,9 @@ CPP_SOURCES += src/audio/instrument.cpp
 CPP_SOURCES += src/samples/cowbell.cpp
 CPP_SOURCES += src/samples/collins.cpp
 CPP_SOURCES += src/audio/decode.cpp
+CPP_SOURCES += DaisySeedGFX2/cDisplay.cpp
+CPP_SOURCES += DaisySeedGFX2/GFX.cpp
+CPP_SOURCES += DaisySeedGFX2/TFT_SPI.cpp
 
 # Bootload into QSPI Flash instead of ARM Chip Flash
 APP_TYPE = BOOT_QSPI

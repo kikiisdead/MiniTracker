@@ -20,7 +20,7 @@
 // 18-bit encoding: RGB666
 // 16-bit encoding: RGB565
 //
-//#define TFT_COLOR 18            // Uncomment for 18-bit color mode
+// #define TFT_COLOR 18            // Uncomment for 18-bit color mode
 #define TFT_COLOR 16              // Use 16-bit color mode (default)
 //#define INV_COLOR 				  // Screen displays with inverted colors remove/comment this if not needed"
 
@@ -33,13 +33,13 @@
 // SPI bus configuration
 #define TFT_SPI_PORT SPI_1        // SPI port used for the display
 #define TFT_SPI_MODE Mode3        // SPI mode (Mode 3: CPOL = 1, CPHA = 1)
-#define TFT_SPI_BaudPrescaler PS_8 // SPI baud rate prescaler
+#define TFT_SPI_BaudPrescaler PS_2 // SPI baud rate prescaler
 
 // GPIO configuration for SPI pins
 #define TFT_MOSI D10              // SPI MOSI (Master Out, Slave In) pin
 #define TFT_SCLK D8               // SPI clock (SCLK) pin
-#define TFT_DC   D20              // Data/Command control pin
-#define TFT_RST  D21              // Reset pin for the display
+#define TFT_DC   D11              // Data/Command control pin
+#define TFT_RST  D12              // Reset pin for the display
 
 //-------------------------------------------------------------------------
 // Define the block size used for partial screen updates

@@ -8,22 +8,24 @@ public:
     NoEffect(){}
     ~NoEffect(){}
 
-    void Init(float samplerate) {
+    void Init(float samplerate, cFont* MainFont) {
         selected = false;
         effectType = NOFX;
+        this->MainFont = MainFont;
     }
 
     void Process(float& left, float& right) {
 
     }
 
-    void Display(MyOledDisplay& display, int x, int y){
-        // drawing box
-        display.DrawRect(x, y, x + FX_WIDTH, y + FX_HEIGHT, true, selected);
+    void Display(cLayer *display, int x, int y){
 
-        // drawing plus
-        display.DrawLine(x + (FX_WIDTH / 2) - 2, y + FX_HEIGHT / 2, x + FX_WIDTH / 2 + 2, y + FX_HEIGHT / 2, !selected);
-        display.DrawLine(x + (FX_WIDTH / 2), y + FX_HEIGHT / 2 + 2, x + FX_WIDTH / 2, y + FX_HEIGHT / 2 - 2, !selected);
+        sColor color = (selected) ? ACCENT2 : ACCENT1;
+
+        display->drawRect(x + FX_BUFFER, y + FX_BUFFER, FX_WIDTH, FX_HEIGHT, 1, color);
+
+        display->drawLine(x + FX_BUFFER + (FX_WIDTH / 2) - 5, y + FX_BUFFER + (FX_HEIGHT / 2), x + FX_BUFFER + (FX_WIDTH / 2) + 6, y + FX_BUFFER + (FX_HEIGHT / 2), color);
+        display->drawLine(x + FX_BUFFER + (FX_WIDTH / 2), y + FX_BUFFER + (FX_HEIGHT / 2) - 5, x + FX_BUFFER + (FX_WIDTH / 2), y + FX_BUFFER + (FX_HEIGHT / 2) + 6, color);
     }
 
     void Increment(){}
