@@ -36,11 +36,13 @@ float SamplePlayer::Process() {
     int32_t pos_integral   = static_cast<int32_t>(pos_); // rounding float pos into int
     float   pos_fractional = pos_ - static_cast<float>(pos_integral); // getting difference between the two
 
+    __disable_irq(); // prevent interrupts while accessing SDRAM (especially when using DMA)
     int32_t t  =  (pos_integral);
     float  xm1 = *(SAMP_POINTER + ((t - 1) % size_)); // casting into float (not as memory efficient with ram usage but that's okay)
     float  x0  = *(SAMP_POINTER + ((t    ) % size_));
     float  x1  = *(SAMP_POINTER + ((t + 1) % size_));
     float  x2  = *(SAMP_POINTER + ((t + 2) % size_));
+    __enable_irq();
 
     const float c     = (x1 - xm1) * 0.5f;
     const float v     = x0 - x1;
@@ -98,11 +100,13 @@ void SamplePlayer::Process(float& outL, float& outR) {
     float interpolated[wave->format.NbrChannels];
 
     for (uint16_t i = 0; i < wave->format.NbrChannels; i++) {
+        __disable_irq(); // prevent interrupts while accessing SDRAM (especially when using DMA)
         int32_t t  =  (pos_integral) + i;
         float  xm1 = *(SAMP_POINTER + ((t - (1 * wave->format.NbrChannels)) % size_)); // casting into float
         float  x0  = *(SAMP_POINTER + ((t   ) % size_));
         float  x1  = *(SAMP_POINTER + ((t + (1 * wave->format.NbrChannels)) % size_)); 
         float  x2  = *(SAMP_POINTER + ((t + (2 * wave->format.NbrChannels)) % size_));
+        __enable_irq();
 
         const float c     = (x1 - xm1) * 0.5f;
         const float v     = x0 - x1;

@@ -3,6 +3,7 @@
 
 #include "effect.h"
 
+#define FILTERSCALE 19980.0f * pow(freq, 2.5f) + 20.0f
 
 class Filter : public Effect {
 public:
@@ -16,12 +17,12 @@ public:
         filterL.Init(samplerate);
         filterR.Init(samplerate);
 
-        freq = 800.0f;
+        freq = 0.5f;
         res = 0.2f;
         drive = 0.85f;
 
-        filterL.SetFreq(freq);
-        filterR.SetFreq(freq);
+        filterL.SetFreq(FILTERSCALE);
+        filterR.SetFreq(FILTERSCALE);
         filterL.SetRes(res);
         filterR.SetRes(res);
         filterL.SetDrive(drive);
@@ -90,9 +91,9 @@ public:
         sprintf(strbuff, "FREQ");
         WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 3 * (CHAR_HEIGHT + 4), color);
 
-        if (freq < 100.0f) sprintf(strbuff, "%.2fhz", freq);
-        else if (freq < 1000.0f) sprintf(strbuff, "%.1fhz", freq);
-        else sprintf(strbuff, "%.2fkhz", freq / 1000.0f);
+        if (FILTERSCALE < 100.0f) sprintf(strbuff, "%.2fhz", FILTERSCALE);
+        else if (FILTERSCALE < 1000.0f) sprintf(strbuff, "%.1fhz", FILTERSCALE);
+        else sprintf(strbuff, "%.2fkhz", ((FILTERSCALE) / 1000.0f));
         if (param == 1 && selected) WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 4 * (CHAR_HEIGHT + 4), ACCENT1);
         else                        WriteString(display, strbuff, x + FX_BUFFER + 8, y + FX_BUFFER + 34 + 4 * (CHAR_HEIGHT + 4), MAIN);
 
@@ -121,9 +122,12 @@ public:
             else filterMode = (FILTERMODE) temp;
             param = 0;
         } else if (param == 1) {
-            freq += pow(freq, 0.8f) / 10.0f;
-            filterL.SetFreq(freq);
-            filterR.SetFreq(freq);
+            freq += 0.01;
+            if (freq > 1) {
+                freq = 1;
+            }
+            filterL.SetFreq(FILTERSCALE);
+            filterR.SetFreq(FILTERSCALE);
         } else if (param == 2) {
             res += 0.01;
             filterL.SetRes(res);
@@ -141,9 +145,12 @@ public:
             if (temp < 0) filterMode = (FILTERMODE) 3;
             else filterMode = (FILTERMODE) temp;
         } else if (param == 1) {
-            freq -= pow(freq, 0.8f) / 10.0f;
-            filterL.SetFreq(freq);
-            filterR.SetFreq(freq);
+            freq -= 0.01;
+            if (freq < 0) {
+                freq = 0;
+            }
+            filterL.SetFreq(FILTERSCALE);
+            filterR.SetFreq(FILTERSCALE);
         } else if (param == 2) {
             res -= 0.01;
             filterL.SetRes(res);

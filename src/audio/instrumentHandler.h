@@ -9,6 +9,7 @@
 #include "fx/filter.h"
 #include "fx/distortion.h"
 #include "fx/compression.h"
+#include "fx/autopan.h"
 #include "dev/oled_ssd130x.h"
 
 using MyOledDisplay = OledDisplay<SSD130xI2c128x64Driver>;
@@ -53,11 +54,11 @@ public:
             return;
         } 
 
-        activeInst->Process(left, left);
+        activeInst->Process(left, right);
        
         if (!preview) { // only process with effects if playing from sequence
             for (Effect* effect : effects) {
-                effect->Process(left, left);
+                effect->Process(left, right);
             }
         }
     }
@@ -128,6 +129,7 @@ public:
         else if (type == Effect::FILTER)      return new Filter;
         else if (type == Effect::DISTORTION)  return new Distortion;
         else if (type == Effect::COMPRESSION) return new Compression;
+        else if (type == Effect::AUTOPAN)     return new Autopan;
         else                                  return new NoEffect;
     }
 

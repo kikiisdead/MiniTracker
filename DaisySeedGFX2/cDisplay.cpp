@@ -455,7 +455,7 @@ void cDisplay::switchOrientation(ORIENTATION Orientation) {
         m_Height = m_Width;
         m_Width = memHeight;
 
-        uint8_t Mem = m_DitryBlocHeight;
+        uint16_t Mem = m_DitryBlocHeight;
         m_DitryBlocHeight = m_DitryBlocWidth;
         m_DitryBlocWidth = Mem;
         
@@ -539,7 +539,7 @@ void cDisplay::flush() {
     for (uint8_t yIndexBloc = 0; yIndexBloc < m_NbDitryBlocY; yIndexBloc++) {
         for (uint8_t xIndexBloc = 0; xIndexBloc < m_NbDitryBlocX; xIndexBloc++) {
             // Check if the block is marked as dirty (needs updating)
-            if (m_DirtyBlocks[yIndexBloc][xIndexBloc] == 1) {
+            // if (m_DirtyBlocks[yIndexBloc][xIndexBloc] == 1) {
                 m_DirtyBlocks[yIndexBloc][xIndexBloc] = 0; // Mark block as clean
 
                 // Calculate X and Y positions of the block in the screen
@@ -590,10 +590,10 @@ void cDisplay::flush() {
                 }
                 // Add the processed block to the FIFO for transmission
                 while (AddBloc(blocX, blocY) == false) {
-                    System::Delay(1); // Wait if the FIFO is full
+                    System::DelayUs(50); // Wait if the FIFO is full
                 }
                 sendDMA(); // Transmit the block
-            }
+            // }
         }
     }
 }
@@ -699,34 +699,33 @@ bool cDisplay::sendDMA() {
     // - The callback function `sendCASETDMAData` will handle subsequent steps
     // - `this` provides context to the callback for handling other DMA stages
 
-    // Going to try to make into a blacking transmit instead
-    //  __disable_irq();
-    // SendDMACommand(&m_pFIFO->m_CmdCASET[m_FIFO_out].m_Commande, 
-    //                cDisplay::sendCASETDMAData, 
-    //                this);
-    // __enable_irq();
-    while (m_Busy) {
-        SendCommand(m_pFIFO->m_CmdCASET[m_FIFO_out].m_Commande);
-        SendData(m_pFIFO->m_CmdCASET[m_FIFO_out].m_Data, 4);
-        SendCommand(m_pFIFO->m_CmdRASET[m_FIFO_out].m_Commande);
-        SendData(m_pFIFO->m_CmdRASET[m_FIFO_out].m_Data, 4);
-        SendCommand(m_pFIFO->m_CmdRAWWR[m_FIFO_out].m_Commande);
-        SendData(m_pFIFO->m_CmdRAWWR[m_FIFO_out].m_Data, TAILLE_BLOC);
+     __disable_irq();
+    SendDMACommand(&m_pFIFO->m_CmdCASET[m_FIFO_out].m_Commande, 
+                   cDisplay::sendCASETDMAData, 
+                   this);
+    __enable_irq();
 
-        m_FIFO_out++;
-        if (m_FIFO_out >= SIZE_FIFO) {
-            m_FIFO_out = 0;  // Wrap the index around if it exceeds the FIFO size
-        }
-        m_FIFO_NbElements -= 1;  // Decrease the number of elements in the FIFO
+    // while (m_Busy) {
+    //     SendCommand(m_pFIFO->m_CmdCASET[m_FIFO_out].m_Commande);
+    //     SendData(m_pFIFO->m_CmdCASET[m_FIFO_out].m_Data, 4);
+    //     SendCommand(m_pFIFO->m_CmdRASET[m_FIFO_out].m_Commande);
+    //     SendData(m_pFIFO->m_CmdRASET[m_FIFO_out].m_Data, 4);
+    //     SendCommand(m_pFIFO->m_CmdRAWWR[m_FIFO_out].m_Commande);
+    //     SendData(m_pFIFO->m_CmdRAWWR[m_FIFO_out].m_Data, TAILLE_BLOC);
 
-        if (m_FIFO_NbElements != 0) {
-            m_Busy = true;
-        } else {
-            // If the FIFO is empty, mark the display as no longer busy
-            m_Busy = false;
-        }
-    }
+    //     m_FIFO_out++;
+    //     if (m_FIFO_out >= SIZE_FIFO) {
+    //         m_FIFO_out = 0;  // Wrap the index around if it exceeds the FIFO size
+    //     }
+    //     m_FIFO_NbElements -= 1;  // Decrease the number of elements in the FIFO
 
+    //     if (m_FIFO_NbElements != 0) {
+    //         m_Busy = true;
+    //     } else {
+    //         // If the FIFO is empty, mark the display as no longer busy
+    //         m_Busy = false;
+    //     }
+    // }
 
     // Return true to indicate that transmission was successfully started
     return true;

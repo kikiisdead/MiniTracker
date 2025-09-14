@@ -17,7 +17,7 @@ using namespace DadGFX;
 
 class Effect {
 public:
-    enum EFFECT_TYPE { NOFX, FILTER, DISTORTION, COMPRESSION };
+    enum EFFECT_TYPE { NOFX, FILTER, DISTORTION, COMPRESSION, AUTOPAN };
 
     bool selected;
     EFFECT_TYPE effectType;
@@ -27,12 +27,24 @@ public:
     virtual void Display(cLayer*, int, int) = 0;
     virtual void Increment() = 0;
     virtual void Decrement() = 0;
-    virtual void NextParam() = 0;
-    virtual void PrevParam() = 0;
+    virtual void NextParam() {
+        param += 1;
+        if (param > paramNum - 1) {
+            param = paramNum - 1;
+        }
+    }
+
+    virtual void PrevParam() {
+        param -= 1;
+        if (param < 0) {
+            param = 0;
+        }
+    }
 
 protected:
     char strbuff[20];
     int param;
+    int paramNum;
     cFont* MainFont;
 
     void WriteString(cLayer* display, char* strbuff, int x, int y, DadGFX::sColor color) {

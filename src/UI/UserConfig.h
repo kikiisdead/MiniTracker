@@ -48,12 +48,14 @@
 // - TFT_WIDTH must be evenly divisible by BLOC_WIDTH
 // - TFT_HEIGHT must be evenly divisible by BLOC_HEIGHT
 // Example: For a 240x320 screen, a block size of 24x32 is valid
-#define NB_BLOC_WIDTH   2               // Number of blocks horizontally
-#define NB_BLOC_HEIGHT  2               // Number of blocks vertically
+#define NB_BLOC_WIDTH   5               // Number of blocks horizontally
+#define NB_BLOC_HEIGHT  5               // Number of blocks vertically
 #define NB_BLOCS        NB_BLOC_WIDTH * NB_BLOC_HEIGHT // Total number of blocks
 #define BLOC_WIDTH      TFT_WIDTH / NB_BLOC_WIDTH      // Width of each block in pixels
 #define BLOC_HEIGHT     TFT_HEIGHT / NB_BLOC_HEIGHT    // Height of each block in pixels
 
 //-------------------------------------------------------------------------
 // FIFO size for SPI block transmission via DMA
-#define SIZE_FIFO 5  // Number of blocks in the FIFO buffer
+#define SIZE_FIFO 2  // Number of blocks in the FIFO buffer
+
+// I'm making every block dirty every time meaning that FIFO is overloaded. need to be more conservative with deiplay usage.

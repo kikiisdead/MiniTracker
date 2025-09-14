@@ -185,7 +185,7 @@ void AudioCallback(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, s
       float tempR = 0.0f;
       hand->Process(tempL, tempR);
       outL += tempL * 0.5f;
-      outR += tempL * 0.5f;
+      outR += tempR * 0.5f;
     }
 
     out[0][i] = outL;
@@ -226,7 +226,7 @@ int main(void)
    * Initializing Seed Audio
    */
   hw.SetAudioBlockSize(8); // number of samples handled per callback
-  hw.SetAudioSampleRate(SaiHandle::Config::SampleRate::SAI_96KHZ);
+  hw.SetAudioSampleRate(SaiHandle::Config::SampleRate::SAI_48KHZ);
 
   float samplerate = hw.AudioSampleRate();
 
@@ -355,6 +355,6 @@ int main(void)
   for (;;) {
     (*userInterface)->UpdateDisplay(pMain); 
     __Display.flush();
-    System::Delay(10);
+    System::Delay(17);
   }
 }

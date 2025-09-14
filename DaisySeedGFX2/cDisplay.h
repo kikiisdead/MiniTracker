@@ -19,7 +19,7 @@ namespace DadGFX {
 // Macro utility
 //***********************************************************************************
 #define DECLARE_DISPLAY(DisplayName)\
-DadGFX::sFIFO_Data                           DisplayName##FIFO;									 /*FIFO pour émission SPI en SRAM*/\
+DadGFX::sFIFO_Data   DMA_BUFFER_MEM_SECTION  DisplayName##FIFO;									 /*FIFO pour émission SPI en SRAM*/\
 DadGFX::sColor       DSY_SDRAM_BSS           DisplayName##BlocFrame[BLOC_HEIGHT][BLOC_WIDTH];    /* Frame Blocs*/\
 DadGFX::cDisplay 				 			 DisplayName;					                     /* Screen */
 
@@ -345,11 +345,11 @@ private :
 
     // --------------------------------------------------------------------------
     // Dirty block management
-    uint8_t m_DirtyBlocks[NB_BLOC_MAX][NB_BLOC_MAX];  // Dirty block flags
-    uint8_t m_DitryBlocWidth;       // Width of a dirty block in pixels
-    uint8_t m_DitryBlocHeight;      // Height of a dirty block in pixels
-    uint8_t m_NbDitryBlocX;         // Number of dirty blocks horizontally
-    uint8_t m_NbDitryBlocY;         // Number of dirty blocks vertically
+    uint16_t m_DirtyBlocks[NB_BLOC_MAX][NB_BLOC_MAX];  // Dirty block flags
+    uint16_t m_DitryBlocWidth;       // Width of a dirty block in pixels
+    uint16_t m_DitryBlocHeight;      // Height of a dirty block in pixels
+    uint16_t m_NbDitryBlocX;         // Number of dirty blocks horizontally
+    uint16_t m_NbDitryBlocY;         // Number of dirty blocks vertically
     sColor* m_pDitryBlocFrame;      // Temporary framebuffer for a dirty block
 
     // --------------------------------------------------------------------------

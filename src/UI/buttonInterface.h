@@ -6,8 +6,7 @@
 #include "../../DaisySeedGFX2/cDisplay.h"
 #include "util/colors.h"
 
-#define CHAR_WIDTH 9
-#define CHAR_HEIGHT 12
+
 
 using namespace daisy;
 using namespace DadGFX;
@@ -37,6 +36,8 @@ public:
     virtual void AltPlayButton() = 0;
 
     virtual void UpdateDisplay(cLayer* tft) = 0;
+
+protected:
     
 };
 

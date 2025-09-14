@@ -1,12 +1,15 @@
 #include "fxDisplay.h"
 
 void FXDisplay::UpdateDisplay(cLayer* display) {
-    display->drawFillRect(0, 0, 320, 240, BACKGROUND);
+
+    display->eraseLayer();
 
     for (size_t i = 0; i < handler.at(currentLane)->effects.size(); i++) {
         handler.at(currentLane)->effects.at(i)->Display(display, i * (FX_WIDTH + FX_BUFFER), 20);
     }
 
+
+    display->drawFillRect(0, 0, 320, CHAR_HEIGHT + 7, BACKGROUND);
     display->drawFillRect(currentLane * (320 / 4), 0, 320/4, CHAR_HEIGHT + 7, ACCENT2);
 
     sprintf(strbuff, "LANE 1");
@@ -24,6 +27,7 @@ void FXDisplay::UpdateDisplay(cLayer* display) {
     sprintf(strbuff, "LANE 4");
     if (currentLane == 3) WriteString(display, strbuff, 3 * (320 / 4) + 4, CHAR_HEIGHT + 2, MAIN);
     else                  WriteString(display, strbuff, 3 * (320 / 4) + 4, CHAR_HEIGHT + 2, ACCENT1);
+    
 
     if (changeEffect) {
 
@@ -49,6 +53,10 @@ void FXDisplay::UpdateDisplay(cLayer* display) {
         sprintf(strbuff, "COMPRESSOR");
         if (type == 3) WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 4, MAIN);
         else           WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 4, MAIN);
+
+        sprintf(strbuff, "AUTOPAN");
+        if (type == 4) WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 5, MAIN);
+        else           WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 5, MAIN);
     }
 
 }
@@ -87,7 +95,7 @@ void FXDisplay::DownButton(){
     if (!changeEffect) CURRENT_EFFECT->NextParam();
     else {
         type += 1;
-        if (type > 3) type = 3;
+        if (type > 4) type = 4;
     }
 }
 

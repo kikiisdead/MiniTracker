@@ -58,6 +58,7 @@ private:
     bool playing_;
     bool stepEdit_;
     bool song_;
+    bool updateStep, updatePattern, updateSidebar;
     float bpm;
     float timePerTick;
     char strbuff[20];
@@ -120,6 +121,9 @@ public:
         lastTrigger = 0;
         laneOffset = 0;
         this->MainFont = MainFont;
+        updateStep = true;
+        updateSidebar = true;
+        updatePattern = true;
     }
     
 

@@ -11,7 +11,7 @@ void InstrumentDisplay::Init(std::vector<Instrument*> instruments_, InstrumentHa
 }
 
 void InstrumentDisplay::UpdateDisplay(cLayer* display) {
-    display->drawFillRect(0, 0, 320, 240, BACKGROUND);
+    display->eraseLayer();
 
     /**
      * Drawing waveform
@@ -22,8 +22,6 @@ void InstrumentDisplay::UpdateDisplay(cLayer* display) {
         range = (*activeInst)->visual[i] * ((double) WAVEHEIGHT / (double) 0x8FFF);
         y1 = (range / 2.0f) + (WAVEHEIGHT / 2.0f);
         y0 = y1 - range;
-        // if (i >= selBeg && i < selEnd) oled.DrawLine(i, y0, i, y1, false);
-        // else oled.DrawLine(i, y0, i, y1, true);
 
         display->drawLine(i, y0, i, y1, ACCENT1);
     }

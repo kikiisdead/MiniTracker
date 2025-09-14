@@ -64,12 +64,14 @@ public:
         if (drive >= 1.0f) {
             drive = 1.0f;
         }
+        overdrive.SetDrive(drive);
     }
     void Decrement() {
         drive -= 0.01f;
         if (drive <= 0.0f) {
             drive = 0.0f;
         }
+        overdrive.SetDrive(drive);
     }
 
     void NextParam() {}

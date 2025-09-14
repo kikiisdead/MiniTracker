@@ -13,4 +13,7 @@
 #define BACKGROUND sColor(0, 0, 0, 255)
 #define ALTBACKGROUND sColor(48, 48, 48, 255)
 
+#define CHAR_WIDTH 9
+#define CHAR_HEIGHT 12
+
 #endif
