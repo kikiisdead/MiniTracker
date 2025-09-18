@@ -1,7 +1,3 @@
-/* Current Limitations:
-- can only playback mono files right now (if passed a stereo file, will interpolate between channels)
-- need to create separate buffers for left and right
-*/
 #pragma once
 #ifndef SAMPLE_PLAYER
 #define SAMPLE_PLAYER /**< Macro */
@@ -17,16 +13,14 @@
 
 namespace daisy
 {
-// TODO: add bitrate, samplerate, length, etc.
+
 /** Struct containing details of Wav File. */
 
 struct WavFile
 {
-    WAV_FormatTypeDef format;               /**< Raw wav data */
-    char              name[WAV_FILENAME_MAX]; /**< Wav filename */
-    // int32_t           **sample; // use a 2D array instead to deal with any num channels
-    void*             start; // start index in buffer
-    // size_t            size; // end index in buffer
+    WAV_FormatTypeDef           format;                 /**< Raw wav data */
+    char                        name[WAV_FILENAME_MAX]; /**< Wav filename */
+    void*                       start;                  /**< start index in SDRAM buffer */
 };
 
 /* 
@@ -90,6 +84,14 @@ public:
     uint16_t* GetVisual (int length);
 
     char* GetName() { return wave->name; }
+
+    int GetNumChannels() { return wave->format.NbrChannels; }
+
+    int GetSampleRate() { return wave->format.SampleRate; }
+    
+    int GetBitsPerSample() { return wave->format.BitPerSample; }
+
+    int GetRawSize() { return wave->format.SubCHunk2Size; }
 
 private:
 

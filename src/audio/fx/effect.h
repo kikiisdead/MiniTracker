@@ -17,7 +17,7 @@ using namespace DadGFX;
 
 class Effect {
 public:
-    enum EFFECT_TYPE { NOFX, FILTER, DISTORTION, COMPRESSION, AUTOPAN };
+    enum EFFECT_TYPE { NOFX, FILTER, DISTORTION, COMPRESSION, AUTOPAN, REDUX };
 
     bool selected;
     EFFECT_TYPE effectType;

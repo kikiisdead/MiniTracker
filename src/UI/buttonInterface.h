@@ -36,9 +36,6 @@ public:
     virtual void AltPlayButton() = 0;
 
     virtual void UpdateDisplay(cLayer* tft) = 0;
-
-protected:
-    
 };
 
 #endif

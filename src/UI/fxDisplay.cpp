@@ -57,13 +57,12 @@ void FXDisplay::UpdateDisplay(cLayer* display) {
         sprintf(strbuff, "AUTOPAN");
         if (type == 4) WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 5, MAIN);
         else           WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 5, MAIN);
+
+        sprintf(strbuff, "REDUX");
+        if (type == 5) WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 6, MAIN);
+        else           WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 6, MAIN);
     }
 
-}
-
-void FXDisplay::WriteString(MyOledDisplay &display, uint16_t x, uint16_t y, bool on) {
-    display.SetCursor(x, y);
-    display.WriteString(strbuff, Font_4x6, on);
 }
 
 void FXDisplay::AButton() {
@@ -95,7 +94,7 @@ void FXDisplay::DownButton(){
     if (!changeEffect) CURRENT_EFFECT->NextParam();
     else {
         type += 1;
-        if (type > 4) type = 4;
+        if (type > 5) type = 5;
     }
 }
 

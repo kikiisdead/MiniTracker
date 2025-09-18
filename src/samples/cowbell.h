@@ -1,3 +1,0 @@
-// Audio data converted from WAV file by wav2sketch
-
-extern unsigned int cowbell[5825];

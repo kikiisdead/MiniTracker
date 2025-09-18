@@ -154,12 +154,14 @@ void InstrumentDisplay::UpdateDisplay(cLayer* display) {
         }
         yOffset += CHAR_HEIGHT + 8;
     }
-    
-}
 
-void InstrumentDisplay::WriteString(MyOledDisplay &display, uint16_t x, uint16_t y, bool on) {
-    display.SetCursor(x, y);
-    display.WriteString(strbuff, Font_4x6, on);
+
+    sprintf(strbuff, "%d", (*activeInst)->GetSize());
+    WriteString(display, strbuff, 100, 1 * (CHAR_HEIGHT + 4), ACCENT1);
+    sprintf(strbuff, "%d", (*activeInst)->GetNumChannels());
+    WriteString(display, strbuff, 100, 2 * (CHAR_HEIGHT + 4), ACCENT1);
+    sprintf(strbuff, "%d", (*activeInst)->GetSampleRate());
+    WriteString(display, strbuff, 100, 3 * (CHAR_HEIGHT + 4), ACCENT1);
 }
 
 void InstrumentDisplay::WriteString(cLayer* display, char* strbuff, int x, int y, DadGFX::sColor color) {
@@ -168,13 +170,6 @@ void InstrumentDisplay::WriteString(cLayer* display, char* strbuff, int x, int y
     display->setTextFrontColor(color);
     display->drawText(strbuff);
 }
-
-void InstrumentDisplay::DrawArrow(MyOledDisplay &display, int x, int y) {
-    display.DrawPixel(x, y, true);
-    display.DrawPixel(x + 1, y - 1, true);
-    display.DrawPixel(x + 1, y + 1, true);
-}
-
 
 void InstrumentDisplay::AButton() {
     if (!sliceEdit) return;

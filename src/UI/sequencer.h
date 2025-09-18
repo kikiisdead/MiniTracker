@@ -1,3 +1,4 @@
+#pragma once
 #ifndef SEQUENCER_H
 #define SEQUENCER_H
 
@@ -5,13 +6,11 @@
 #include "daisy_seed.h"
 #include "../audio/instrumentHandler.h"
 #include "step.h"
-#include "dev/oled_ssd130x.h"
 #include <vector>
 
 #define OFF -1
 
 using namespace daisy;
-using MyOledDisplay = OledDisplay<SSD130xI2c128x64Driver>;
 
 class Lane {
 public:
@@ -43,7 +42,6 @@ public:
 
 class Sequencer : public buttonInterface {
 private:
-    // MyOledDisplay* display_;
     std::vector<InstrumentHandler*> handler_;
     std::vector<Pattern*> patterns; // holds all the possible patterns made
     std::vector<int> songOrder; // holds the order of the patterns

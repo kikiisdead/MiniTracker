@@ -1,3 +1,4 @@
+#pragma once
 #include "daisy.h"
 #include "../../../DaisySeedGFX2/cDisplay.h"
 

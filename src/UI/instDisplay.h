@@ -1,3 +1,4 @@
+#pragma once
 #ifndef INST_DISPLAY_H
 #define INST_DISPLAY_H
 
@@ -46,9 +47,7 @@ private:
     bool sliceEdit;
     cFont* MainFont;
 
-    void WriteString(MyOledDisplay &display, uint16_t x, uint16_t y, bool on);
     void WriteString(cLayer* display, char* strbuff, int x, int y, DadGFX::sColor color);
-    void DrawArrow(MyOledDisplay &display, int x, int y);
 };
 
 #endif

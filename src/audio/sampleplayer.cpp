@@ -13,7 +13,7 @@ void SamplePlayer::Init(WavFile* wave_, float samplerate_)
     // Only checks '/'
     samplerate = samplerate_;
     wave = wave_;
-    size_ = wave->format.SubChunk2Size / wave->format.NbrChannels; // for interleaved
+    size_ = wave->format.SubCHunk2Size / wave->format.NbrChannels; // for interleaved
     playing_  = false;
     looping_  = false;
     SetPitch(0.0);
@@ -67,7 +67,7 @@ uint16_t* SamplePlayer::GetVisual(int size) {
         float max = 0.0f;
 
         for (size_t j = 0; j < stepSize; j++) {
-            float step = abs(*(SAMP_POINTER + (i * stepSize) + j));
+            float step = abs(*(SAMP_POINTER + ((i * stepSize) + j) * wave->format.NbrChannels));
             if (step > max) {
                 max = step;
             }
@@ -101,11 +101,11 @@ void SamplePlayer::Process(float& outL, float& outR) {
 
     for (uint16_t i = 0; i < wave->format.NbrChannels; i++) {
         __disable_irq(); // prevent interrupts while accessing SDRAM (especially when using DMA)
-        int32_t t  =  (pos_integral) + i;
-        float  xm1 = *(SAMP_POINTER + ((t - (1 * wave->format.NbrChannels)) % size_)); // casting into float
-        float  x0  = *(SAMP_POINTER + ((t   ) % size_));
-        float  x1  = *(SAMP_POINTER + ((t + (1 * wave->format.NbrChannels)) % size_)); 
-        float  x2  = *(SAMP_POINTER + ((t + (2 * wave->format.NbrChannels)) % size_));
+        int32_t t  =  (pos_integral);
+        float  xm1 = *(SAMP_POINTER + (((t - 1) % size_) * wave->format.NbrChannels + i)); // casting into float
+        float  x0  = *(SAMP_POINTER + (((t    ) % size_) * wave->format.NbrChannels + i));
+        float  x1  = *(SAMP_POINTER + (((t + 1) % size_) * wave->format.NbrChannels + i)); 
+        float  x2  = *(SAMP_POINTER + (((t + 2) % size_) * wave->format.NbrChannels + i));
         __enable_irq();
 
         const float c     = (x1 - xm1) * 0.5f;
@@ -119,7 +119,6 @@ void SamplePlayer::Process(float& outL, float& outR) {
     }
 
     outL = interpolated[0];
-    if (wave->format.NbrChannels > 1) outR = interpolated[1];
-    else outR = interpolated[0];
+    outR = interpolated[wave->format.NbrChannels - 1];
     
 }

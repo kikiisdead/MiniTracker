@@ -5,7 +5,9 @@
 
 class Distortion : public Effect {
 public:
-
+    Distortion(){}
+    ~Distortion(){}
+    
     void Init(float samplerate, cFont* MainFont) {
         overdrive.Init();
 
@@ -55,7 +57,11 @@ public:
             arcY = sin((deg + degOffset) * (PI_F / 180.0f));
 
             sprintf(strbuff, "%d", i);
-            WriteString(display, strbuff, centerX + arcX * 40 - (CHAR_WIDTH / 2), centerY + arcY * 40 + (CHAR_HEIGHT / 2), MAIN);
+            if ((int)(drive * 10.0f) == i) {
+                WriteString(display, strbuff, centerX + arcX * 40 - (CHAR_WIDTH / 2), centerY + arcY * 40 + (CHAR_HEIGHT / 2), ACCENT1);
+            } else {
+                WriteString(display, strbuff, centerX + arcX * 40 - (CHAR_WIDTH / 2), centerY + arcY * 40 + (CHAR_HEIGHT / 2), MAIN);
+            }
         }
     }
 

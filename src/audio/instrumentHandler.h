@@ -1,3 +1,4 @@
+#pragma once
 #ifndef INSTRUMENT_HANDLER_H
 #define INSTRUMENT_HANDLER_H
 
@@ -10,6 +11,7 @@
 #include "fx/distortion.h"
 #include "fx/compression.h"
 #include "fx/autopan.h"
+#include "fx/redux.h"
 #include "dev/oled_ssd130x.h"
 
 using MyOledDisplay = OledDisplay<SSD130xI2c128x64Driver>;
@@ -130,6 +132,7 @@ public:
         else if (type == Effect::DISTORTION)  return new Distortion;
         else if (type == Effect::COMPRESSION) return new Compression;
         else if (type == Effect::AUTOPAN)     return new Autopan;
+        else if (type == Effect::REDUX)       return new Redux;
         else                                  return new NoEffect;
     }
 

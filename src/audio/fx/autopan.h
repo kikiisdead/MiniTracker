@@ -7,6 +7,9 @@
 
 class Autopan : public Effect {
 public:
+    Autopan(){};
+    ~Autopan(){}
+
     void Init(float samplerate, cFont* MainFont) {
         // REQUIRED INITIALIZERS 
         param = 0;

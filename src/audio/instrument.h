@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef INSTRUMENT_H
 #define INSTRUMENT_H
 
@@ -70,6 +72,14 @@ public:
     float GetGain() { return gain; }
 
     char* GetName() { return samplePlayer.GetName(); }
+
+    int GetNumChannels() { return samplePlayer.GetNumChannels(); }
+
+    int GetSampleRate() { return samplePlayer.GetSampleRate(); }
+    
+    int GetBitsPerSample() { return samplePlayer.GetBitsPerSample(); }
+
+    int GetRawSize() { return samplePlayer.GetRawSize(); }
 
     param GetEdit() { return edit; }
 

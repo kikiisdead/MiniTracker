@@ -1,24 +1,16 @@
 #include "daisy_seed.h"
 #include "daisysp.h"
-#include "src/audio/decode.h"
 #include "fatfs.h"
 #include "src/UI/sequencer.h"
 #include "src/UI/button.h"
-#include "src/samples/cowbell.h"
-#include "src/samples/collins.h"
 #include "src/audio/sampleplayer.h"
 #include "src/UI/instDisplay.h"
 #include "src/UI/fxDisplay.h"
 #include <vector>
 #include <stdint.h>
 #include "DaisySeedGFX2/cDisplay.h"
-#include "src/UI/util/KodeMono_Regular20pt7b.h"
-#include "src/UI/util/KodeMono_Regular10pt7b.h"
-#include "src/UI/util/KodeMono_SemiBold10pt7b.h"
-#include "src/UI/util/KodeMono_SemiBold6pt7b.h"
-#include "src/UI/util/KodeMono_SemiBold8pt7b.h"
 #include "src/UI/util/KodeMono_Regular8pt7b.h"
-#include "src/UI/util/KodeMono_Bold10pt7b.h"
+#include "src/sd/waveFileLoader.h"
 
 #define LANE_NUMBER 4
 
@@ -82,6 +74,12 @@ void* sample_buffer_allocate(size_t size)
   buffer_index += size;
   return ptr;
 }
+
+/**
+ * WaveFileLoader
+ */
+
+WaveFileLoader waveFileLoader;
 
 /**
  * USER INTERFACES
@@ -230,61 +228,15 @@ int main(void)
 
   float samplerate = hw.AudioSampleRate();
 
-  // move to sample loader eventually
-  // load into sample buffer get pointer to beginning of sub array and size
-  sample.format.AudioFormat = WAVE_FORMAT_ULAW;
-  sample.format.BitPerSample = 8;
-  sample.format.SampleRate = 44100;
-  sample.format.NbrChannels = 1;
-  sample.format.SubChunk2Size = sizeof(collins);
-  sample.start = sample_buffer_allocate(sample.format.SubChunk2Size * sizeof(float));
-  
-  sprintf(sample.name, "COLLINS");
+  /**
+   * Initialize Wave File Loader
+   */
+  waveFileLoader.Init(samplerate, sample_buffer_allocate);
 
-  void* readPtr = &collins[0];
-  
-  void* writePtr = sample.start;
-
-  size_t readIndex = 0;
-
-  while (readIndex < sample.format.SubChunk2Size) {
-    int16_t val = MuLaw2Lin((*(static_cast<uint8_t*>(readPtr)) * -1) - 1); // get the sample and convert
-    float samp = s162f(val); // turn to float
-    readPtr = static_cast<uint8_t*>(readPtr) + 1;
-    readIndex += 1;
-    *(static_cast<float*>(writePtr)) = samp;
-    writePtr = static_cast<float*>(writePtr) + 1;
-  }
-
-  sample2.format.AudioFormat = WAVE_FORMAT_ULAW;
-  sample2.format.BitPerSample = 8;
-  sample2.format.SampleRate = 44100;
-  sample2.format.NbrChannels = 1;
-  sample2.format.SubChunk2Size = sizeof(cowbell); // getting bytes
-  sample2.start = sample_buffer_allocate(sample2.format.SubChunk2Size * sizeof(float)); // because mulaw, each byte becomes 1 float
-  
-  sprintf(sample2.name, "COWBELL");
-
-  readPtr = &cowbell[0];
-  
-  writePtr = sample2.start;
-
-  readIndex = 0;
-
-  while (readIndex < sample2.format.SubChunk2Size) {
-    int16_t val = MuLaw2Lin((*(static_cast<uint8_t*>(readPtr)) * -1) - 1); // get the sample and convert
-    float samp = s162f(val);
-    readPtr = static_cast<uint8_t*>(readPtr) + 1;
-    readIndex += 1;
-    *(static_cast<float*>(writePtr)) = samp;
-    writePtr = static_cast<float*>(writePtr) + 1;
-  }
-
-  instruments.push_back(new Instrument);
-  instruments.back()->Init(samplerate, &sample);
-
-  instruments.push_back(new Instrument);
-  instruments.back()->Init(samplerate, &sample2);
+  instruments.push_back(waveFileLoader.CreateInstrument(0)); // loads a wave file, 
+  instruments.push_back(waveFileLoader.CreateInstrument(1));
+  instruments.push_back(waveFileLoader.CreateInstrument(2));
+  instruments.push_back(waveFileLoader.CreateInstrument(3));
 
   /**
    * Building instrument handlers

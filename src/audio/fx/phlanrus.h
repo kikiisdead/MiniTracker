@@ -1,12 +1,14 @@
-#ifndef NO_EFFECT_H
-#define NO_EFFECT_H
+#ifndef PHLANRUS_H
+#define PHLANRUS_H
 
 #include "effect.h"
 
-class NoEffect : public Effect {
+
+
+class Phlanrus : public Effect {
 public:
-    NoEffect(){}
-    ~NoEffect(){}
+    Phlanrus(){}
+    ~Phlanrus(){}
 
     void Init(float samplerate, cFont* MainFont) {
         param = 0;
@@ -14,6 +16,8 @@ public:
         selected = false;
         effectType = NOFX;
         this->MainFont = MainFont;
+
+        phaser.Init(samplerate);
     }
 
     void Process(float& left, float& right) {
@@ -34,6 +38,11 @@ public:
     void Decrement(){}
     void NextParam(){}
     void PrevParam(){}
+
+private:
+    Phaser  phaser;
+    Flanger flanger;
+    Chorus  chorus;
 };
 
 #endif

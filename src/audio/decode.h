@@ -1,3 +1,5 @@
+#pragma once
+
 #include "daisy.h"
 #include <cmath>
 

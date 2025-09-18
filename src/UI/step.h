@@ -1,3 +1,4 @@
+#pragma once
 #ifndef step_h
 #define step_h
 
