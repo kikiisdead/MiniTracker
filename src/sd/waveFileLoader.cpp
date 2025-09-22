@@ -5,36 +5,23 @@
 void WaveFileLoader::Init(float samplerate, void* (*sample_buffer_allocate)(size_t size)) {
     this->samplerate = samplerate;
     this->sample_buffer_allocate = sample_buffer_allocate;
-
-    SdmmcHandler::Config sd_cfg;
-    sd_cfg.Defaults();
-    sd_cfg.speed = SdmmcHandler::Speed::SLOW;
-    if (sd.Init(sd_cfg) == SdmmcHandler::Result::OK) {
-        // FatFS Interface
-        if (fsi.Init(FatFSInterface::Config::MEDIA_SD) == FatFSInterface::Result::OK) {
-            // Mount SD Card
-            f_mount(&fsi.GetSDFileSystem(), "/", 1);
-            safe = true;
-            OpenDir("/");
-            return;
-        }
-    }
-    safe = false;
+    safe = true;
+    rootNode.up = nullptr;
+    sprintf(rootNode.data.name, "/");
+    OpenDir(rootNode.data.name, &rootNode);
 }
 
-void WaveFileLoader::OpenDir(const char* appendPath) {
+void WaveFileLoader::OpenDir(const char* path, Node<File>* node) {
     if (!safe) return; // does nothing if f_mount failed
-    f_closedir(&dir);
 
-    sprintf(searchpath + strlen(searchpath), appendPath);
+    DIR            dir; // exist locally for each recursive call as opposed to globally
+    FILINFO        fno;
 
-    if (f_opendir(&dir, searchpath) != FR_OK) {
+    if (f_opendir(&dir, path) != FR_OK) {
         safe = false;
         return;
     }
-
-    fileNames.clear();
-
+    
     bool result;
     do
     {
@@ -42,44 +29,46 @@ void WaveFileLoader::OpenDir(const char* appendPath) {
         // Exit if bad read or NULL fname
         if(result != FR_OK || fno.fname[0] == 0)
             break;
+
         // Skip if its a hidden file.
         if(fno.fattrib & (AM_HID))
             continue;
-        
-        file finfo;
-        sprintf(finfo.searchpath, searchpath);
-        sprintf(finfo.name, searchpath);
-        sprintf(finfo.name + strlen(finfo.name), fno.fname);
-        finfo.attrib = fno.fattrib;
-        fileNames.push_back(finfo);
+
+        node->down.push_back(new Node<File>);
+        node->down.back()->up = node;
+
+        sprintf(node->down.back()->data.name, "%.254s/", node->data.name);
+        sprintf(node->down.back()->data.name + strlen(node->down.back()->data.name), fno.fname);
+        node->down.back()->data.attrib = fno.fattrib;
+
+        if (node->down.back()->data.attrib & (AM_DIR)) {
+            // only recursive if it is a directory
+            OpenDir(node->down.back()->data.name, node->down.back());
+        } else {
+            node->down.back()->down.push_back(nullptr);
+        }
 
     } while(result == FR_OK);
 
-
+    f_closedir(&dir);
 }
 
-std::vector<file> WaveFileLoader::GetFileNames() {
-    return fileNames;
-}
-
-Instrument* WaveFileLoader::CreateInstrument(int index) {
+Instrument* WaveFileLoader::CreateInstrument(Node<File>* node) {
     if (!safe) return nullptr; // can't find sd card
+
+    
     UINT bytesread;
 
-    if (fileNames.at(index).attrib & (AM_DIR)) {
-        OpenDir(fileNames.at(index).name);
+    if (node->data.attrib & (AM_DIR)) {
         return nullptr;
     }
 
-    // std::string fileSearch = name + searchpath;
+    if (f_open(&fil, node->data.name, (FA_OPEN_EXISTING | FA_READ)) == FR_OK) {
 
-    if (f_open(&fil, fileNames.at(index).name, (FA_OPEN_EXISTING | FA_READ)) == FR_OK) {
 
         WavFile* sample = new WavFile; // CREATING ON HEAP
 
         WAV_FormatTypeDef wave;
-
-        // f_read(&fil, (void*)&wave, sizeof(wave), &bytesread);
 
         /**
          * RIFF Header
@@ -101,7 +90,7 @@ Instrument* WaveFileLoader::CreateInstrument(int index) {
         f_read(&fil, (void*)&(wave.BitPerSample), sizeof(wave.BitPerSample), &bytesread);
 
         /**
-         * Non PCM data has 2 byte extension size
+         * Non PCM data has 2 byte extension size (PCM data meaning 16bit PCM soa nything not that gets an extension)
          */
         if (wave.AudioFormat != WAVE_FORMAT_PCM) {
             f_read(&fil, (void*)&(wave.extensionSize), sizeof(wave.extensionSize), &bytesread);
@@ -125,7 +114,7 @@ Instrument* WaveFileLoader::CreateInstrument(int index) {
             f_read(&fil, (void*)&(wave.FactChunkID), sizeof(wave.FactChunkID), &bytesread);
             f_read(&fil, (void*)&(wave.FactChunkSize), sizeof(wave.FactChunkSize), &bytesread);
             f_read(&fil, (void*)&(wave.SampleLength), sizeof(wave.SampleLength), &bytesread);
-        }
+        } 
 
         /**
          * Data Chunk
@@ -133,7 +122,10 @@ Instrument* WaveFileLoader::CreateInstrument(int index) {
         f_read(&fil, (void*)&(wave.SubChunk2ID), sizeof(wave.SubChunk2ID), &bytesread);
         f_read(&fil, (void*)&(wave.SubCHunk2Size), sizeof(wave.SubCHunk2Size), &bytesread);
 
-        sprintf(sample->name, fileNames.at(index).name);
+        std::string file = std::string(node->data.name);
+        size_t index = file.find_last_of('/') + 1; 
+        std::string name = file.substr(index, file.length() - index);
+        sprintf(sample->name, "%s", name.c_str());
 
         sample->format = wave;
         
@@ -144,6 +136,7 @@ Instrument* WaveFileLoader::CreateInstrument(int index) {
          */
         if (wave.AudioFormat == WAVE_FORMAT_ULAW) {
             sample->start = sample_buffer_allocate((wave.SubCHunk2Size / sizeof(uint8_t)) * sizeof(float));
+            if (sample->start == 0) return nullptr;
   
             void* writePtr = sample->start;
             while (readIndex < wave.SubCHunk2Size) {
@@ -163,6 +156,7 @@ Instrument* WaveFileLoader::CreateInstrument(int index) {
          */
         else if (wave.AudioFormat == WAVE_FORMAT_ALAW) {
             sample->start = sample_buffer_allocate((wave.SubCHunk2Size / sizeof(uint8_t)) * sizeof(float));
+            if (sample->start == 0) return nullptr;
   
             void* writePtr = sample->start;
             while (readIndex < wave.SubCHunk2Size) {
@@ -184,6 +178,7 @@ Instrument* WaveFileLoader::CreateInstrument(int index) {
          */
         else if (wave.AudioFormat == WAVE_FORMAT_PCM && wave.BitPerSample == 16) {
             sample->start = sample_buffer_allocate((wave.SubCHunk2Size / sizeof(int16_t)) * sizeof(float));
+            if (sample->start == 0) return nullptr;
   
             void* writePtr = sample->start;
             while (readIndex < wave.SubCHunk2Size / sizeof(int16_t)) {
@@ -207,22 +202,32 @@ Instrument* WaveFileLoader::CreateInstrument(int index) {
             ||  wave.AudioFormat == WAVE_FORMAT_PCM)
             &&  wave.BitPerSample == 24) {
             sample->start = sample_buffer_allocate((wave.SubCHunk2Size / (sizeof(int8_t) * 3)) * sizeof(float));
+            if (sample->start == 0) return nullptr;
   
             void* writePtr = sample->start;
-            while (readIndex < wave.SubCHunk2Size / (sizeof(int8_t) * 3)) {
+            while (readIndex < wave.SubCHunk2Size / sizeof(Bit24x4)) {
 
-                int32_t val = 0; // need to have this initialized
-                int8_t byte;
+                Bit24x4 bit;
+                f_read(&fil, (void*)&bit, sizeof(bit), &bytesread);
+                
+                int32_t temp1 = ((bit.val1      ) & 0x00FFFFFF);
+                int32_t temp2 = ((bit.val1 >> 24) & 0x000000FF) | ((bit.val2 <<  8) & 0x00FFFF00);
+                int32_t temp3 = ((bit.val2 >> 16) & 0x0000FFFF) | ((bit.val3 << 16) & 0x00FF0000);
+                int32_t temp4 = ((bit.val3 >>  8) & 0x00FFFFFF);
 
-                for (int i = 0; i < 3; i++) { // reading 1 byte at a time and adding to val
-                    f_read(&fil, (void*)&byte, sizeof(byte), &bytesread);
-                    val = val | byte;
-                    val = val << (i * 8);
-                }
-
-                float samp = s242f(val); // turn to float
+                
+                float samp1 = s242f(temp1);
+                float samp2 = s242f(temp2);
+                float samp3 = s242f(temp3);
+                float samp4 = s242f(temp4);
                 readIndex += 1; 
-                *(static_cast<float*>(writePtr)) = samp; // add to sdram
+                *(static_cast<float*>(writePtr)) = samp1; // add to sdram
+                writePtr = static_cast<float*>(writePtr) + 1;
+                *(static_cast<float*>(writePtr)) = samp2; // add to sdram
+                writePtr = static_cast<float*>(writePtr) + 1;
+                *(static_cast<float*>(writePtr)) = samp3; // add to sdram
+                writePtr = static_cast<float*>(writePtr) + 1;
+                *(static_cast<float*>(writePtr)) = samp4; // add to sdram
                 writePtr = static_cast<float*>(writePtr) + 1;
             }
 
@@ -232,10 +237,11 @@ Instrument* WaveFileLoader::CreateInstrument(int index) {
          * READ 32bit float
          */
         else if (wave.AudioFormat == WAVE_FORMAT_IEEE_FLOAT) {
-            sample->start = sample_buffer_allocate((wave.SubCHunk2Size / sizeof(int16_t)) * sizeof(float));
+            sample->start = sample_buffer_allocate((wave.SubCHunk2Size / sizeof(float)) * sizeof(float));
+            if (sample->start == 0) return nullptr;
   
             void* writePtr = sample->start;
-            while (readIndex < wave.SubCHunk2Size / sizeof(int16_t)) {
+            while (readIndex < wave.SubCHunk2Size / sizeof(float)) {
 
                 float val;
 
@@ -246,6 +252,10 @@ Instrument* WaveFileLoader::CreateInstrument(int index) {
                 } else break;
             }
             sample->format.SubCHunk2Size = sample->format.SubCHunk2Size / sizeof(float);
+        } 
+        else { // if code does not match any type we can read
+            f_close(&fil);
+            return nullptr;
         }
 
         f_close(&fil);
@@ -253,6 +263,8 @@ Instrument* WaveFileLoader::CreateInstrument(int index) {
         Instrument* instrument = new Instrument; // CREATING ON HEAP
 
         instrument->Init(samplerate, sample);
+
+        // __enable_irq();
 
         return instrument;
     } else {

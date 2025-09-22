@@ -27,8 +27,8 @@ public:
         bitcrushR.Init();
         osc.Init(OSCDISPRATE);
 
-        bitcrushL.SetBitsToCrush(bitDepth);
-        bitcrushR.SetBitsToCrush(bitDepth);
+        bitcrushL.SetBitsToCrush(16 - bitDepth);
+        bitcrushR.SetBitsToCrush(16 - bitDepth);
 
         bitcrushL.SetDownsampleFactor(crush);
         bitcrushR.SetDownsampleFactor(crush);

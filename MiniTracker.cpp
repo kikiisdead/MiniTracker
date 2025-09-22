@@ -6,11 +6,13 @@
 #include "src/audio/sampleplayer.h"
 #include "src/UI/instDisplay.h"
 #include "src/UI/fxDisplay.h"
+#include "src/UI/sampDisplay.h"
 #include <vector>
 #include <stdint.h>
 #include "DaisySeedGFX2/cDisplay.h"
 #include "src/UI/util/KodeMono_Regular8pt7b.h"
 #include "src/sd/waveFileLoader.h"
+#include "../../../../DaisyExamples/DaisySP/DaisySP-LGPL/Source/Effects/reverbsc.h"
 
 #define LANE_NUMBER 4
 
@@ -26,8 +28,6 @@
 #define RightShoulderPin 14
 
 #define USE_DAISYSP_LGPL 1
-
-#define TOPI 6.283185307179
 
 using namespace daisy;
 using namespace daisysp;
@@ -47,10 +47,6 @@ std::vector<InstrumentHandler*> handler;
 std::vector<Instrument*> instruments;
 
 bool shift;
-
-WavFile sample;
-WavFile sample2;
-
 
 /**
  * SDRAM STUFF
@@ -78,7 +74,6 @@ void* sample_buffer_allocate(size_t size)
 /**
  * WaveFileLoader
  */
-
 WaveFileLoader waveFileLoader;
 
 /**
@@ -93,6 +88,8 @@ Sequencer sequencer;
 InstrumentDisplay instDisplay;
 
 FXDisplay fxDisplay;
+
+SampDisplay sampDisplay;
 
 
 /**
@@ -164,12 +161,14 @@ void InputHandle() {
   }
 }
 
+GPIO ok;
+GPIO ok2;
+
 /** LOOP */
 void AudioCallback(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, size_t size) 
 {
   float outL = 0;
   float outR = 0;
-  InputHandle(); 
   
   for (size_t i = 0; i < size; i++)
   {
@@ -208,19 +207,6 @@ int main(void)
   DadGFX::cFont MainFont(&KodeMono_Regular8pt7b);
 
   /**
-   * Initialize SDIO
-   */
-  SdmmcHandler::Config sd_cfg;
-  sd_cfg.Defaults();
-  if (sd.Init(sd_cfg) == SdmmcHandler::Result::OK) {
-    // FatFS Interface
-    if (fsi.Init(FatFSInterface::Config::MEDIA_SD) == FatFSInterface::Result::OK) {
-      // Mount SD Card
-      f_mount(&fsi.GetSDFileSystem(), "/", 1);
-    }
-  }
-
-  /**
    * Initializing Seed Audio
    */
   hw.SetAudioBlockSize(8); // number of samples handled per callback
@@ -228,15 +214,37 @@ int main(void)
 
   float samplerate = hw.AudioSampleRate();
 
-  /**
-   * Initialize Wave File Loader
-   */
-  waveFileLoader.Init(samplerate, sample_buffer_allocate);
+  // reverb.Init(samplerate);
 
-  instruments.push_back(waveFileLoader.CreateInstrument(0)); // loads a wave file, 
-  instruments.push_back(waveFileLoader.CreateInstrument(1));
-  instruments.push_back(waveFileLoader.CreateInstrument(2));
-  instruments.push_back(waveFileLoader.CreateInstrument(3));
+  /**
+   * Initialize SDIO
+   */
+  ok.Init(seed::D29, GPIO::Mode::OUTPUT);
+  ok2.Init(seed::D28, GPIO::Mode::OUTPUT);
+  SdmmcHandler::Config sd_cfg;
+  sd_cfg.Defaults();
+  //sd_cfg.speed = SdmmcHandler::Speed::SLOW;
+  if (sd.Init(sd_cfg) == SdmmcHandler::Result::OK) {
+    
+    // FatFS Interface
+    if (fsi.Init(FatFSInterface::Config::MEDIA_SD) == FatFSInterface::Result::OK) {
+      ok.Write(true);
+
+      // Mount SD Card
+      if (f_mount(&fsi.GetSDFileSystem(), "/", 1) == FR_OK) ok2.Write(true);
+
+      /**
+       * Initialize Wave File Loader
+       */
+      waveFileLoader.Init(samplerate, sample_buffer_allocate);
+
+      // Node<File>* root = waveFileLoader.GetRootNode();
+      // instruments.push_back(waveFileLoader.CreateInstrument(root->down.at(0)));
+    }
+  } 
+
+  
+  
 
   /**
    * Building instrument handlers
@@ -250,41 +258,41 @@ int main(void)
    * Initializing Buttons
    * sending callbacks and adding to buttons vector
    */
-  A.Init(hw.GetPin(APin), samplerate);
+  A.Init(hw.GetPin(APin), samplerate, false);
   A.CallbackHandler(APress);
   buttons.push_back(&A);
 
-  B.Init(hw.GetPin(BPin), samplerate);
+  B.Init(hw.GetPin(BPin), samplerate, false);
   B.CallbackHandler(BPress);
   buttons.push_back(&B);
 
-  Play.Init(hw.GetPin(PlayPin), samplerate);
+  Play.Init(hw.GetPin(PlayPin), samplerate, false);
   Play.CallbackHandler(PlayPress);
   buttons.push_back(&Play);
 
   Shift.Init(hw.GetPin(ShiftPin), samplerate);
 
-  Left.Init(hw.GetPin(LeftPin), samplerate);
+  Left.Init(hw.GetPin(LeftPin), samplerate, true);
   Left.CallbackHandler(LeftPress);
   buttons.push_back(&Left);
 
-  Right.Init(hw.GetPin(RightPin), samplerate);
+  Right.Init(hw.GetPin(RightPin), samplerate, true);
   Right.CallbackHandler(RightPress);
   buttons.push_back(&Right);
 
-  Up.Init(hw.GetPin(UpPin), samplerate);
+  Up.Init(hw.GetPin(UpPin), samplerate, true);
   Up.CallbackHandler(UpPress);
   buttons.push_back(&Up);
 
-  Down.Init(hw.GetPin(DownPin), samplerate);
+  Down.Init(hw.GetPin(DownPin), samplerate, true);
   Down.CallbackHandler(DownPress);
   buttons.push_back(&Down);
 
-  LeftShoulder.Init(hw.GetPin(LeftShoulderPin), samplerate);
+  LeftShoulder.Init(hw.GetPin(LeftShoulderPin), samplerate, false);
   LeftShoulder.CallbackHandler(LeftShoulderPress);
   buttons.push_back(&LeftShoulder);
 
-  RightShoulder.Init(hw.GetPin(RightShoulderPin), samplerate);
+  RightShoulder.Init(hw.GetPin(RightShoulderPin), samplerate, false);
   RightShoulder.CallbackHandler(RightShoulderPress);
   buttons.push_back(&RightShoulder);
 
@@ -293,20 +301,27 @@ int main(void)
    * and adding to interfaces vector
    */
   sequencer.Init(handler, samplerate, &MainFont);
-  instDisplay.Init(instruments, handler.at(0), &MainFont);
+  instDisplay.Init(&instruments, handler.at(0), &MainFont);
   fxDisplay.Init(samplerate, handler, &MainFont);
+  sampDisplay.Init(&waveFileLoader, &instruments, &MainFont, &buffer_index);
 
   interfaces.push_back(&sequencer);
   interfaces.push_back(&instDisplay);
   interfaces.push_back(&fxDisplay);
+  interfaces.push_back(&sampDisplay);
 
   userInterface = interfaces.begin();
 
   hw.StartAudio(AudioCallback);
 
+  uint32_t time = System::GetNow();
+
   for (;;) {
-    (*userInterface)->UpdateDisplay(pMain); 
-    __Display.flush();
-    System::Delay(17);
+    if (System::GetNow() > time + 17) {
+      (*userInterface)->UpdateDisplay(pMain); 
+      __Display.flush();
+      time = System::GetNow();
+    }
+    InputHandle(); 
   }
 }

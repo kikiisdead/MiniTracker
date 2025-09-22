@@ -89,6 +89,7 @@ public:
         if (step->instrument != -1) {
             if (step->instrument == -2 && activeInst != NULL) activeInst->Release();
             else if (step->instrument >= 0) {
+                if (step->instrument >= (int) instVector->size()) return;
                 activeInst = instVector->at(step->instrument);
                 activeInst->Trigger(step->note);
             }

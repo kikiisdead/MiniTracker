@@ -15,13 +15,15 @@ private:
     void (*buttonCallback)();
     int delay;
     bool pressed;
+    bool repeatable;
 public:
     Button(){}
     ~Button(){}
 
-    void Init(dsy_gpio_pin pin, float samplerate) {
+    void Init(dsy_gpio_pin pin, float samplerate, bool repeatable) {
         button.Init(pin, samplerate);
         pressed = false;
+        this->repeatable = repeatable;
     }
 
     void CallbackHandler(void (*func)()) {
@@ -33,9 +35,9 @@ public:
         if (button.RisingEdge()) {
             buttonCallback();
             timeAtPress = System::GetNow();
-            delay = 200;
+            delay = 250;
             pressed = true;
-        } else if (pressed && (System::GetNow() > (timeAtPress + delay))) {
+        } else if (pressed && (System::GetNow() > (timeAtPress + delay)) && repeatable) {
             buttonCallback();
             timeAtPress = System::GetNow();
             delay = 50;

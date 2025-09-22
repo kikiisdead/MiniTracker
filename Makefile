@@ -11,6 +11,7 @@ CPP_SOURCES += src/sd/waveFileLoader.cpp
 CPP_SOURCES += src/UI/sequencer.cpp
 CPP_SOURCES += src/UI/instDisplay.cpp
 CPP_SOURCES += src/UI/fxDisplay.cpp
+CPP_SOURCES += src/UI/sampDisplay.cpp
 CPP_SOURCES += src/audio/sampleplayer.cpp
 CPP_SOURCES += src/audio/instrument.cpp
 CPP_SOURCES += src/audio/decode.cpp

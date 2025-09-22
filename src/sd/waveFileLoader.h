@@ -8,8 +8,17 @@
 #include "../audio/sampleplayer.h"
 #include "../audio/instrument.h"
 #include "../audio/decode.h"
+#include "node.h"
 
 using namespace daisy;
+
+
+struct Bit24x4 {
+    int32_t val1;
+    int32_t val2;
+    int32_t val3;
+};
+
 
 /**
  * WAVEFILELOADER
@@ -19,9 +28,8 @@ using namespace daisy;
  * will have ability to select dirs and append things to them.
  */
 
-struct file {
+struct File {
     char name[256];
-    char searchpath[256];
     BYTE attrib;
 };
 
@@ -36,10 +44,10 @@ public:
     void Init(float samplerate, void* (*sample_buffer_allocate)(size_t size));
 
     /**
-     * Get names of all files in open dir
-     * \return 2d char array 
+     * Get Root Node of tree
+     * \return the root node
      */
-    std::vector<file> GetFileNames();
+    Node<File>* GetRootNode() { return &rootNode; }
 
     /**
      * creates an instrument object from 
@@ -47,30 +55,24 @@ public:
      * \return an instrument that the sampleDisplay UI thing will append it to the Instruments vector
      * Need to create a case where it opens a dir and returns a nullptr
      */
-    Instrument* CreateInstrument(int index);
+    Instrument* CreateInstrument(Node<File>* node);
 
-    /**
-     * closes current and opens  next directory by appending to searchpath
-     * \param appendPath a char array that is appended to the waveFileLoaders searchpath
-     */
-    void OpenDir(const char* appendPath);
-
-    /**
-     * closes current and opens  next directory by deleting from searchpath
-     */
-    void CloseDir(){};
+    
 
 private:
-    SdmmcHandler   sd;
-    FatFSInterface fsi;
-    DIR            dir;
-    FILINFO        fno;
     FIL            fil;
-    bool           safe;
+    Node<File>     rootNode;
+    bool           safe = false;
     char           searchpath[256]; // need method to append and subtract from searchpath so I can effectively open directories
     float          samplerate;
-    std::vector<file> fileNames;
     void* (*sample_buffer_allocate)(size_t size);
+
+    /**
+     * Recursively searches through the SDCard to extract all file info and put into TREE
+     * \param path the path to the directory being opened
+     * \param node the current node being modified and added to
+     */
+    void OpenDir(const char* path, Node<File>* node);
 };
 
 

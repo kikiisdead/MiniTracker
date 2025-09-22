@@ -8,6 +8,8 @@
 #include "dev/oled_ssd130x.h"
 #include <vector>
 
+#define ACTIVEINST instruments->at(active)
+
 using namespace daisy;
 using MyOledDisplay = OledDisplay<SSD130xI2c128x64Driver>;
 
@@ -17,7 +19,7 @@ public:
     InstrumentDisplay(){};
     ~InstrumentDisplay(){};
 
-    void Init(std::vector<Instrument*> instruments_, InstrumentHandler* handler_, cFont *MainFont);
+    void Init(std::vector<Instrument*>* instruments_, InstrumentHandler* handler_, cFont *MainFont);
 
     void AButton();
     void BButton();
@@ -39,9 +41,10 @@ public:
 
 private:
     // MyOledDisplay* display;
-    std::vector<Instrument*> instruments;
+    std::vector<Instrument*>* instruments;
     InstrumentHandler* handler; 
     std::vector<Instrument*>::iterator activeInst;
+    int active;
     size_t currentSlice;
     char strbuff[256];
     bool sliceEdit;

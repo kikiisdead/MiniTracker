@@ -1,14 +1,13 @@
-#ifndef PHLANRUS_H
-#define PHLANRUS_H
+#ifndef REVERB_H
+#define REVERB_H
 
 #include "effect.h"
+#include "../../../../DaisyExamples/DaisySP/DaisySP-LGPL/Source/Effects/reverbsc.h"
 
-
-
-class Phlanrus : public Effect {
+class Reverb : public Effect {
 public:
-    Phlanrus(){}
-    ~Phlanrus(){}
+    Reverb(){}
+    ~Reverb(){}
 
     void Init(float samplerate, cFont* MainFont) {
         param = 0;
@@ -16,12 +15,17 @@ public:
         selected = false;
         effectType = NOFX;
         this->MainFont = MainFont;
+    }
 
-        phaser.Init(samplerate);
+    void Init2(ReverbSc* reverb, float* lpFreq, float* feedback) {
+        this->reverb = reverb;
+        this->lpFreq = lpFreq;
+        this->feedback = feedback;
     }
 
     void Process(float& left, float& right) {
-
+        float inLeft = left * pow(10.0f, inputVol / 10.0f);
+        float rightLeft = right * pow(10.0f, inputVol / 10.0f);
     }
 
     void Display(cLayer *display, int x, int y){
@@ -40,9 +44,11 @@ public:
     void PrevParam(){}
 
 private:
-    Phaser  phaser;
-    Flanger flanger;
-    Chorus  chorus;
+    ReverbSc* reverb; // pointer because it takes up so much fucking SRAM
+
+    float inputVol;
+    float* lpFreq; 
+    float* feedback;
 };
 
 #endif

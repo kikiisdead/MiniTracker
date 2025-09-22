@@ -87,11 +87,11 @@ public:
 
     int GetNumChannels() { return wave->format.NbrChannels; }
 
-    int GetSampleRate() { return wave->format.SampleRate; }
+    int GetSampleRate() { return wave->format.SubChunk2ID; }
     
-    int GetBitsPerSample() { return wave->format.BitPerSample; }
+    int GetBitsPerSample() { return wave->format.SubCHunk2Size; }
 
-    int GetRawSize() { return wave->format.SubCHunk2Size; }
+    int GetRawSize() { return wave->format.AudioFormat; }
 
 private:
 
