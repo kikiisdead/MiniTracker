@@ -1,23 +1,22 @@
 #include "sequencer.h"
 
 void Sequencer::NewPattern() {
-    patterns.push_back(new Pattern);
+    patterns->push_back(new Pattern);
 
-    patterns.back()->index = patterns.size() - 1;
-    patterns.back()->numLanes = handler_.size();
+    patterns->back()->index = patterns->size() - 1;
+    patterns->back()->numLanes = handler_->size();
     
-    songOrder[currentPattern] = patterns.back()->index;
+    songOrder->at(currentPattern) = patterns->back()->index;
 
-    activePattern = patterns.at(songOrder[currentPattern]);
+    activePattern = patterns->at(songOrder->at(currentPattern));
 
     for (int i = 0; i < activePattern->numLanes; i ++) {
         activePattern->lanes.push_back(new Lane);
         currentLane = activePattern->lanes[i];
-        currentLane->length = 16;
+        currentLane->length = 64;
         currentLane->index = i;
         for (int j = 0; j < activePattern->lanes[i]->length; j++) {
-            currentLane->sequence.push_back(new Step);
-            InitStep(currentLane->sequence.at(j), j);
+            currentLane->sequence.push_back(new Step(j));
         }
     }
 
@@ -25,14 +24,38 @@ void Sequencer::NewPattern() {
     currentStep = currentLane->sequence.at(0);
 }
 
-void Sequencer::InitStep(Step* step, int index) {
-    step->note = 48;
-    step->instrument = -1;
-    step->fx = 0;
-    step->fxAmount = 0;
-    step->selected = false;
-    step->paramEdit = Step::i;
-    step->index = index;
+void Sequencer::Clear() {
+    patterns->clear();
+    songOrder->clear();
+    playing_ = false;
+    stepEdit_ = false;
+    song_ = false;
+    currentPattern = 0;
+    lastTrigger = 0;
+    laneOffset = 0;
+    updateStep = true;
+    updateSidebar = true;
+    updatePattern = true;
+    currentLane = nullptr;
+    currentStep = nullptr;
+    activePattern = nullptr;
+}
+
+void Sequencer::Safe() {
+
+    playing_ = false;
+    stepEdit_ = false;
+    song_ = false;
+    currentPattern = 0;
+    lastTrigger = 0;
+    laneOffset = 0;
+    updateStep = true;
+    updateSidebar = true;
+    updatePattern = true;
+
+    activePattern = patterns->at(songOrder->at(currentPattern));
+    currentLane = activePattern->lanes[0];
+    currentStep = currentLane->sequence.at(0);
 }
 
 void Sequencer::DrawStep(cLayer* display, int x, int y, Step* step) {
@@ -182,7 +205,7 @@ void Sequencer::UpdateDisplay(cLayer *display) {
     /**
      * Drawing Steps
      */
-    if (songOrder[currentPattern] > -1) {
+    if (songOrder->at(currentPattern) > -1) {
         // clear previous stuff
         display->drawFillRect(0, 0, (28 * 9), 240, BACKGROUND);
 
@@ -222,12 +245,12 @@ void Sequencer::UpdateDisplay(cLayer *display) {
     WriteString(display, strbuff, 320 - (CHAR_WIDTH * 7), CHAR_HEIGHT + 4, ACCENT1);
 
     
-    if (songOrder[currentPattern] > -1) sprintf(strbuff, "LANE%3d", currentLane->index + 1);
+    if (songOrder->at(currentPattern) > -1) sprintf(strbuff, "LANE%3d", currentLane->index + 1);
     else sprintf(strbuff, "LANE");
     WriteString(display, strbuff, 320 - (CHAR_WIDTH * 7), (CHAR_HEIGHT + 4) * 2, ACCENT1);
 
     
-    if (songOrder[currentPattern] > -1) sprintf(strbuff, "LEN%4d", currentLane->length);
+    if (songOrder->at(currentPattern) > -1) sprintf(strbuff, "LEN%4d", currentLane->length);
     else sprintf(strbuff, "LEN");
     WriteString(display, strbuff, 320 - (CHAR_WIDTH * 7), (CHAR_HEIGHT + 4) * 3, ACCENT1);
     
@@ -237,16 +260,16 @@ void Sequencer::UpdateDisplay(cLayer *display) {
      */
     display->drawFillRect(28*9, (CHAR_HEIGHT + 4) * 3 + 4, 100, 240, BACKGROUND);
 
-    auto it = songOrder.begin() + currentPattern;
+    auto it = songOrder->begin() + currentPattern;
     for (int i = 0; i < 7; i++) {
         auto offset = it + (i - 3);
-        if (offset < songOrder.begin())     continue; 
-        else if (offset >= songOrder.end()) continue;
+        if (offset < songOrder->begin())     continue; 
+        else if (offset >= songOrder->end()) continue;
         else if (*offset < 0)               continue;
         else {
             
             sprintf(strbuff, "%d", *offset);
-            if (offset == songOrder.begin() + currentPattern) {
+            if (offset == songOrder->begin() + currentPattern) {
                 DrawSquare(display, *offset, 320 - (CHAR_WIDTH * 4), (CHAR_HEIGHT + 4) * 4 + (28 * i), true);
             }
             else {
@@ -268,7 +291,7 @@ void Sequencer::Update() {
             //lastTrigger = System::GetNow();
             NextStep();
             for (Lane* lane : activePattern->lanes) {
-                handler_[lane->index]->Update(lane->sequence.at(currentStep->index)); 
+                handler_->at(lane->index)->Update(lane->sequence.at(currentStep->index)); 
             }
         }
     }
@@ -279,7 +302,7 @@ void Sequencer::PlayButton() {
     song_ = false;
     if (playing_) {
         for (Lane* lane : activePattern->lanes) {
-            handler_[lane->index]->Update(lane->sequence.at(currentStep->index)); 
+            handler_->at(lane->index)->Update(lane->sequence.at(currentStep->index)); 
         }
     }
 }
@@ -305,8 +328,8 @@ void Sequencer::PreviousStep() {
 }
 
 void Sequencer::UpButton() {
-    if (!playing_ && !stepEdit_ && songOrder[currentPattern] > -1) PreviousStep();
-    else if (stepEdit_ && songOrder[currentPattern] > -1) currentStep->Increment();
+    if (!playing_ && !stepEdit_ && songOrder->at(currentPattern) > -1) PreviousStep();
+    else if (stepEdit_ && songOrder->at(currentPattern) > -1) currentStep->Increment();
     updateStep = true;
 }
 
@@ -324,8 +347,8 @@ void Sequencer::NextStep() {
 }
 
 void Sequencer::DownButton() {
-    if (!playing_ && !stepEdit_ && songOrder[currentPattern] > -1) NextStep();
-    else if (stepEdit_ && songOrder[currentPattern] > -1) currentStep->Decrement();
+    if (!playing_ && !stepEdit_ && songOrder->at(currentPattern) > -1) NextStep();
+    else if (stepEdit_ && songOrder->at(currentPattern) > -1) currentStep->Decrement();
     updateStep = true;
 }
 
@@ -341,8 +364,8 @@ void Sequencer::PreviousLane() {
 }
 
 void Sequencer::LeftButton() {
-    if (!stepEdit_ && songOrder[currentPattern] > -1) PreviousLane();
-    else if (songOrder[currentPattern] > -1) currentStep->PrevParam();
+    if (!stepEdit_ && songOrder->at(currentPattern) > -1) PreviousLane();
+    else if (songOrder->at(currentPattern) > -1) currentStep->PrevParam();
     updateStep = true;
 }
 
@@ -358,15 +381,15 @@ void Sequencer::NextLane() {
 }
 
 void Sequencer::RightButton() {
-    if (!stepEdit_ && songOrder[currentPattern] > -1) NextLane();
-    else if (songOrder[currentPattern] > -1) currentStep->NextParam();
+    if (!stepEdit_ && songOrder->at(currentPattern) > -1) NextLane();
+    else if (songOrder->at(currentPattern) > -1) currentStep->NextParam();
     updateStep = true;
 }
 
 void Sequencer::NextPattern() {
     currentStep->selected = false;
-    currentPattern = (currentPattern >= (int) songOrder.size() - 1) ? 0 : currentPattern + 1;
-    activePattern = patterns.at(songOrder[currentPattern]);
+    currentPattern = (currentPattern >= (int) songOrder->size() - 1) ? 0 : currentPattern + 1;
+    activePattern = patterns->at(songOrder->at(currentPattern));
     currentLane = activePattern->lanes.at(currentLane->index);
     currentStep = currentLane->sequence.at(0);
     currentStep->selected = true;
@@ -378,10 +401,10 @@ void Sequencer::NextPattern() {
 void Sequencer::PreviousPattern() {
     currentStep->selected = false;
     currentPattern = currentPattern + 1;
-    if (currentPattern >= (int) songOrder.size()) {
+    if (currentPattern >= (int) songOrder->size()) {
         playing_ = false;
     } else {
-        activePattern = patterns.at(songOrder[currentPattern]);
+        activePattern = patterns->at(songOrder->at(currentPattern));
         currentLane = activePattern->lanes.at(currentLane->index);
         currentStep = currentLane->sequence.at(0);
         currentStep->selected = true;
@@ -395,21 +418,21 @@ void Sequencer::AltUpButton() {
     currentStep->selected = false; //deselecting step
 
     // if the index of pattern were moving away from is -1, remove from songOrder
-    if (songOrder[currentPattern] == -1) {
-        auto it = songOrder.begin();
+    if (songOrder->at(currentPattern) == -1) {
+        auto it = songOrder->begin();
         std::advance(it, currentPattern);
-        songOrder.erase(it);
+        songOrder->erase(it);
     } 
     
     currentPattern -= 1; // decrement index of pattern
 
     if (currentPattern < 0) {
-        songOrder.insert(songOrder.begin(), -1);
+        songOrder->insert(songOrder->begin(), -1);
         currentPattern = 0; // need to reset it to 0 to shift everything down
     }
 
-    if (songOrder[currentPattern] > -1) {
-        activePattern = patterns.at(songOrder[currentPattern]);
+    if (songOrder->at(currentPattern) > -1) {
+        activePattern = patterns->at(songOrder->at(currentPattern));
         currentLane = activePattern->lanes[0];
         currentStep = currentLane->sequence.at(0);
     }
@@ -418,17 +441,17 @@ void Sequencer::AltUpButton() {
 
 void Sequencer::AltDownButton() {
     currentStep->selected = false;
-    if (songOrder[currentPattern] == -1) {
-        auto it = songOrder.begin();
+    if (songOrder->at(currentPattern) == -1) {
+        auto it = songOrder->begin();
         std::advance(it, currentPattern);
-        songOrder.erase(it);
+        songOrder->erase(it);
     } else {
         currentPattern += 1;
     }
     
-    if (currentPattern >= (int) songOrder.size()) songOrder.push_back(-1); 
+    if (currentPattern >= (int) songOrder->size()) songOrder->push_back(-1); 
     else { //not seting active pattern to anything to avoid index out of range error
-        activePattern = patterns.at(songOrder[currentPattern]);
+        activePattern = patterns->at(songOrder->at(currentPattern));
         currentLane = activePattern->lanes[0];
         currentStep = currentLane->sequence.at(0);
     }
@@ -437,10 +460,10 @@ void Sequencer::AltDownButton() {
 
 void Sequencer::AltLeftButton() {
     currentStep->selected = false;
-    if (songOrder[currentPattern] < 0) songOrder[currentPattern] = -1;
-    else songOrder[currentPattern] -= 1;
-    if (songOrder[currentPattern] > -1) {
-        activePattern = patterns.at(songOrder[currentPattern]);
+    if (songOrder->at(currentPattern) < 0) songOrder->at(currentPattern) = -1;
+    else songOrder->at(currentPattern) -= 1;
+    if (songOrder->at(currentPattern) > -1) {
+        activePattern = patterns->at(songOrder->at(currentPattern));
         currentLane = activePattern->lanes[0];
         currentStep = currentLane->sequence.at(0);
     }
@@ -449,9 +472,9 @@ void Sequencer::AltLeftButton() {
 
 void Sequencer::AltRightButton() {
     currentStep->selected = false;
-    songOrder[currentPattern] += 1;
-    if (songOrder[currentPattern] > ((int) patterns.size() - 1)) NewPattern();
-    activePattern = patterns.at(songOrder[currentPattern]);
+    songOrder->at(currentPattern) += 1;
+    if (songOrder->at(currentPattern) > ((int) patterns->size() - 1)) NewPattern();
+    activePattern = patterns->at(songOrder->at(currentPattern));
     currentLane = activePattern->lanes[0];
     currentStep = currentLane->sequence.at(0);
     updatePattern = true;
@@ -462,7 +485,7 @@ void Sequencer::AltPlayButton() {
     song_ = (song_) ? false : true;
     if (playing_) {
         for (Lane* lane : activePattern->lanes) {
-            handler_[lane->index]->Update(lane->sequence.at(currentStep->index)); 
+            handler_->at(lane->index)->Update(lane->sequence.at(currentStep->index)); 
         }
     }
 }
@@ -470,8 +493,7 @@ void Sequencer::AltPlayButton() {
 void Sequencer::AltAButton() {
     for (Lane* lane : activePattern->lanes) {
         lane->length += 1;
-        lane->sequence.push_back(new Step);
-        InitStep(lane->sequence.back(), lane->length - 1);
+        lane->sequence.push_back(new Step(lane->length - 1));
     }
     updateStep = true;
     updateSidebar = true;

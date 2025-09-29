@@ -1,14 +1,15 @@
 #include "instrument.h"
 
-void Instrument::Init(float samplerate, WavFile* sample) {
+void Instrument::Init(float samplerate, WavFile* sample, std::string path) {
     samplePlayer.Init(sample, samplerate);
     env.Init(samplerate);
-    att = 0.01;
-    dec = 0.6;
-    sus = 0.0;
-    rel = 0.01;
-    pitch = 0;
-    gain = 0;
+    this->path = path;
+    att = 0.01f;
+    dec = 0.6f;
+    sus = 0.0f;
+    rel = 0.01f;
+    pitch = 0.0f;
+    gain = 0.0f;
     env.SetAttackTime(att);
     env.SetDecayTime(dec);
     env.SetSustainLevel(sus);

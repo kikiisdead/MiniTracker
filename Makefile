@@ -8,13 +8,16 @@ LDFLAGS = -u _printf_float
 # Sources
 CPP_SOURCES = MiniTracker.cpp
 CPP_SOURCES += src/sd/waveFileLoader.cpp
+CPP_SOURCES += src/sd/dirLoader.cpp
+CPP_SOURCES += src/sd/projSaverLoader.cpp
 CPP_SOURCES += src/UI/sequencer.cpp
 CPP_SOURCES += src/UI/instDisplay.cpp
 CPP_SOURCES += src/UI/fxDisplay.cpp
 CPP_SOURCES += src/UI/sampDisplay.cpp
+CPP_SOURCES += src/UI/songDisplay.cpp
 CPP_SOURCES += src/audio/sampleplayer.cpp
 CPP_SOURCES += src/audio/instrument.cpp
-CPP_SOURCES += src/audio/decode.cpp
+CPP_SOURCES += sd/decode.cpp
 CPP_SOURCES += DaisySeedGFX2/cDisplay.cpp
 CPP_SOURCES += DaisySeedGFX2/GFX.cpp
 CPP_SOURCES += DaisySeedGFX2/TFT_SPI.cpp

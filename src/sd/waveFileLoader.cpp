@@ -1,70 +1,15 @@
 #include "waveFileLoader.h"
 
-
-
 void WaveFileLoader::Init(float samplerate, void* (*sample_buffer_allocate)(size_t size)) {
     this->samplerate = samplerate;
     this->sample_buffer_allocate = sample_buffer_allocate;
-    safe = true;
-    rootNode.up = nullptr;
-    sprintf(rootNode.data.name, "/");
-    OpenDir(rootNode.data.name, &rootNode);
 }
 
-void WaveFileLoader::OpenDir(const char* path, Node<File>* node) {
-    if (!safe) return; // does nothing if f_mount failed
+Instrument* WaveFileLoader::CreateInstrument(std::string path) {
 
-    DIR            dir; // exist locally for each recursive call as opposed to globally
-    FILINFO        fno;
-
-    if (f_opendir(&dir, path) != FR_OK) {
-        safe = false;
-        return;
-    }
-    
-    bool result;
-    do
-    {
-        result = f_readdir(&dir, &fno);
-        // Exit if bad read or NULL fname
-        if(result != FR_OK || fno.fname[0] == 0)
-            break;
-
-        // Skip if its a hidden file.
-        if(fno.fattrib & (AM_HID))
-            continue;
-
-        node->down.push_back(new Node<File>);
-        node->down.back()->up = node;
-
-        sprintf(node->down.back()->data.name, "%.254s/", node->data.name);
-        sprintf(node->down.back()->data.name + strlen(node->down.back()->data.name), fno.fname);
-        node->down.back()->data.attrib = fno.fattrib;
-
-        if (node->down.back()->data.attrib & (AM_DIR)) {
-            // only recursive if it is a directory
-            OpenDir(node->down.back()->data.name, node->down.back());
-        } else {
-            node->down.back()->down.push_back(nullptr);
-        }
-
-    } while(result == FR_OK);
-
-    f_closedir(&dir);
-}
-
-Instrument* WaveFileLoader::CreateInstrument(Node<File>* node) {
-    if (!safe) return nullptr; // can't find sd card
-
-    
     UINT bytesread;
 
-    if (node->data.attrib & (AM_DIR)) {
-        return nullptr;
-    }
-
-    if (f_open(&fil, node->data.name, (FA_OPEN_EXISTING | FA_READ)) == FR_OK) {
-
+    if (f_open(&fil, path.c_str(), (FA_OPEN_EXISTING | FA_READ)) == FR_OK) {
 
         WavFile* sample = new WavFile; // CREATING ON HEAP
 
@@ -122,9 +67,15 @@ Instrument* WaveFileLoader::CreateInstrument(Node<File>* node) {
         f_read(&fil, (void*)&(wave.SubChunk2ID), sizeof(wave.SubChunk2ID), &bytesread);
         f_read(&fil, (void*)&(wave.SubCHunk2Size), sizeof(wave.SubCHunk2Size), &bytesread);
 
-        std::string file = std::string(node->data.name);
-        size_t index = file.find_last_of('/') + 1; 
-        std::string name = file.substr(index, file.length() - index);
+        std::string file = std::string(path);
+        std::string name;
+        size_t index = file.find_last_of('/');
+        if (index != std::string::npos) {
+            name = file.substr(index + 1, file.length() - (index + 1));
+        } else {
+            name = file;
+        }
+
         sprintf(sample->name, "%s", name.c_str());
 
         sample->format = wave;
@@ -262,7 +213,7 @@ Instrument* WaveFileLoader::CreateInstrument(Node<File>* node) {
 
         Instrument* instrument = new Instrument; // CREATING ON HEAP
 
-        instrument->Init(samplerate, sample);
+        instrument->Init(samplerate, sample, path);
 
         // __enable_irq();
 
@@ -270,5 +221,27 @@ Instrument* WaveFileLoader::CreateInstrument(Node<File>* node) {
     } else {
         return nullptr;
     }
+}
+
+Instrument* WaveFileLoader::CreateInstrument(Node<File>* node) {
+
+    if (node->data.attrib & (AM_DIR)) {
+        return nullptr;
+    }
+    
+    std::string path = std::string(*node->data.name);
+
+    if (path.find(".wav") == std::string::npos && path.find(".WAV") == std::string::npos) 
+        return nullptr;
+
+    Node<File> *temp = node->parent;
+
+    while (temp != nullptr) {
+        path = std::string(*temp->data.name) + std::string("/") + path;
+        temp = temp->parent;
+    }
+
+    return CreateInstrument(path.c_str());
+
 }
 

@@ -31,7 +31,6 @@ private:
 
 public:
     
-
     std::vector<Effect*> effects;
 
     InstrumentHandler(){}
@@ -107,6 +106,11 @@ public:
         effects.back()->Init(samplerate, MainFont);
     }
 
+    void AddEffect(Effect::EFFECT_TYPE type, char* buf) {
+        effects.push_back(GetEffect(type));
+        effects.back()->Load(buf, samplerate, MainFont);
+    }
+
     void RemoveEffect(size_t index) {
         auto it  = effects.begin();
         std::advance(it, index);
@@ -135,6 +139,10 @@ public:
         else if (type == Effect::AUTOPAN)     return new Autopan;
         else if (type == Effect::REDUX)       return new Redux;
         else                                  return new NoEffect;
+    }
+
+    void ClearFX() {
+        effects.clear();
     }
 
 };

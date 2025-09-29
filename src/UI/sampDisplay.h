@@ -13,8 +13,15 @@ public:
     SampDisplay(){}
     ~SampDisplay(){}
 
-    void Init(WaveFileLoader* fileLoader, std::vector<Instrument*>* instruments, cFont *MainFont, size_t* bufferIndex);
+    /**
+     * Initialize with all functionality to add and remove
+     * Updated to pass directory root node separate from waveFileLoader for future implementation of project saving and loading
+     */
+    void Init(WaveFileLoader* fileLoader, std::vector<Instrument*>* instruments, cFont *MainFont, size_t* bufferIndex, Node<File>* rootNode);
 
+    /**
+     * INHERITED FROM BUTTON INTERFACE
+     */
     void AButton();
     void BButton();
     void UpButton();
@@ -40,7 +47,6 @@ private:
     Node<File> *currentNode;
     char strbuff[256];
     size_t* bufferIndex;
-
     int row, col, lev, scrRow;
 
     void WriteString(cLayer* display, char* strbuff, int x, int y, DadGFX::sColor color);

@@ -17,6 +17,7 @@ public:
         effectType = AUTOPAN;
         this->MainFont = MainFont;
         paramNum = 4;
+        this->samplerate = samplerate;
 
         // class specific initializers
         amount = 1.0f;
@@ -201,6 +202,80 @@ public:
             displayL.SetWaveform(shape);
             displayR.SetWaveform(shape);
         }
+    }
+
+    void GetSnapshot(char *buf) {
+        
+        void* ptr = &buf[0];
+
+        // *(static_cast<float*>(ptr)) = samplerate;
+        // ptr = static_cast<char*>(ptr) + sizeof(samplerate);
+
+        // *((cFont**) ptr) = MainFont;
+        // ptr = static_cast<char*>(ptr) + sizeof(MainFont);
+
+        *(static_cast<float*>(ptr)) = rate;
+        ptr = static_cast<float*>(ptr) + 1;
+
+        *(static_cast<float*>(ptr)) = amount;
+        ptr = static_cast<float*>(ptr) + 1;
+
+        *(static_cast<float*>(ptr)) = phase;
+        ptr = static_cast<float*>(ptr) + 1;
+        
+        *(static_cast<int*>(ptr)) = shape;
+        ptr = static_cast<int*>(ptr) + 1;
+
+    }
+
+    void Load(char* buf, float samplerate, cFont* MainFont) {
+        void* ptr = &buf[0];
+
+        this->samplerate = samplerate;
+
+        this->MainFont = MainFont;
+
+        rate = *(static_cast<float*>(ptr));
+        ptr = static_cast<float*>(ptr) + 1;
+
+        amount = *(static_cast<float*>(ptr));
+        ptr = static_cast<float*>(ptr) + 1;
+
+        phase = *(static_cast<float*>(ptr));
+        ptr = static_cast<float*>(ptr) + 1;
+        
+        shape = *(static_cast<int*>(ptr));
+        ptr = static_cast<int*>(ptr) + 1;
+
+        param = 0;
+        selected = false;
+        effectType = AUTOPAN;
+        paramNum = 4;
+
+        levL.Init(samplerate);
+        levR.Init(samplerate);
+        displayL.Init((float) (FX_WIDTH - 16));
+        displayR.Init((float) (FX_WIDTH - 16));
+
+        levL.SetAmp(amount);
+        levR.SetAmp(amount);
+        displayL.SetAmp(amount);
+        displayR.SetAmp(amount);
+
+        levL.SetFreq(PANSCALE);
+        levR.SetFreq(PANSCALE);
+        displayL.SetFreq(PANSCALE * 2.0f);
+        displayR.SetFreq(PANSCALE * 2.0f);
+
+        levL.SetWaveform(shape);
+        levR.SetWaveform(shape);
+        displayL.SetWaveform(shape);
+        displayR.SetWaveform(shape);
+
+        levL.Reset();
+        levR.Reset();
+
+        levR.PhaseAdd(phase);
     }
 
 private:

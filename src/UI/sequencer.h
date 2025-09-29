@@ -12,6 +12,13 @@
 
 using namespace daisy;
 
+
+/**
+ * Lane described in 8 + x * 20
+ * 4 bytes for Lane header
+ * 4 bytes for length
+ * x * 20 bytes for num of steps
+ */
 class Lane {
 public:
     Lane(){}
@@ -26,6 +33,12 @@ public:
     int index;
 };
 
+/**
+ * pattern described in 8 bytes + size of all lanes in pattern
+ * 4 bytes pattern label
+ * 4 bytes numlanes
+ * then all the lanes
+ */
 class Pattern {
 public:
     Pattern(){}
@@ -42,9 +55,9 @@ public:
 
 class Sequencer : public buttonInterface {
 private:
-    std::vector<InstrumentHandler*> handler_;
-    std::vector<Pattern*> patterns; // holds all the possible patterns made
-    std::vector<int> songOrder; // holds the order of the patterns
+    std::vector<InstrumentHandler*>* handler_;
+    std::vector<Pattern*>* patterns; // holds all the possible patterns made
+    std::vector<int>* songOrder; // holds the order of the patterns
     Pattern* activePattern;
 
     cFont* MainFont;
@@ -76,7 +89,6 @@ private:
     void GetNoteString(char* strbuff, int note);
     void GetFxString(char* strbuff, int fx, int fxAmount);
     void GetFxString(char* strbuff, int fx);
-    void InitStep(Step* step, int index);
 
     void NextStep();
     void PreviousStep();
@@ -90,14 +102,25 @@ private:
 public:
     Sequencer(){};
 
-    // to be called continuously from the audio callback
+    /**
+     * Sends triggers to the instrument handlers and moves sequencer forward
+     */
     void Update();
 
+    /**
+     * Updates the BPM
+     * \param bpm new bpm that will be changed to
+     */
     void SetBPM(float bpm_) {
         bpm = bpm_;
         tick.SetFreq((bpm / 60.0f) * 4.0f);
         triggerTime = (1.0f / ((bpm / 60.0f) * 4.0f)) * 1000;
     }
+
+    /**
+     * Returns the BPM
+     */
+    float GetBPM() { return bpm; }
     
     /**
      * Initializes display
@@ -105,13 +128,15 @@ public:
      * \param handler voice for each lane
      * \param samplerate samplerate to intialize Metro object
      */
-    void Init(std::vector<InstrumentHandler*> handler, float samplerate, cFont* MainFont) {
+    void Init(std::vector<InstrumentHandler*>* handler, float samplerate, cFont* MainFont, std::vector<Pattern*>* patterns, std::vector<int>* songOrder) {
         //display_ = display;
+        this->songOrder = songOrder;
+        this->patterns = patterns;
         handler_ = handler;
         playing_ = false;
         stepEdit_ = false;
         song_ = false;
-        songOrder.push_back(0);
+        songOrder->push_back(0);
         currentPattern = 0;
         tick.Init(1.0f, samplerate);
         SetBPM(178.0f);
@@ -124,14 +149,24 @@ public:
         updatePattern = true;
     }
     
+    std::vector<Pattern*>* GetPatterns() { return patterns; } 
+
+    std::vector<int>* GetSongOrder() { return songOrder; } 
+
+    void Clear();
+
+    void Safe();
 
     /**
      * Called by the Display object to refresh the screen, not called internally because it interupts audio playback 
      */
     void UpdateDisplay(cLayer *display);
 
+
+    
+
     /**
-     * Implementations of virtual parent functions.
+     * INHERITED FROM BUTTON INTERFACE
      */
     void AButton();
     void BButton();

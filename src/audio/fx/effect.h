@@ -41,10 +41,17 @@ public:
         }
     }
 
+    // Making an arrray of data to be written into SD CARD
+    virtual void GetSnapshot(char *buf) = 0;
+
+    // Taking data written into SD CARD and Initializing
+    virtual void Load(char *buf, float samplerate, cFont* MainFont) = 0;
+
 protected:
     char strbuff[20];
     int param;
     int paramNum;
+    float samplerate;
     cFont* MainFont;
 
     void WriteString(cLayer* display, char* strbuff, int x, int y, DadGFX::sColor color) {

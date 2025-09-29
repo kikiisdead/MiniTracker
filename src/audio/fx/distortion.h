@@ -16,10 +16,12 @@ public:
         overdrive.SetDrive(drive);
 
         param = 0;
+        paramNum = 1;
         selected = false;
         effectType = DISTORTION;
         this->MainFont = MainFont;
     }
+
     void Process(float& left, float& right) {
         left = overdrive.Process(left);
         right = overdrive.Process(right);
@@ -80,8 +82,39 @@ public:
         overdrive.SetDrive(drive);
     }
 
-    void NextParam() {}
-    void PrevParam() {}
+    void GetSnapshot(char *buf) {
+        
+        void* ptr = &buf[0];
+
+        // *(static_cast<float*>(ptr)) = samplerate;
+        // ptr = static_cast<char*>(ptr) + sizeof(samplerate);
+
+        // *((cFont**) ptr) = MainFont;
+        // ptr = static_cast<char*>(ptr) + sizeof(MainFont);
+
+        *(static_cast<float*>(ptr)) = drive;
+        ptr = static_cast<float*>(ptr) + 1;
+
+    }
+
+    void Load(char* buf, float samplerate, cFont* MainFont) {
+
+        void* ptr = &buf[0];
+
+        this->samplerate = samplerate;
+        this->MainFont = MainFont;
+
+        drive = *(static_cast<float*>(ptr));
+        ptr = static_cast<float*>(ptr) + 1;
+
+        overdrive.Init();
+
+        param = 0;
+        paramNum = 1;
+        selected = false;
+        effectType = DISTORTION;
+        this->MainFont = MainFont;
+    }
 
 private:
     Overdrive overdrive;

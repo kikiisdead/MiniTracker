@@ -1,11 +1,13 @@
 #include "fxDisplay.h"
 
 void FXDisplay::UpdateDisplay(cLayer* display) {
+    
+    CURRENT_EFFECT->selected = true;
 
     display->eraseLayer();
 
-    for (size_t i = 0; i < handler.at(currentLane)->effects.size(); i++) {
-        handler.at(currentLane)->effects.at(i)->Display(display, i * (FX_WIDTH + FX_BUFFER), 20);
+    for (size_t i = 0; i < handler->at(currentLane)->effects.size(); i++) {
+        handler->at(currentLane)->effects.at(i)->Display(display, i * (FX_WIDTH + FX_BUFFER), 20);
     }
 
 
@@ -69,7 +71,7 @@ void FXDisplay::AButton() {
     if (!changeEffect) {
         changeEffect = true;
     } else {
-        if ( (Effect::EFFECT_TYPE) type != CURRENT_EFFECT->effectType) handler.at(currentLane)->ChangeEffect(currentEffect, (Effect::EFFECT_TYPE) type);
+        if ( (Effect::EFFECT_TYPE) type != CURRENT_EFFECT->effectType) handler->at(currentLane)->ChangeEffect(currentEffect, (Effect::EFFECT_TYPE) type);
         changeEffect = false;
         EffectNormal();
     }
@@ -131,8 +133,8 @@ void FXDisplay::AltUpButton(){
 void FXDisplay::AltDownButton(){
     CURRENT_EFFECT->selected = false;
     currentLane += 1;
-    if (currentLane >= handler.size()) {
-        currentLane = handler.size() - 1;
+    if (currentLane >= handler->size()) {
+        currentLane = handler->size() - 1;
     }
     currentEffect = 0;
     EffectNormal();
@@ -150,8 +152,8 @@ void FXDisplay::AltLeftButton(){
 void FXDisplay::AltRightButton(){
     CURRENT_EFFECT->selected = false;
     currentEffect += 1;
-    if (currentEffect >= handler.at(currentLane)->effects.size()) {
-        currentEffect = handler.at(currentLane)->effects.size() - 1;
+    if (currentEffect >= handler->at(currentLane)->effects.size()) {
+        currentEffect = handler->at(currentLane)->effects.size() - 1;
     }
     EffectNormal();
 }

@@ -7,7 +7,7 @@
 #include "daisy_seed.h"
 #include <vector>
 
-#define CURRENT_EFFECT handler.at(currentLane)->effects.at(currentEffect) // a little macro cozi write this too much
+#define CURRENT_EFFECT handler->at(currentLane)->effects.at(currentEffect) // a little macro cozi write this too much
 
 using namespace daisy;
 
@@ -16,13 +16,12 @@ public:
     FXDisplay(){}
     ~FXDisplay(){}
 
-    void Init(float samplerate_, std::vector<InstrumentHandler*> handler_, cFont* MainFont) {
+    void Init(float samplerate_, std::vector<InstrumentHandler*>* handler_, cFont* MainFont) {
         handler = handler_;
         samplerate = samplerate_;
         currentLane = 0;
         currentEffect = 0;
         changeEffect = false;
-        EffectNormal();
         this->MainFont = MainFont;
     }
 
@@ -51,7 +50,7 @@ private:
     char strbuff[20];
     InstrumentHandler* Lane;
     Effect* effect;
-    std::vector<InstrumentHandler*> handler;
+    std::vector<InstrumentHandler*>* handler;
     int param;
     bool changeEffect;
     int type;

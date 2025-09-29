@@ -29,6 +29,7 @@ public:
         filterR.SetDrive(drive);
         filterMode = LOWPASS;
         param = 0;
+        paramNum = 4;
         selected = false;
         effectType = FILTER;
         this->MainFont = MainFont;
@@ -162,18 +163,58 @@ public:
         }
     }
 
-    void NextParam() {
-        param += 1;
-        if (param > 3) {
-            param = 3;
-        }
+    void GetSnapshot(char *buf) {
+        
+        void* ptr = &buf[0];
+
+        *(static_cast<uint32_t*>(ptr)) = (uint32_t) filterMode;
+        ptr = static_cast<uint32_t*>(ptr) + 1;
+
+        *(static_cast<float*>(ptr)) = freq;
+        ptr = static_cast<float*>(ptr) + 1;
+
+        *(static_cast<float*>(ptr)) = res;
+        ptr = static_cast<float*>(ptr) + 1;
+        
+        *(static_cast<float*>(ptr)) = drive;
+        ptr = static_cast<float*>(ptr) + 1;
+
     }
 
-    void PrevParam() {
-        param -= 1;
-        if (param < 0) {
-            param = 0;
-        }
+    void Load(char* buf, float samplerate, cFont* MainFont) {
+        void* ptr = &buf[0];
+
+        this->samplerate = samplerate;
+
+        this->MainFont = MainFont;
+
+        filterL.Init(samplerate);
+        filterR.Init(samplerate);
+
+        filterMode = (FILTERMODE) *(static_cast<uint32_t*>(ptr));
+        ptr = static_cast<uint32_t*>(ptr) + 1;
+
+        freq = *(static_cast<float*>(ptr));
+        ptr = static_cast<float*>(ptr) + 1;
+
+        res = *(static_cast<float*>(ptr));
+        ptr = static_cast<float*>(ptr) + 1;
+        
+        drive = *(static_cast<float*>(ptr));
+        ptr = static_cast<float*>(ptr) + 1;
+
+
+        filterL.SetFreq(FILTERSCALE);
+        filterR.SetFreq(FILTERSCALE);
+        filterL.SetRes(res);
+        filterR.SetRes(res);
+        filterL.SetDrive(drive);
+        filterR.SetDrive(drive);
+        param = 0;
+        paramNum = 4;
+        selected = false;
+        effectType = FILTER;
+        this->MainFont = MainFont;
     }
 
 private:

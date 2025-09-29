@@ -2,16 +2,39 @@
 #ifndef step_h
 #define step_h
 
-
+/**
+ * Step can be represented in 20 bytes including one byte telling program that it is a Step
+ */
 
 class Step {
 public:
+    Step(int index) {
+        this->note = 48;
+        this->instrument = -1;
+        this->fx = 0;
+        this->fxAmount = 0;
+        this->selected = false;
+        this->paramEdit = Step::i;
+        this->index = index;
+    }
+
+    // verbose constructor for loading
+    Step(int8_t instrument, uint8_t note, uint8_t fx, uint8_t fxAmount, int index) {
+        this->note = note;
+        this->instrument = instrument;
+        this->fx = fx;
+        this->fxAmount = fxAmount;
+        this->selected = false;
+        this->paramEdit = Step::i;
+        this->index = index;
+    }
+
     enum param {i, n, f, fa};
 
-    int instrument;
-    int note;
-    int fx;
-    int fxAmount;
+    int8_t instrument;
+    uint8_t note;
+    uint8_t fx;
+    uint8_t fxAmount;
     bool selected;
     int index;
     // bool active;

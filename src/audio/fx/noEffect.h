@@ -34,6 +34,19 @@ public:
     void Decrement(){}
     void NextParam(){}
     void PrevParam(){}
+
+    void GetSnapshot(char *buf) {
+
+    }
+
+    void Load(char *buf, float samplerate, cFont* MainFont) {
+        param = 0;
+        paramNum = 0;
+        selected = false;
+        effectType = NOFX;
+        this->MainFont = MainFont;
+    }
+
 };
 
 #endif

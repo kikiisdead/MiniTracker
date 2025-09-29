@@ -1,11 +1,11 @@
 #include "sampDisplay.h"
 
-void SampDisplay::Init(WaveFileLoader* fileLoader, std::vector<Instrument*>* instruments, cFont *MainFont, size_t* bufferIndex) {
+void SampDisplay::Init(WaveFileLoader* fileLoader, std::vector<Instrument*>* instruments, cFont *MainFont, size_t* bufferIndex, Node<File>* rootNode) {
     this->fileLoader = fileLoader;
     this->instruments = instruments;
     this->MainFont = MainFont;
     this->bufferIndex = bufferIndex;
-    currentNode = fileLoader->GetRootNode();
+    currentNode = rootNode;
     row = 0;
     scrRow = 0;
     col = 0;
@@ -14,8 +14,8 @@ void SampDisplay::Init(WaveFileLoader* fileLoader, std::vector<Instrument*>* ins
 
 void SampDisplay::AButton() {
 
-    if (currentNode->down.at(row)->data.attrib & (AM_DIR)) {
-        currentNode = currentNode->down.at(row);
+    if (currentNode->children.at(row)->data.attrib & (AM_DIR)) {
+        currentNode = currentNode->children.at(row);
         lev += 1;
         if (lev > 2) {
             col = 2;
@@ -25,14 +25,14 @@ void SampDisplay::AButton() {
         row = 0;
         scrRow = 0;
     } else {
-        Instrument* inst = fileLoader->CreateInstrument(currentNode->down.at(row));
+        Instrument* inst = fileLoader->CreateInstrument(currentNode->children.at(row));
         if (inst != nullptr) instruments->push_back(inst);
     }
 }
 
 void SampDisplay::BButton(){
-    if (currentNode->up != nullptr) {
-        currentNode = currentNode->up;
+    if (currentNode->parent != nullptr) {
+        currentNode = currentNode->parent;
         lev -= 1;
         if (lev < 0) {
             lev = 0;
@@ -62,8 +62,8 @@ void SampDisplay::UpButton(){
 void SampDisplay::DownButton(){
     row += 1;
     scrRow += 1;
-    if (row >= (int) currentNode->down.size()) {
-        row = currentNode->down.size() - 1;
+    if (row >= (int) currentNode->children.size()) {
+        row = currentNode->children.size() - 1;
     }
     if (scrRow > 10) {
         scrRow = 10;
@@ -95,7 +95,7 @@ void SampDisplay::UpdateDisplay(cLayer* display){
     display->drawFillRect(0, 0, sdramUsage * 240.0f, 20, ACCENT2);
 
     sprintf(strbuff, "MEM USAGE");
-    WriteString(display, strbuff, 4, CHAR_HEIGHT + 4, MAIN);
+    WriteString(display, strbuff, 4, CHAR_HEIGHT + 3, MAIN);
 
 
     display->drawLine(80, 21, 80, 240, MAIN);
@@ -106,19 +106,19 @@ void SampDisplay::UpdateDisplay(cLayer* display){
      */
     display->drawFillRect(col * 80 + 1, scrRow * (CHAR_HEIGHT + 8) + 20, 79, CHAR_HEIGHT + 8, ACCENT2);
 
+    /**
+     * Drawing parent dir
+     */
     int y = CHAR_HEIGHT + 4 + 18;
     int x = 4;
-    if (currentNode->up != nullptr) {
+    if (currentNode->parent != nullptr) {
 
-        if (currentNode->up->up != nullptr) {
-            for (Node<File>* node : currentNode->up->up->down) {
-                std::string path = std::string(node->data.name);
-                size_t index = path.find_last_of('/') + 1; 
-                std::string name = path.substr(index, path.length() - index);
-                if (node->data.attrib & (AM_DIR)) sprintf(strbuff, "/%.7s", name.c_str());
-                else sprintf(strbuff, "%.8s", name.c_str());
+        if (currentNode->parent->parent != nullptr) {
+            for (Node<File>* node : currentNode->parent->parent->children) {
+                if (node->data.attrib & (AM_DIR)) sprintf(strbuff, "/%.7s", *node->data.name);
+                else sprintf(strbuff, "%.8s", *node->data.name);
 
-                if (node == currentNode->up) {
+                if (node == currentNode->parent) {
                     display->drawFillRect(x - 3, y - (CHAR_HEIGHT + 2), 79, CHAR_HEIGHT + 8, ACCENT2);
                 }
 
@@ -129,12 +129,9 @@ void SampDisplay::UpdateDisplay(cLayer* display){
         }
 
         y = CHAR_HEIGHT + 4 + 18;
-        for (Node<File>* node : currentNode->up->down) {
-            std::string path = std::string(node->data.name);
-            size_t index = path.find_last_of('/') + 1; 
-            std::string name = path.substr(index, path.length() - index);
-            if (node->data.attrib & (AM_DIR)) sprintf(strbuff, "/%.7s", name.c_str());
-            else sprintf(strbuff, "%.8s", name.c_str());
+        for (Node<File>* node : currentNode->parent->children) {
+            if (node->data.attrib & (AM_DIR)) sprintf(strbuff, "/%.7s", *node->data.name);
+            else sprintf(strbuff, "%.8s", *node->data.name);
 
             if (node == currentNode) {
                 display->drawFillRect(x - 3, y - (CHAR_HEIGHT + 2), 79, CHAR_HEIGHT + 8, ACCENT2);
@@ -154,29 +151,17 @@ void SampDisplay::UpdateDisplay(cLayer* display){
     for (int i = 0; i < 11; i ++) {
         int pos = row + (i - scrRow);
 
-        if (pos >= (int) currentNode->down.size()) continue;
+        if (pos >= (int) currentNode->children.size()) continue;
         else if (pos < 0) continue;
 
-        Node<File>* node = currentNode->down.at(pos);
+        Node<File>* node = currentNode->children.at(pos);
 
-        std::string path = std::string(node->data.name);
-        size_t index = path.find_last_of('/') + 1; 
-        std::string name = path.substr(index, path.length() - index);
-        if (node->data.attrib & (AM_DIR)) sprintf(strbuff, "/%.7s", name.c_str());
-        else sprintf(strbuff, "%.8s", name.c_str());
+        if (node->data.attrib & (AM_DIR)) sprintf(strbuff, "/%.7s", *node->data.name);
+        else sprintf(strbuff, "%.8s", *node->data.name);
+        
         WriteString(display, strbuff, x, y, MAIN);
         y += CHAR_HEIGHT + 8; 
     }
-
-    // for (Node<File>* node : currentNode->down) {
-    //     std::string path = std::string(node->data.name);
-    //     size_t index = path.find_last_of('/') + 1; 
-    //     std::string name = path.substr(index, path.length() - index);
-    //     if (node->data.attrib & (AM_DIR)) sprintf(strbuff, "/%.7s", name.c_str());
-    //     else sprintf(strbuff, "%.8s", name.c_str());
-    //     WriteString(display, strbuff, x, y, MAIN);
-    //     y += CHAR_HEIGHT + 8;
-    // }
     
     /**
      * Drawing Instruments
@@ -184,7 +169,7 @@ void SampDisplay::UpdateDisplay(cLayer* display){
     display->drawLine(320 - 80, 0, 320-80, 240, ACCENT2);
     display->drawFillRect(240, 0, 80, 21, ACCENT2);
     sprintf(strbuff, "LOADED");
-    WriteString(display, strbuff, 320 - 76, CHAR_HEIGHT + 4, MAIN);
+    WriteString(display, strbuff, 320 - 76, CHAR_HEIGHT + 3, MAIN);
     int yOffset = CHAR_HEIGHT + 4 + CHAR_HEIGHT + 8;
     if (!instruments->empty()) {
         for (size_t i = 0; i < instruments->size(); i ++) {
@@ -194,7 +179,6 @@ void SampDisplay::UpdateDisplay(cLayer* display){
             yOffset += CHAR_HEIGHT + 8;
         }
     }
-    
 }
 
 void SampDisplay::WriteString(cLayer* display, char* strbuff, int x, int y, DadGFX::sColor color) {

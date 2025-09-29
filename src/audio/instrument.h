@@ -6,6 +6,7 @@
 #include "daisy_seed.h"
 #include "daisysp.h"
 #include "sampleplayer.h"
+#include "../sd/dirLoader.h"
 #include <vector>
 
 using namespace daisy;
@@ -30,7 +31,7 @@ public:
     /**
      * Initializes the instrument with sample rate and sample. Each instrument will only have one sample
      */
-    void Init(float samplerate, WavFile* sample);
+    void Init(float samplerate, WavFile* sample, std::string path);
 
     /**
      * Called in audioCallback to get next sample
@@ -71,15 +72,9 @@ public:
 
     float GetGain() { return gain; }
 
+    std::string GetPath() { return path; }
+
     char* GetName() { return samplePlayer.GetName(); }
-
-    int GetNumChannels() { return samplePlayer.GetNumChannels(); }
-
-    int GetSampleRate() { return samplePlayer.GetSampleRate(); }
-    
-    int GetBitsPerSample() { return samplePlayer.GetBitsPerSample(); }
-
-    int GetRawSize() { return samplePlayer.GetRawSize(); }
 
     param GetEdit() { return edit; }
 
@@ -96,6 +91,15 @@ public:
 
     std::vector<double> slices;
 
+    void Load(float attack, float decay, float sustain, float release, float pitch, float gain) {
+        att = attack;
+        dec = decay;
+        sus = sustain;
+        rel = release;
+        this->pitch = pitch;
+        this->gain = gain;
+    }
+
 private:
     SamplePlayer samplePlayer;
     Adsr env;
@@ -105,6 +109,8 @@ private:
     bool playing;
     float att, dec, sus, rel, pitch, gain;
     param edit;
+
+    std::string path;
 
     float Scaling(float num) { return pow(num, ((num / 5.0f) + 1.0f) / 2.0f) / 10.0f; }
 

@@ -7,12 +7,16 @@
 #include "src/UI/instDisplay.h"
 #include "src/UI/fxDisplay.h"
 #include "src/UI/sampDisplay.h"
+#include "src/UI/songDisplay.h"
 #include <vector>
 #include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 #include "DaisySeedGFX2/cDisplay.h"
 #include "src/UI/util/KodeMono_Regular8pt7b.h"
 #include "src/sd/waveFileLoader.h"
-#include "../../../../DaisyExamples/DaisySP/DaisySP-LGPL/Source/Effects/reverbsc.h"
+#include "src/sd/dirLoader.h"
+#include "src/sd/projSaverLoader.h"
 
 #define LANE_NUMBER 4
 
@@ -33,7 +37,7 @@ using namespace daisy;
 using namespace daisysp;
 using namespace DadGFX;
 
-DaisySeed hw;
+static DaisySeed hw;
 
 SdmmcHandler   sd;
 FatFSInterface fsi;
@@ -41,12 +45,21 @@ FIL            SDFile;
 
 DECLARE_DISPLAY(__Display)
 DECLARE_LAYER(MainLayer, 320, 240)
+DadGFX::cFont MainFont(&KodeMono_Regular8pt7b);
 
 std::vector<InstrumentHandler*> handler;
 
 std::vector<Instrument*> instruments;
 
+std::vector<Pattern*> patterns; // holds all the possible patterns made
+
+std::vector<int> songOrder; // holds the order of the patterns
+
+float bpm = 178.0f;
+
 bool shift;
+
+bool projSafe = true;
 
 /**
  * SDRAM STUFF
@@ -71,10 +84,42 @@ void* sample_buffer_allocate(size_t size)
   return ptr;
 }
 
+bool sample_buffer_clear() {
+  memset(sample_buffer, 0, CUSTOM_POOL_SIZE);
+  buffer_index = 0;
+  return true;
+}
+
+#define FILE_BUFFER_SIZE (1024*1024)
+
+DSY_SDRAM_BSS char file_buffer[FILE_BUFFER_SIZE];
+
+size_t file_index = 0;
+
+// allocating space in buffer
+void* file_buffer_allocate(size_t size)
+{
+  if (file_index + size >= FILE_BUFFER_SIZE)
+  {
+    return 0;
+  }
+  void* ptr = &file_buffer[file_index];
+  file_index += size;
+  return ptr;
+}
+
+
+
 /**
- * WaveFileLoader
+ * SD CARD STUFF
  */
 WaveFileLoader waveFileLoader;
+
+ProjSaverLoader projSaverLoader;
+
+DirLoader sampleDirLoader;
+
+DirLoader projDirLoader;
 
 /**
  * USER INTERFACES
@@ -90,6 +135,8 @@ InstrumentDisplay instDisplay;
 FXDisplay fxDisplay;
 
 SampDisplay sampDisplay;
+
+SongDisplay songDisplay;
 
 
 /**
@@ -128,7 +175,7 @@ void RightPress() {
 }
 void LeftShoulderPress() {
   if (userInterface == interfaces.begin()) {
-    userInterface = interfaces.end() - 1;
+    userInterface = interfaces.begin();
   } else {
     userInterface--;
   }
@@ -137,7 +184,7 @@ void RightShoulderPress() {
   if (userInterface != interfaces.end() - 1) {
     userInterface++;
   } else {
-    userInterface = interfaces.begin();
+    userInterface = interfaces.end() - 1;
   }
 }
 
@@ -164,12 +211,44 @@ void InputHandle() {
 GPIO ok;
 GPIO ok2;
 
+Limiter limiter;
+
+#define TEST_FILE "test.txt"
+
+FIL fil;
+
+void CLEAR() {
+  sample_buffer_clear();
+  sequencer.Clear();
+
+  for (Instrument* inst : instruments) {
+    delete inst;
+  }
+
+  for (Pattern* patt : patterns) {
+    delete patt;
+  } 
+  
+  songOrder.clear();
+
+  for (InstrumentHandler* hand : handler) {
+    hand->ClearFX();
+  }
+  projSafe = false;
+}
+
+void SAFE() {
+  projSafe = true;
+  sequencer.Safe();
+}
+
 /** LOOP */
-void AudioCallback(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, size_t size) 
-{
+void AudioCallback(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, size_t size) {
   float outL = 0;
   float outR = 0;
   
+  if (!projSafe) return; // cutsoff audio processing during project load
+
   for (size_t i = 0; i < size; i++)
   {
     outL = 0;
@@ -185,14 +264,19 @@ void AudioCallback(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, s
       outR += tempR * 0.5f;
     }
 
+    songDisplay.Process(outL, outR);
+
     out[0][i] = outL;
     out[1][i] = outR;
   }
+
+  limiter.ProcessBlock(out[0], size, 1.0f);
+  limiter.ProcessBlock(out[1], size, 1.0f);
 }
 
 /** SETUP */
-int main(void) 
-{
+int main(void) {
+
   hw.Init();
 
   /**
@@ -201,50 +285,44 @@ int main(void)
   INIT_DISPLAY(__Display);
   __Display.setOrientation(Rotation::Degre_90);
   DadGFX::cLayer* pMain = ADD_LAYER(MainLayer, 0, 0, 1);
-  pMain->drawFillRect(0, 0, 320, 240, BACKGROUND);
-  __Display.flush();
 
-  DadGFX::cFont MainFont(&KodeMono_Regular8pt7b);
+  // DadGFX::cFont MainFont(&KodeMono_Regular8pt7b);
 
   /**
    * Initializing Seed Audio
    */
-  hw.SetAudioBlockSize(8); // number of samples handled per callback
+  hw.SetAudioBlockSize(64); // number of samples handled per callback
   hw.SetAudioSampleRate(SaiHandle::Config::SampleRate::SAI_48KHZ);
 
   float samplerate = hw.AudioSampleRate();
 
-  // reverb.Init(samplerate);
-
   /**
-   * Initialize SDIO
+   * Initialize SDIO & waveFileLoader
    */
   ok.Init(seed::D29, GPIO::Mode::OUTPUT);
   ok2.Init(seed::D28, GPIO::Mode::OUTPUT);
+
   SdmmcHandler::Config sd_cfg;
-  sd_cfg.Defaults();
-  //sd_cfg.speed = SdmmcHandler::Speed::SLOW;
-  if (sd.Init(sd_cfg) == SdmmcHandler::Result::OK) {
-    
-    // FatFS Interface
-    if (fsi.Init(FatFSInterface::Config::MEDIA_SD) == FatFSInterface::Result::OK) {
-      ok.Write(true);
+  sd_cfg.clock_powersave = true; // turn clock off when not in use to save power
+  sd_cfg.speed = SdmmcHandler::Speed::VERY_FAST; // very fast because wav files are big
+  sd_cfg.width = SdmmcHandler::BusWidth::BITS_4; // same here
+  sd.Init(sd_cfg);
 
-      // Mount SD Card
-      if (f_mount(&fsi.GetSDFileSystem(), "/", 1) == FR_OK) ok2.Write(true);
+  // FatFS Interface
+  if (fsi.Init(FatFSInterface::Config::MEDIA_SD) == FatFSInterface::Result::OK) ok.Write(true);
 
-      /**
-       * Initialize Wave File Loader
-       */
-      waveFileLoader.Init(samplerate, sample_buffer_allocate);
+  // Mount SD Card
+  if (f_mount(&fsi.GetSDFileSystem(), "/", 1) == FR_OK) {
+    ok2.Write(true);
 
-      // Node<File>* root = waveFileLoader.GetRootNode();
-      // instruments.push_back(waveFileLoader.CreateInstrument(root->down.at(0)));
-    }
-  } 
-
-  
-  
+    /**
+     * Initialize Wave File Loader
+     */
+    sampleDirLoader.Init(file_buffer_allocate, "/Samples");
+    projDirLoader.Init(file_buffer_allocate, "/Projects");
+    waveFileLoader.Init(samplerate, sample_buffer_allocate);
+    projSaverLoader.Init("/Projects/", &fil, &sequencer, &instruments, &handler, CLEAR, SAFE, &waveFileLoader);
+  }
 
   /**
    * Building instrument handlers
@@ -300,21 +378,24 @@ int main(void)
    * Initializing UI objects
    * and adding to interfaces vector
    */
-  sequencer.Init(handler, samplerate, &MainFont);
+  limiter.Init();
+  sequencer.Init(&handler, samplerate, &MainFont, &patterns, &songOrder);
   instDisplay.Init(&instruments, handler.at(0), &MainFont);
-  fxDisplay.Init(samplerate, handler, &MainFont);
-  sampDisplay.Init(&waveFileLoader, &instruments, &MainFont, &buffer_index);
+  fxDisplay.Init(samplerate, &handler, &MainFont);
+  sampDisplay.Init(&waveFileLoader, &instruments, &MainFont, &buffer_index, sampleDirLoader.GetRootNode());
+  songDisplay.Init(&sequencer, projDirLoader.GetRootNode(), &projSaverLoader, &MainFont, file_buffer_allocate);
 
+  interfaces.push_back(&songDisplay);
+  interfaces.push_back(&sampDisplay);
   interfaces.push_back(&sequencer);
   interfaces.push_back(&instDisplay);
   interfaces.push_back(&fxDisplay);
-  interfaces.push_back(&sampDisplay);
-
-  userInterface = interfaces.begin();
+  
+  userInterface = interfaces.begin() + 2;
 
   hw.StartAudio(AudioCallback);
 
-  uint32_t time = System::GetNow();
+  uint32_t time = System::GetNow();  
 
   for (;;) {
     if (System::GetNow() > time + 17) {

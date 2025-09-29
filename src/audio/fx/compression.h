@@ -27,6 +27,7 @@ public:
         compressor.AutoMakeup(false);
 
         param = 0;
+        paramNum = 5;
         selected = false;
         effectType = COMPRESSION;
         this->MainFont = MainFont;
@@ -180,18 +181,61 @@ public:
         }
     }
 
-    void NextParam() {
-        param += 1;
-        if (param > 4) {
-            param = 4;
-        }
+    void GetSnapshot(char *buf) {
+        
+        void* ptr = &buf[0];
+
+        *(static_cast<float*>(ptr)) = threshold;
+        ptr = static_cast<float*>(ptr) + 1;
+
+        *(static_cast<float*>(ptr)) = ratio;
+        ptr = static_cast<float*>(ptr) + 1;
+
+        *(static_cast<float*>(ptr)) = attack;
+        ptr = static_cast<float*>(ptr) + 1;
+        
+        *(static_cast<float*>(ptr)) = release;
+        ptr = static_cast<float*>(ptr) + 1;
+
+        *(static_cast<float*>(ptr)) = makeup;
+        ptr = static_cast<float*>(ptr) + 1;
     }
 
-    void PrevParam(){
-        param -= 1;
-        if (param < 0) {
-            param = 0;
-        }
+    void Load(char* buf, float samplerate, cFont* MainFont) {
+        void* ptr = &buf[0];
+
+        this->samplerate = samplerate;
+
+        this->MainFont = MainFont;
+
+        compressor.Init(samplerate);
+
+        threshold = *(static_cast<float*>(ptr));
+        ptr = static_cast<float*>(ptr) + 1;
+
+        ratio = *(static_cast<float*>(ptr));
+        ptr = static_cast<float*>(ptr) + 1;
+
+        attack = *(static_cast<float*>(ptr));
+        ptr = static_cast<float*>(ptr) + 1;
+        
+        release = *(static_cast<float*>(ptr));
+        ptr = static_cast<float*>(ptr) + 1;
+
+        makeup = *(static_cast<float*>(ptr));
+        ptr = static_cast<float*>(ptr) + 1;
+
+        compressor.SetAttack(attack);
+        compressor.SetRelease(release);
+        compressor.SetRatio(ratio);
+        compressor.SetThreshold(threshold);
+        compressor.SetMakeup(makeup); 
+        compressor.AutoMakeup(false);
+
+        param = 0;
+        paramNum = 5;
+        selected = false;
+        effectType = COMPRESSION;
     }
 
 private:

@@ -34,7 +34,7 @@
 #define TFT_MAD_RGB 0x00    // Red-Green-Blue pixel order
 
 using namespace daisy;
-extern DaisySeed hw;
+// extern DaisySeed hw;
 
 enum class SPIMode {
     Mode0, // SPI Mode 0

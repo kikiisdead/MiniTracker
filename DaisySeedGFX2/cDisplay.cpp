@@ -539,7 +539,7 @@ void cDisplay::flush() {
     for (uint8_t yIndexBloc = 0; yIndexBloc < m_NbDitryBlocY; yIndexBloc++) {
         for (uint8_t xIndexBloc = 0; xIndexBloc < m_NbDitryBlocX; xIndexBloc++) {
             // Check if the block is marked as dirty (needs updating)
-            // if (m_DirtyBlocks[yIndexBloc][xIndexBloc] == 1) {
+            if (m_DirtyBlocks[yIndexBloc][xIndexBloc] == 1) {
                 m_DirtyBlocks[yIndexBloc][xIndexBloc] = 0; // Mark block as clean
 
                 // Calculate X and Y positions of the block in the screen
@@ -593,7 +593,7 @@ void cDisplay::flush() {
                     System::DelayUs(50); // Wait if the FIFO is full
                 }
                 sendDMA(); // Transmit the block
-            // }
+            }
         }
     }
 }

@@ -126,12 +126,58 @@ public:
         }
     }
 
+    void GetSnapshot(char *buf) {
+        
+        void* ptr = &buf[0];
+
+        // *(static_cast<float*>(ptr)) = samplerate;
+        // ptr = static_cast<char*>(ptr) + sizeof(samplerate);
+
+        // *((cFont**) ptr) = MainFont;
+        // ptr = static_cast<char*>(ptr) + sizeof(MainFont);
+
+        *(static_cast<float*>(ptr)) = crush;
+        ptr = static_cast<float*>(ptr) + 1;
+
+        *(static_cast<int*>(ptr)) = bitDepth;
+        ptr = static_cast<int*>(ptr) + 1;
+    }
+
+    void Load(char* buf, float samplerate, cFont* MainFont) {
+        param = 0;
+        paramNum = 2;
+        selected = false;
+        effectType = REDUX;
+
+        void* ptr = &buf[0];
+
+        this->samplerate = samplerate;
+
+        this->MainFont = MainFont;
+
+        crush = *(static_cast<float*>(ptr));
+        ptr = static_cast<float*>(ptr) + 1;
+
+        bitDepth = *(static_cast<int*>(ptr));
+        ptr = static_cast<int*>(ptr) + 1;
+
+        bitcrushL.Init();
+        bitcrushR.Init();
+        osc.Init(OSCDISPRATE);
+
+        bitcrushL.SetBitsToCrush(16 - bitDepth);
+        bitcrushR.SetBitsToCrush(16 - bitDepth);
+
+        bitcrushL.SetDownsampleFactor(crush);
+        bitcrushR.SetDownsampleFactor(crush);
+    }
+
 private:
     Decimator bitcrushL;
     Decimator bitcrushR;
     Oscillator osc;
 
-    float crush, samplerate;
+    float crush;
     int bitDepth;
 
 };
