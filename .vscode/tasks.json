@@ -54,7 +54,7 @@
       "type": "shell"
     },
     {
-      "command": "make clean;DEBUG=1 make",
+      "command": "make clean; DEBUG=1 make",
       "dependsOn": [
         "build_libdaisy",
         "build_daisysp"

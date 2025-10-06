@@ -1,22 +1,36 @@
 #include "instrument.h"
 
 void Instrument::Init(float samplerate, WavFile* sample, std::string path) {
+    Config cfg;
+    cfg.Defaults();
+    Init(samplerate, sample, path, cfg);
+}
+
+void Instrument::Init(float samplerate, WavFile* sample, std::string path, Config cfg) {
     samplePlayer.Init(sample, samplerate);
     env.Init(samplerate);
     this->path = path;
-    att = 0.01f;
-    dec = 0.6f;
-    sus = 0.0f;
-    rel = 0.01f;
-    pitch = 0.0f;
-    gain = 0.0f;
+    Load(cfg);
+    edit = p;
+    visual = samplePlayer.GetVisual(WAVEWIDTH);
+}
+
+void Instrument::Load(Config cfg) {
+
+    att = cfg.Attack;
+    dec = cfg.Decay;
+    sus = cfg.Sustain;
+    rel = cfg.Release;
+    pitch = cfg.Pitch;
+    gain = cfg.Gain;
     env.SetAttackTime(att);
     env.SetDecayTime(dec);
     env.SetSustainLevel(sus);
     env.SetReleaseTime(rel);
-    slices.push_back(0.0f);
-    edit = p;
-    visual = samplePlayer.GetVisual(WAVEWIDTH);
+    slices.clear();
+    for (double slice : cfg.slices) {
+        slices.push_back(slice);
+    }
 }
 
 void Instrument::Process(float& left, float& right) {
@@ -27,34 +41,19 @@ void Instrument::Process(float& left, float& right) {
 
     if (!env.IsRunning() && samplePlayer.IsPlaying()) {
         samplePlayer.Stop(); // if the envelope has stopped and the sample is still playing: stop
+        playing = false;
     } else if (currentSlice + 1 < slices.size()) {
         if (samplePlayer.GetPos() >= slices.at(currentSlice + 1) * samplePlayer.GetSize()) {
             samplePlayer.Stop();
+            playing = false;
         }
+    } else if (!samplePlayer.IsPlaying()) {
+        playing = false;
     }
     samplePlayer.Process(_left, _right);
 
     left = _left * env_out * pow(10.0f, gain / 10.0f);
     right = _right * env_out * pow(10.0f, gain / 10.0f);
-}
-
-float Instrument::Process() {
-    env_out = env.Process(playing);
-
-    float _left = 0;
-    float _right = 0;
-
-    if (!env.IsRunning() && samplePlayer.IsPlaying()) {
-        samplePlayer.Stop(); // if the envelope has stopped and the sample is still playing: stop
-    } else if (currentSlice + 1 < slices.size()) {
-        if (samplePlayer.GetPos() >= slices.at(currentSlice + 1) * samplePlayer.GetSize()) {
-            samplePlayer.Stop();
-        }
-    }
-
-    samplePlayer.Process(_left, _right);
-
-    return _left * env_out * pow(10.0f, gain / 10.0f);
 }
 
 void Instrument::Trigger(int note) {

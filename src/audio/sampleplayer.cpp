@@ -20,43 +20,6 @@ void SamplePlayer::Init(WavFile* wave_, float samplerate_)
 
 }
 
-float SamplePlayer::Process() {
-
-    pos_ = (pos_ + samplePerStep);
-    if (pos_ > size_) {
-        pos_ = 0.0; 
-        if (!looping_) {
-            Stop();
-        }
-    }
-    if (!playing_) {
-        return 0.0f; // if its not playing then do nothing
-    }
-
-    int32_t pos_integral   = static_cast<int32_t>(pos_); // rounding float pos into int
-    float   pos_fractional = pos_ - static_cast<float>(pos_integral); // getting difference between the two
-
-    __disable_irq(); // prevent interrupts while accessing SDRAM (especially when using DMA)
-    int32_t t  =  (pos_integral);
-    float  xm1 = *(SAMP_POINTER + ((t - 1) % size_)); // casting into float (not as memory efficient with ram usage but that's okay)
-    float  x0  = *(SAMP_POINTER + ((t    ) % size_));
-    float  x1  = *(SAMP_POINTER + ((t + 1) % size_));
-    float  x2  = *(SAMP_POINTER + ((t + 2) % size_));
-    __enable_irq();
-
-    const float c     = (x1 - xm1) * 0.5f;
-    const float v     = x0 - x1;
-    const float w     = c + v;
-    const float a     = w + v + (x2 - x0) * 0.5f;
-    const float b_neg = w + a;
-    const float f     = pos_fractional;
-    float interpolated = (((a * f) - b_neg) * f + c) * f + x0;
-
-
-    return interpolated;
-
-}
-
 uint16_t* SamplePlayer::GetVisual(int size) {
     uint16_t* visual = new uint16_t[size];
     

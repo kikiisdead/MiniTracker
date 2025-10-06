@@ -9,6 +9,7 @@
 #include "src/UI/sampDisplay.h"
 #include "src/UI/songDisplay.h"
 #include <vector>
+#include <queue>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -17,6 +18,7 @@
 #include "src/sd/waveFileLoader.h"
 #include "src/sd/dirLoader.h"
 #include "src/sd/projSaverLoader.h"
+// #include "src/displayDriver/ST7789Driver.h"
 
 #define LANE_NUMBER 4
 
@@ -37,11 +39,16 @@ using namespace daisy;
 using namespace daisysp;
 using namespace DadGFX;
 
-static DaisySeed hw;
+// using this because issue with creating FIL objects on stack
+#define DSY_TEXT __attribute__((section(".text")))
+
+DaisySeed hw;
 
 SdmmcHandler   sd;
-FatFSInterface fsi;
-FIL            SDFile;
+
+DSY_TEXT FatFSInterface fsi;
+DSY_TEXT FIL            readFIL;
+DSY_TEXT FIL            writeFIL;
 
 DECLARE_DISPLAY(__Display)
 DECLARE_LAYER(MainLayer, 320, 240)
@@ -108,7 +115,11 @@ void* file_buffer_allocate(size_t size)
   return ptr;
 }
 
-
+bool file_buffer_clear() {
+  memset(file_buffer, 0, FILE_BUFFER_SIZE);
+  file_index = 0;
+  return true;
+}
 
 /**
  * SD CARD STUFF
@@ -145,47 +156,147 @@ SongDisplay songDisplay;
  * Objects
  * and Vectors
 */
+class Command {
+public:
+  Command(){}
+  ~Command(){}
+
+  virtual void Execute(buttonInterface* interface, bool shift) = 0;
+};
+
+class ACommand : public Command {
+public:
+  ACommand(){}
+  ~ACommand(){}
+
+  void Execute(buttonInterface* interface, bool shift) {
+    if (shift) interface->AltAButton();
+    else interface->AButton();
+  }
+};
+
+class BCommand : public Command {
+public:
+  BCommand(){}
+  ~BCommand(){}
+
+  void Execute(buttonInterface* interface, bool shift) {
+    if (shift) interface->AltBButton();
+    else interface->BButton();
+  }
+};
+
+class PlayCommand : public Command {
+public:
+  PlayCommand(){}
+  ~PlayCommand(){}
+
+  void Execute(buttonInterface* interface, bool shift) {
+    if (shift) interface->AltPlayButton();
+    else interface->PlayButton();
+  }
+};
+
+class UpCommand : public Command {
+public:
+  UpCommand(){}
+  ~UpCommand(){}
+
+  void Execute(buttonInterface* interface, bool shift) {
+    if (shift) interface->AltUpButton();
+    else interface->UpButton();
+  }
+};
+
+class DownCommand : public Command {
+public:
+  DownCommand(){}
+  ~DownCommand(){}
+
+  void Execute(buttonInterface* interface, bool shift) {
+    if (shift) interface->AltDownButton();
+    else interface->DownButton();
+  }
+};
+
+class LeftCommand : public Command {
+public:
+  LeftCommand(){}
+  ~LeftCommand(){}
+
+  void Execute(buttonInterface* interface, bool shift) {
+    if (shift) interface->AltLeftButton();
+    else interface->LeftButton();
+  }
+};
+
+class RightCommand : public Command {
+public:
+  RightCommand(){}
+  ~RightCommand(){}
+
+  void Execute(buttonInterface* interface, bool shift) {
+    if (shift) interface->AltRightButton();
+    else interface->RightButton();
+  }
+};
+
+class LeftShoulderCommand : public Command {
+public:
+  LeftShoulderCommand(){}
+  ~LeftShoulderCommand(){}
+
+  void Execute(buttonInterface* interface, bool shift) {
+    if (userInterface == interfaces.begin()) {
+      userInterface = interfaces.begin();
+    } else {
+      userInterface--;
+    }
+  }
+};
+
+class RightShoulderCommand : public Command {
+public:
+  RightShoulderCommand(){}
+  ~RightShoulderCommand(){}
+
+  void Execute(buttonInterface* interface, bool shift) {
+    if (userInterface != interfaces.end() - 1) {
+      userInterface++;
+    } else {
+      userInterface = interfaces.end() - 1;
+    }
+  }
+};
+
+std::queue<Command*> eventQueue;
+
 void APress() {
-  if (shift) (*userInterface)->AltAButton();
-  else (*userInterface)->AButton();
+  eventQueue.push(new ACommand);
 }
 void BPress() {
-  if (shift) (*userInterface)->AltBButton();
-  else (*userInterface)->BButton();
+  eventQueue.push(new BCommand);
 }
 void PlayPress() {
-  if (shift) (*userInterface)->AltPlayButton();
-  else (*userInterface)->PlayButton();
+  eventQueue.push(new PlayCommand);
 }
 void UpPress() {
-  if (shift) (*userInterface)->AltUpButton();
-  else (*userInterface)->UpButton();
+  eventQueue.push(new UpCommand);
 }
 void DownPress() {
-  if (shift) (*userInterface)->AltDownButton();
-  else (*userInterface)->DownButton();
+  eventQueue.push(new DownCommand);
 }
 void LeftPress() {
-  if (shift) (*userInterface)->AltLeftButton();
-  else (*userInterface)->LeftButton();
+  eventQueue.push(new LeftCommand);
 }
 void RightPress() {
-  if (shift) (*userInterface)->AltRightButton();
-  else (*userInterface)->RightButton();
+  eventQueue.push(new RightCommand);
 }
 void LeftShoulderPress() {
-  if (userInterface == interfaces.begin()) {
-    userInterface = interfaces.begin();
-  } else {
-    userInterface--;
-  }
+  eventQueue.push(new LeftShoulderCommand);
 }
 void RightShoulderPress() {
-  if (userInterface != interfaces.end() - 1) {
-    userInterface++;
-  } else {
-    userInterface = interfaces.end() - 1;
-  }
+  eventQueue.push(new RightShoulderCommand);
 }
 
 Button A;
@@ -213,10 +324,6 @@ GPIO ok2;
 
 Limiter limiter;
 
-#define TEST_FILE "test.txt"
-
-FIL fil;
-
 void CLEAR() {
   sample_buffer_clear();
   sequencer.Clear();
@@ -225,9 +332,13 @@ void CLEAR() {
     delete inst;
   }
 
+  instruments.clear();
+
   for (Pattern* patt : patterns) {
     delete patt;
   } 
+
+  patterns.clear();
   
   songOrder.clear();
 
@@ -248,6 +359,8 @@ void AudioCallback(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, s
   float outR = 0;
   
   if (!projSafe) return; // cutsoff audio processing during project load
+
+  InputHandle(); 
 
   for (size_t i = 0; i < size; i++)
   {
@@ -274,7 +387,6 @@ void AudioCallback(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, s
   limiter.ProcessBlock(out[1], size, 1.0f);
 }
 
-/** SETUP */
 int main(void) {
 
   hw.Init();
@@ -286,7 +398,7 @@ int main(void) {
   __Display.setOrientation(Rotation::Degre_90);
   DadGFX::cLayer* pMain = ADD_LAYER(MainLayer, 0, 0, 1);
 
-  // DadGFX::cFont MainFont(&KodeMono_Regular8pt7b);
+  DadGFX::cFont MainFont(&KodeMono_Regular8pt7b);
 
   /**
    * Initializing Seed Audio
@@ -318,10 +430,10 @@ int main(void) {
     /**
      * Initialize Wave File Loader
      */
-    sampleDirLoader.Init(file_buffer_allocate, "/Samples");
-    projDirLoader.Init(file_buffer_allocate, "/Projects");
-    waveFileLoader.Init(samplerate, sample_buffer_allocate);
-    projSaverLoader.Init("/Projects/", &fil, &sequencer, &instruments, &handler, CLEAR, SAFE, &waveFileLoader);
+    sampleDirLoader.Init(file_buffer_allocate, "/Samples"); // building separate trees; this one loads sample file info
+    projDirLoader.Init(file_buffer_allocate, "/Projects"); // building separate trees; this one loads project file info
+    waveFileLoader.Init(samplerate, sample_buffer_allocate, &readFIL);
+    projSaverLoader.Init("/Projects/", &readFIL, &writeFIL, &sequencer, &instruments, &handler, CLEAR, SAFE, &waveFileLoader);
   }
 
   /**
@@ -397,12 +509,32 @@ int main(void) {
 
   uint32_t time = System::GetNow();  
 
+  float flushTime = 0; 
+  float processTime = 0;
+
+  char strbuff[20];
+
   for (;;) {
     if (System::GetNow() > time + 17) {
       (*userInterface)->UpdateDisplay(pMain); 
+      sprintf(strbuff, "%.0fms", flushTime);
+      pMain->setCursor(0, CHAR_HEIGHT);
+      pMain->setFont(&MainFont);
+      pMain->setTextFrontColor(MAIN);
+      pMain->drawText(strbuff);
+      sprintf(strbuff, "%.0fms", processTime);
+      pMain->setCursor(0, CHAR_HEIGHT * 2 + 4);
+      pMain->setFont(&MainFont);
+      pMain->setTextFrontColor(MAIN);
+      pMain->drawText(strbuff);
+      processTime = ((float) (System::GetNow() - time));
       __Display.flush();
+      flushTime = ((float) (System::GetNow() - time)) - processTime;
       time = System::GetNow();
     }
-    InputHandle(); 
+    while (eventQueue.size() != 0) {
+      eventQueue.front()->Execute((*userInterface), shift);
+      eventQueue.pop();
+    }
   }
 }

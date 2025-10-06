@@ -1,9 +1,14 @@
 # Project Name
 TARGET = MiniTracker
 
-USE_DAISYSP_LGPL=1
+# DaisySP LGPL Objects (compressor, reverb, etc.)
+USE_DAISYSP_LGPL = 1
 
+# Print floats when using sprintf
 LDFLAGS = -u _printf_float
+
+# Debug flag true
+DEBUG = 1
 
 # Sources
 CPP_SOURCES = MiniTracker.cpp
@@ -23,7 +28,7 @@ CPP_SOURCES += DaisySeedGFX2/GFX.cpp
 CPP_SOURCES += DaisySeedGFX2/TFT_SPI.cpp
 
 # Bootload into QSPI Flash instead of ARM Chip Flash
-APP_TYPE = BOOT_QSPI
+APP_TYPE = BOOT_SRAM
 
 # Library Locations
 LIBDAISY_DIR = ../DaisyExamples/libDaisy/

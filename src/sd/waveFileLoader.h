@@ -33,12 +33,12 @@ public:
     /**
      * Initializes the wave file object
      */
-    void Init(float samplerate, void* (*sample_buffer_allocate)(size_t size));
+    void Init(float samplerate, void* (*sample_buffer_allocate)(size_t size), FIL* fil);
 
     /**
      * creates an instrument object from 
-     * \param index selects the index of what file to read, if index is a dir, will call open dir instead
-     * \return an instrument that the sampleDisplay UI thing will append it to the Instruments vector
+     * @param index selects the index of what file to read, if index is a dir, will call open dir instead
+     * @return an instrument that the sampleDisplay UI thing will append it to the Instruments vector
      * Need to create a case where it opens a dir and returns a nullptr
      */
     Instrument* CreateInstrument(Node<File>* node);
@@ -52,7 +52,7 @@ public:
     Instrument* CreateInstrument(std::string path);
 
 private:
-    FIL   fil;
+    FIL*   fil;
     float samplerate;
     void* (*sample_buffer_allocate)(size_t size);
 };

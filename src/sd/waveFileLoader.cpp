@@ -1,15 +1,16 @@
 #include "waveFileLoader.h"
 
-void WaveFileLoader::Init(float samplerate, void* (*sample_buffer_allocate)(size_t size)) {
+void WaveFileLoader::Init(float samplerate, void* (*sample_buffer_allocate)(size_t size), FIL* fil) {
     this->samplerate = samplerate;
     this->sample_buffer_allocate = sample_buffer_allocate;
+    this->fil = fil;
 }
 
 Instrument* WaveFileLoader::CreateInstrument(std::string path) {
 
     UINT bytesread;
 
-    if (f_open(&fil, path.c_str(), (FA_OPEN_EXISTING | FA_READ)) == FR_OK) {
+    if (f_open(fil, path.c_str(), (FA_OPEN_EXISTING | FA_READ)) == FR_OK) {
 
         WavFile* sample = new WavFile; // CREATING ON HEAP
 
@@ -18,54 +19,54 @@ Instrument* WaveFileLoader::CreateInstrument(std::string path) {
         /**
          * RIFF Header
          */
-        f_read(&fil, (void*)&(wave.ChunkId), sizeof(wave.ChunkId), &bytesread);
-        f_read(&fil, (void*)&(wave.FileSize), sizeof(wave.FileSize), &bytesread);
-        f_read(&fil, (void*)&(wave.FileFormat), sizeof(wave.FileFormat), &bytesread);
+        f_read(fil, (void*)&(wave.ChunkId), sizeof(wave.ChunkId), &bytesread);
+        f_read(fil, (void*)&(wave.FileSize), sizeof(wave.FileSize), &bytesread);
+        f_read(fil, (void*)&(wave.FileFormat), sizeof(wave.FileFormat), &bytesread);
 
         /**
          * SubChunk1
          */
-        f_read(&fil, (void*)&(wave.SubChunk1ID), sizeof(wave.SubChunk1ID), &bytesread);
-        f_read(&fil, (void*)&(wave.SubChunk1Size), sizeof(wave.SubChunk1Size), &bytesread);
-        f_read(&fil, (void*)&(wave.AudioFormat), sizeof(wave.AudioFormat), &bytesread);
-        f_read(&fil, (void*)&(wave.NbrChannels), sizeof(wave.NbrChannels), &bytesread);
-        f_read(&fil, (void*)&(wave.SampleRate), sizeof(wave.SampleRate), &bytesread);
-        f_read(&fil, (void*)&(wave.ByteRate), sizeof(wave.ByteRate), &bytesread);
-        f_read(&fil, (void*)&(wave.BlockAlign), sizeof(wave.BlockAlign), &bytesread);
-        f_read(&fil, (void*)&(wave.BitPerSample), sizeof(wave.BitPerSample), &bytesread);
+        f_read(fil, (void*)&(wave.SubChunk1ID), sizeof(wave.SubChunk1ID), &bytesread);
+        f_read(fil, (void*)&(wave.SubChunk1Size), sizeof(wave.SubChunk1Size), &bytesread);
+        f_read(fil, (void*)&(wave.AudioFormat), sizeof(wave.AudioFormat), &bytesread);
+        f_read(fil, (void*)&(wave.NbrChannels), sizeof(wave.NbrChannels), &bytesread);
+        f_read(fil, (void*)&(wave.SampleRate), sizeof(wave.SampleRate), &bytesread);
+        f_read(fil, (void*)&(wave.ByteRate), sizeof(wave.ByteRate), &bytesread);
+        f_read(fil, (void*)&(wave.BlockAlign), sizeof(wave.BlockAlign), &bytesread);
+        f_read(fil, (void*)&(wave.BitPerSample), sizeof(wave.BitPerSample), &bytesread);
 
         /**
          * Non PCM data has 2 byte extension size (PCM data meaning 16bit PCM soa nything not that gets an extension)
          */
         if (wave.AudioFormat != WAVE_FORMAT_PCM) {
-            f_read(&fil, (void*)&(wave.extensionSize), sizeof(wave.extensionSize), &bytesread);
+            f_read(fil, (void*)&(wave.extensionSize), sizeof(wave.extensionSize), &bytesread);
         }
 
         /**
          * Wave format extensible
          */
         if (wave.AudioFormat == WAVE_FORMAT_EXTENSIBLE || wave.extensionSize == (uint16_t) 22) {
-            f_read(&fil, (void*)&(wave.ValidBitsPerSample), sizeof(wave.ValidBitsPerSample), &bytesread);
-            f_read(&fil, (void*)&(wave.dwChannelMask), sizeof(wave.dwChannelMask), &bytesread);
-            f_read(&fil, (void*)&(wave.SubformatCode), sizeof(wave.SubformatCode), &bytesread);
-            f_read(&fil, (void*)&(wave.SubformatPad1), sizeof(wave.SubformatPad1), &bytesread);
-            f_read(&fil, (void*)&(wave.SubformatPad2), sizeof(wave.SubformatPad2), &bytesread);
+            f_read(fil, (void*)&(wave.ValidBitsPerSample), sizeof(wave.ValidBitsPerSample), &bytesread);
+            f_read(fil, (void*)&(wave.dwChannelMask), sizeof(wave.dwChannelMask), &bytesread);
+            f_read(fil, (void*)&(wave.SubformatCode), sizeof(wave.SubformatCode), &bytesread);
+            f_read(fil, (void*)&(wave.SubformatPad1), sizeof(wave.SubformatPad1), &bytesread);
+            f_read(fil, (void*)&(wave.SubformatPad2), sizeof(wave.SubformatPad2), &bytesread);
         }
 
         /**
          * Fact Chunk
          */
         if (wave.AudioFormat != WAVE_FORMAT_PCM && wave.SubformatCode != WAVE_FORMAT_PCM) {
-            f_read(&fil, (void*)&(wave.FactChunkID), sizeof(wave.FactChunkID), &bytesread);
-            f_read(&fil, (void*)&(wave.FactChunkSize), sizeof(wave.FactChunkSize), &bytesread);
-            f_read(&fil, (void*)&(wave.SampleLength), sizeof(wave.SampleLength), &bytesread);
+            f_read(fil, (void*)&(wave.FactChunkID), sizeof(wave.FactChunkID), &bytesread);
+            f_read(fil, (void*)&(wave.FactChunkSize), sizeof(wave.FactChunkSize), &bytesread);
+            f_read(fil, (void*)&(wave.SampleLength), sizeof(wave.SampleLength), &bytesread);
         } 
 
         /**
          * Data Chunk
          */
-        f_read(&fil, (void*)&(wave.SubChunk2ID), sizeof(wave.SubChunk2ID), &bytesread);
-        f_read(&fil, (void*)&(wave.SubCHunk2Size), sizeof(wave.SubCHunk2Size), &bytesread);
+        f_read(fil, (void*)&(wave.SubChunk2ID), sizeof(wave.SubChunk2ID), &bytesread);
+        f_read(fil, (void*)&(wave.SubCHunk2Size), sizeof(wave.SubCHunk2Size), &bytesread);
 
         std::string file = std::string(path);
         std::string name;
@@ -92,7 +93,7 @@ Instrument* WaveFileLoader::CreateInstrument(std::string path) {
             void* writePtr = sample->start;
             while (readIndex < wave.SubCHunk2Size) {
                 uint8_t val;
-                if (f_read(&fil, (void*)&val, sizeof(val), &bytesread) == FR_OK) { // reading sd card 1 byte at a time
+                if (f_read(fil, (void*)&val, sizeof(val), &bytesread) == FR_OK) { // reading sd card 1 byte at a time
                     int16_t temp = MuLaw2Lin((val * -1) - 1); // decode mulaw
                     float samp = s162f(temp); // turn to float
                     readIndex += 1; 
@@ -114,7 +115,7 @@ Instrument* WaveFileLoader::CreateInstrument(std::string path) {
 
                 uint8_t val;
 
-                if (f_read(&fil, (void*)&val, sizeof(val), &bytesread) == FR_OK) { // reading sd card 1 byte at a time
+                if (f_read(fil, (void*)&val, sizeof(val), &bytesread) == FR_OK) { // reading sd card 1 byte at a time
                     int16_t temp = ALaw2Lin((val * -1) - 1); // decode mulaw
                     float samp = s162f(temp); // turn to float
                     readIndex += 1; 
@@ -136,7 +137,7 @@ Instrument* WaveFileLoader::CreateInstrument(std::string path) {
 
                 int16_t val;
 
-                if (f_read(&fil, (void*)&val, sizeof(val), &bytesread) == FR_OK) { // reading sd card 2 bytes at a time
+                if (f_read(fil, (void*)&val, sizeof(val), &bytesread) == FR_OK) { // reading sd card 2 bytes at a time
                     float samp = s162f(val); // turn to float
                     readIndex += 1; 
                     *(static_cast<float*>(writePtr)) = samp; // add to sdram
@@ -159,7 +160,7 @@ Instrument* WaveFileLoader::CreateInstrument(std::string path) {
             while (readIndex < wave.SubCHunk2Size / sizeof(Bit24x4)) {
 
                 Bit24x4 bit;
-                f_read(&fil, (void*)&bit, sizeof(bit), &bytesread);
+                f_read(fil, (void*)&bit, sizeof(bit), &bytesread);
                 
                 int32_t temp1 = ((bit.val1      ) & 0x00FFFFFF);
                 int32_t temp2 = ((bit.val1 >> 24) & 0x000000FF) | ((bit.val2 <<  8) & 0x00FFFF00);
@@ -196,7 +197,7 @@ Instrument* WaveFileLoader::CreateInstrument(std::string path) {
 
                 float val;
 
-                if (f_read(&fil, (void*)&val, sizeof(val), &bytesread) == FR_OK) { // reading sd card 2 bytes at a time
+                if (f_read(fil, (void*)&val, sizeof(val), &bytesread) == FR_OK) { // reading sd card 2 bytes at a time
                     readIndex += 1; 
                     *(static_cast<float*>(writePtr)) = val; // add to sdram
                     writePtr = static_cast<float*>(writePtr) + 1;
@@ -205,11 +206,11 @@ Instrument* WaveFileLoader::CreateInstrument(std::string path) {
             sample->format.SubCHunk2Size = sample->format.SubCHunk2Size / sizeof(float);
         } 
         else { // if code does not match any type we can read
-            f_close(&fil);
+            f_close(fil);
             return nullptr;
         }
 
-        f_close(&fil);
+        f_close(fil);
 
         Instrument* instrument = new Instrument; // CREATING ON HEAP
 
@@ -241,7 +242,7 @@ Instrument* WaveFileLoader::CreateInstrument(Node<File>* node) {
         temp = temp->parent;
     }
 
-    return CreateInstrument(path.c_str());
+    return CreateInstrument(path);
 
 }
 

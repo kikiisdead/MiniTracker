@@ -20,7 +20,7 @@
 // 18-bit encoding: RGB666
 // 16-bit encoding: RGB565
 //
-// #define TFT_COLOR 18            // Uncomment for 18-bit color mode
+//#define TFT_COLOR 18            // Uncomment for 18-bit color mode
 #define TFT_COLOR 16              // Use 16-bit color mode (default)
 //#define INV_COLOR 				  // Screen displays with inverted colors remove/comment this if not needed"
 
@@ -57,5 +57,3 @@
 //-------------------------------------------------------------------------
 // FIFO size for SPI block transmission via DMA
 #define SIZE_FIFO 2  // Number of blocks in the FIFO buffer
-
-// I'm making every block dirty every time meaning that FIFO is overloaded. need to be more conservative with deiplay usage.

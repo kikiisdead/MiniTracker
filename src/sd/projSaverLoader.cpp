@@ -1,11 +1,12 @@
 #include "projSaverLoader.h"
 
-void ProjSaverLoader::Init(const char* savePath, FIL *fil, Sequencer* sequencer, std::vector<Instrument*>* instVector, std::vector<InstrumentHandler*>* instHandler, void (*CLEAR)(), void (*SAFE)(), WaveFileLoader* waveFileLoader) {
+void ProjSaverLoader::Init(const char* savePath, FIL* fil, FIL *writeFIL,  Sequencer* sequencer, std::vector<Instrument*>* instVector, std::vector<InstrumentHandler*>* instHandler, void (*CLEAR)(), void (*SAFE)(), WaveFileLoader* waveFileLoader) {
     this->savePath = std::string(savePath);
     safe = true; // function called which means mounted safely
     buffer_index = 0;
     memset(buf, 0, sizeof(buf));
     this->fil = fil;
+    this->writeFIL = writeFIL;
     this->sequencer = sequencer;
     this->instVector = instVector;
     this->instHandler = instHandler;
@@ -14,10 +15,6 @@ void ProjSaverLoader::Init(const char* savePath, FIL *fil, Sequencer* sequencer,
     this->waveFileLoader = waveFileLoader;
 }
 
-/**
- * Template function to dynamically write to the file as the program runs, 
- * will need another function to force it to write if amountData % 128 != 0
- */
 template <typename T>
 void ProjSaverLoader::Write(T val) {
     Write(val, sizeof(val));
@@ -29,9 +26,9 @@ void ProjSaverLoader::Write(T val, size_t size) {
     if (buffer_index + size > WRITE_BUFFER_SIZE) { 
         size_t diff = WRITE_BUFFER_SIZE - buffer_index;
         void* ptr = &val;
-        Write(((char *) ptr)[0], diff);
+        if (diff != 0) Write(((uint8_t *) ptr)[0], diff);
         ResetAndPush();
-        Write(((char *) ptr)[diff], size - diff);
+        Write(((uint8_t *) ptr)[diff], size - diff);
     } else {
         void* writePtr = &buf[buffer_index];
         std::memcpy(writePtr, &val, size);
@@ -40,26 +37,22 @@ void ProjSaverLoader::Write(T val, size_t size) {
 }
 
 void ProjSaverLoader::ResetAndPush() {
-    f_write(fil, buf, buffer_index, &bytesWritten);
+    f_write(writeFIL, buf, buffer_index, &bytesWritten);
     buffer_index = 0;
     memset(buf, 0, sizeof(buf)); 
 }
 
-/**
- * LOAD PROJECT
- * takes project name as argument
- */
 void ProjSaverLoader::LoadProject(const char* name) {
     std::string save = savePath + std::string(name);
 
     if (f_open(fil, save.c_str(), (FA_OPEN_EXISTING) | (FA_READ)) == FR_OK) {
 
+        CLEAR();
+
         uint32_t HEADER;
 
         // Sequencer Header
         f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
-
-        CLEAR();
 
         // BPM
         float bpm;
@@ -163,32 +156,39 @@ void ProjSaverLoader::LoadProject(const char* name) {
 
         uint32_t numInst;
         f_read(fil, &numInst, sizeof(numInst), &bytesWritten);
+        // reading 0 for num instruments
+        Instrument::Config* instCfg[numInst];
+        
+        std::string* searchPaths[numInst];
 
-        for (uint32_t i = 0; i < numInst; i ++) {
+        // std::vector<Instrument::Config*> instCfg;
+        // std::vector<std::string*> searchPaths;
+        
+        for (uint32_t inst = 0; inst < numInst; inst ++) {
             //INST HEADER
             f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
 
-            float attack, decay, sustain, release, gain, pitch;
+            instCfg[inst] = new Instrument::Config;
+
             uint32_t numSlices, pathLength;
-            std::vector<float> slices;
 
             // attack
-            f_read(fil, &attack, sizeof(attack), &bytesWritten);
+            f_read(fil, &instCfg[inst]->Attack, sizeof(instCfg[inst]->Attack), &bytesWritten);
 
             // decay
-            f_read(fil, &decay, sizeof(decay), &bytesWritten);
+            f_read(fil, &instCfg[inst]->Decay, sizeof(instCfg[inst]->Decay), &bytesWritten);
 
             // sustain
-            f_read(fil, &sustain, sizeof(sustain), &bytesWritten);
+            f_read(fil, &instCfg[inst]->Sustain, sizeof(instCfg[inst]->Sustain), &bytesWritten);
 
             // release
-            f_read(fil, &release, sizeof(release), &bytesWritten);
+            f_read(fil, &instCfg[inst]->Release, sizeof(instCfg[inst]->Release), &bytesWritten);
 
             // gain
-            f_read(fil, &gain, sizeof(gain), &bytesWritten);
+            f_read(fil, &instCfg[inst]->Gain, sizeof(instCfg[inst]->Gain), &bytesWritten);
 
             // pitch
-            f_read(fil, &pitch, sizeof(pitch), &bytesWritten);
+            f_read(fil, &instCfg[inst]->Pitch, sizeof(instCfg[inst]->Pitch), &bytesWritten);
 
             // numSlices
             f_read(fil, &numSlices, sizeof(numSlices), &bytesWritten);
@@ -198,57 +198,46 @@ void ProjSaverLoader::LoadProject(const char* name) {
 
                 // numSlices
                 f_read(fil, &slice, sizeof(slice), &bytesWritten);
-                slices.push_back(slice);
+                instCfg[inst]->slices.push_back(slice);
             }
 
             // pathLength
             f_read(fil, &pathLength, sizeof(pathLength), &bytesWritten);
 
             // search path
-            std::string path = "";
+            searchPaths[inst] = new std::string("");
 
-            for (uint32_t i = 0; i < pathLength; i ++) {
+            for (uint32_t c = 0; c < pathLength; c ++) {
                 char chr;
                 f_read(fil, &chr, sizeof(chr), &bytesWritten);
-                path += chr;
+                *searchPaths[inst] += chr;
             }
 
-            f_close(fil); // closing file to prevent 2 files open at same time
+        }
 
-            Instrument* inst = waveFileLoader->CreateInstrument(path.c_str());
+        f_close(fil);
 
+        // creating instruments
+        for (uint32_t i = 0; i < numInst; i ++) {
+            Instrument* inst = waveFileLoader->CreateInstrument(*searchPaths[i]);
             if (inst != nullptr) {
-                inst->Load(attack, decay, sustain, release, pitch, gain);
-
-                inst->slices.clear();
-
-                for (float slice : slices) {
-                    inst->slices.push_back((double) slice);
-                }
-                
+                inst->Load(*instCfg[i]);
                 instVector->push_back(inst);
             }
-
-            f_open(fil, save.c_str(), (FA_OPEN_EXISTING) | (FA_READ)); // reopening for another instrument
-            
+            delete searchPaths[i]; // free up that memory
+            delete instCfg[i];
         }
-        
-        f_close(fil);
+
     }
 
     SAFE();
 }
 
-
-/**
- * SAVE PROJECT
- * takes project name as argument
- */
 void ProjSaverLoader::SaveProject(const char* name) {
 
-    std::string save = savePath + std::string(name) + std::string(".mtrk");
+    std::string save = savePath + std::string(name);
 
-    if (f_open(fil, save.c_str(), (FA_CREATE_ALWAYS) | (FA_WRITE)) == FR_OK && safe) {
+    if (f_open(writeFIL, save.c_str(), (FA_CREATE_ALWAYS) | (FA_WRITE)) == FR_OK && safe) {
 
         // SEQUENCER HEADER
         Write(0x20514553); // "SEQ "
@@ -384,7 +373,7 @@ void ProjSaverLoader::SaveProject(const char* name) {
         }
 
         ResetAndPush(); 
-        f_close(fil);
+        f_close(writeFIL);
     }
 
 }

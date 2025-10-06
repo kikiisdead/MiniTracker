@@ -36,13 +36,13 @@ public:
 
     /**
      * Get Root Node of tree
-     * \return the root node
+     * @return the root node
      */
     Node<File>* GetRootNode() { return &rootNode; }
 
     /**
      * Search for node by its name
-     * \return corresponding node
+     * @return corresponding node
      */
     Node<File>* GetNode(std::string name, Node<File>* dir);
 
@@ -53,8 +53,8 @@ private:
 
     /**
      * Recursively searches through the SDCard to extract all file info and put into TREE
-     * \param path the path to the directory being opened
-     * \param node the current node being modified and added to
+     * @param path the path to the directory being opened
+     * @param node the current node being modified and added to
      */
     void OpenDir(const char* path, Node<File>* node);
 };

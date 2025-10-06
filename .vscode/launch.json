@@ -10,23 +10,24 @@
         "-d",
         "${workspaceRoot}"
       ],
-      "executable": "${workspaceRoot}/build/minichord.elf",
+      "executable": "${workspaceRoot}/build/MiniTracker.elf",
       "interface": "swd",
       "name": "Cortex Debug",
       "openOCDLaunchCommands": [
         "init",
-        "reset init"
+        "reset init",
+        "gdb_breakpoint_override hard"
       ],
-      "preLaunchTask": "build_all_debug",
+      "preLaunchTask": "build_and_program_dfu",
       "preRestartCommands": [
         "load",
         "enable breakpoint",
         "monitor reset"
       ],
       "request": "launch",
-      "runToMain": true,
+      "runToEntryPoint": "main",
       "servertype": "openocd",
-      "showDevDebugOutput": true,
+      "showDevDebugOutput": "both",
       "svdFile": "${workspaceRoot}/.vscode/STM32H750x.svd",
       "type": "cortex-debug"
     }

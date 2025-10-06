@@ -21,30 +21,67 @@ Will have a public process function which will get called if its playing. pointe
 */
 
 class Instrument {
-
-
 public:
+
+    struct Config {
+        float Attack;
+        float Decay;
+        float Sustain;
+        float Release;
+        float Pitch;
+        float Gain;
+        std::vector<double> slices;
+
+        void Defaults() {
+            Attack = 0.01f;
+            Decay = 0.6f;
+            Sustain = 0.0f;
+            Release = 0.01f;
+            Pitch = 0.0f;
+            Gain = 0.0f;
+            slices.push_back(0.0f);
+        }
+
+    };
+
     enum param { p, g, a, d, s, r };
 
     Instrument(){};
 
     /**
      * Initializes the instrument with sample rate and sample. Each instrument will only have one sample
+     * @param samplerate samplerate of project, used to initialize daisysp obejcts
+     * @param sample the wavefile object that contains pointers to the file in SDRAM
+     * @param path the path to the file in the sdcard
+     * @overload Init, passes config defaults as config
      */
     void Init(float samplerate, WavFile* sample, std::string path);
 
     /**
+     * Initializes the instrument with sample rate and sample. Each instrument will only have one sample
+     * @param samplerate samplerate of project, used to initialize daisysp obejcts
+     * @param sample the wavefile object that contains pointers to the file in SDRAM
+     * @param path the path to the file in the sdcard
+     * @param cfg configuration to help with loading from project file
+     */
+    void Init(float samplerate, WavFile* sample, std::string path, Config cfg);
+
+    /**
+     * Loads configurations from project save file
+     * @param cfg the configuration struct
+     */
+    void Load(Config cfg);
+
+    /**
      * Called in audioCallback to get next sample
+     * @param left float of left channel passed by reference so that the value changes
+     * @param right float of right channel passed by reference so that the value changes
      */
     void Process(float& left, float& right);
 
     /**
-     * Called in audioCallback to get next sample
-     */
-    float Process();
-
-    /**
      * Trigger the next sample slice or trigger at different pitch (depends on mode)
+     * @param note the note to play
      */
     void Trigger(int note);
 
@@ -89,16 +126,10 @@ public:
      */
     uint16_t* visual;
 
+    /**
+     * the slices / subsections of the sample to be played
+     */
     std::vector<double> slices;
-
-    void Load(float attack, float decay, float sustain, float release, float pitch, float gain) {
-        att = attack;
-        dec = decay;
-        sus = sustain;
-        rel = release;
-        this->pitch = pitch;
-        this->gain = gain;
-    }
 
 private:
     SamplePlayer samplePlayer;

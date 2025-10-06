@@ -17,10 +17,71 @@ public:
     ProjSaverLoader(){}
     ~ProjSaverLoader(){}
 
-    void Init(const char* savePath, FIL *fil, Sequencer* sequencer, std::vector<Instrument*>* instVector, std::vector<InstrumentHandler*>* instHandler, void (*CLEAR)(), void (*SAFE)(), WaveFileLoader* waveFileLoader);
+    /**
+     * Initializes the object with all containers of data that will be
+     * used to save a file
+     * @param savePath the overall save path that will be used to save projects
+     * @param fil the FIL object used to save (for some reason needs to be global to write files)
+     * @param sequencer the sequencer object that allows to access patterns 
+     * @param instVector the container holding all Instrument objects
+     * @param instHandler instrument handlers that house the effect containers
+     * @param CLEAR a function callback that clears the patterns, frees up the memory, and marks those containers as unsafe
+     * @param SAFE makrs containers as safe for access again
+     * @param waveFileLoader to load wave files on project load
+     * 
+     */
+    void Init(const char* savePath, FIL* fil, FIL *writeFIL, Sequencer* sequencer, std::vector<Instrument*>* instVector, std::vector<InstrumentHandler*>* instHandler, void (*CLEAR)(), void (*SAFE)(), WaveFileLoader* waveFileLoader);
 
+    /**
+     * Saves project
+     * takes all data from patterns instruments and effects and writes them
+     * to the file in a format that is easy to decode later on
+     * File Format is as such:
+     *
+     * - SEQUENCER HEADER (4 bytes)
+     *     - bpm (4 bytes)
+     *     - SONG ORDER HEADER(4 bytes)
+     *         - Song order length (8 bytes)
+     *         - pattern index (x * 4 bytes)
+     *     - num patterns (8 bytes)
+     *     - PATTERN HEADER (4 bytes)
+     *         - num lanes (4 bytes)
+     *         - LANE HEADER (4 bytes)
+     *             - length (4 bytes)
+     *             - STEP HEADER  (4 bytes)
+     *                 - instrument (1 byte signed) 
+     *                 - note (1 byte unsigned)
+     *                 - fx (1 byte unsigned)
+     *                 - fx amout (1 byte unsigned)
+     * - EFFECTS CONTAINER HEADER (4 bytes)
+     * - Num Lanes (4 bytes)
+     *     - FX HEADER (4 bytes)
+     *         - FX type (4 bytes)
+     *         - efect specific params (32 bytes)
+     * - INSTRUMENT CONTAINER HEADER (4 bytes)
+     *     - num instruments (4 bytes)
+     *     - INSTRUMENT HEADER (4 bytes)
+     *         - attack (4bytes)
+     *         - decay (4bytes)
+     *         - sustain (4 bytes)
+     *         - release (4 bytes)
+     *         - gain (4 bytes)
+     *         - pitch (4 bytes)
+     *         - num slices (4 bytes)
+     *         - slices (4 byets * num slices)
+     *         - searchpath length (4 bytes unsigned)
+     *         - searchpath (searchpath length bytes)
+     * 
+     * @param name the name of the file to be saved MUST CONTAIN ".mtrk"
+     */
     void SaveProject(const char* name);
 
+    /**
+     * Loads a project from a specified file, 
+     * clears al patterns and instruments and recreates them based on 
+     * the data from the save file
+     * @param name name of the project MUST CONTAIN ".mtrk"
+     */
     void LoadProject(const char* name);
 
 private:
@@ -30,6 +91,7 @@ private:
     size_t buffer_index;
 
     FIL *fil;
+    FIL *writeFIL;
     UINT bytesWritten;
     Sequencer* sequencer; 
     std::vector<Instrument*>* instVector;
@@ -39,23 +101,27 @@ private:
     void (*SAFE)();
 
     /**
-     * Write data into buffer 
-     * If the data being added exceeds the buffer limit, it will write that chunk to the file
-     * template method to accomodate for various types of data being sent to Write
+     * Overload of other Write function
+     * \param val value to write
+     * passes sizeof(val) as size parameter to main Write function
      */
     template <typename T>
     void Write(T val);
 
     /**
-     * Write data into buffer 
-     * If the data being added exceeds the buffer limit, it will write that chunk to the file
-     * template method to accomodate for various types of data being sent to Write
+     * Writes to my saving buffer to write data in WRITE_BUFFER_SIZE chunks
+     * Templated and using void pointers to achieve type erasure to write 
+     * many different data types into the same char buffer
+     * \param val the value to write to the buffer
+     * \param size the amount of bytes that val consists of
      */
     template <typename T>
     void Write(T val, size_t size);
 
+    
     /**
-     * Forces buffer into file and resets counters
+     * Simple overload for the other Write function which passes sizeof
+     * \param val as size parameter
      */
     void ResetAndPush();
 

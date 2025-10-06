@@ -100,12 +100,15 @@ private:
     void NewPattern();
 
 public:
+
     Sequencer(){};
 
     /**
      * Sends triggers to the instrument handlers and moves sequencer forward
      */
     void Update();
+
+    
 
     /**
      * Updates the BPM

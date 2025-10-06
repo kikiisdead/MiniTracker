@@ -60,8 +60,8 @@ void DirLoader::OpenDir(const char* loadpath, Node<File>* node) {
 
         node->children.at(pos)->parent = node;
 
-        void* ptr = search_buffer_allocate(256);
-        node->children.at(pos)->data.name = (char (*)[256]) ptr;
+        void* ptr = search_buffer_allocate(256); // allocating space for file names in SDRAM
+        node->children.at(pos)->data.name = (char (*)[256]) ptr; // casting to char array of size 256
 
         sprintf(*node->children.at(pos)->data.name, fno.fname);
         node->children.at(pos)->data.attrib = fno.fattrib;

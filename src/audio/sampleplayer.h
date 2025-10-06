@@ -34,51 +34,71 @@ public:
     SamplePlayer() {}
     ~SamplePlayer() {}
 
-    /** Initializes the SamplePlayer, loading up to max_files of wav files from an SD Card. */
+    /** Initializes the SamplePlayer, loading up to max_files of wav files from an SD Card. 
+     * @param wave_ the wavfile object to be played from (needs pointer to sample in SDRAM)
+     * @param samplerate_ the samplerate of the project to determine interpolation and step size
+     */
     void Init(WavFile* wave_, float samplerate_);
 
-    /** \return the next sample played interpolated 
-     * does logic based on number of channels
-    */
-    float Process();
-
-    /** stereo out same as above except with 2 channels */
+    /**
+     * Processes audio by getting the next step to be taken
+     * @param outL reference to a float whose value will be the interpolated sample of the left channel
+     * @param outR reference to a float whose value will be the interpolated sample of the right channel
+     */
     void Process(float& outL, float& outR);
 
 
-    /** plays the file from the beginning */
+    /**
+     * Plays sample from the start
+     */
     void Play() { pos_ = 0; playing_ = true; }
 
-    /** plays from specified position */
+    /**
+     * Plays sample from a specified position
+     */
     void Play(double pos) { pos_ = pos; playing_ = true; }
 
-    /** stops playback */
+    /** 
+     * stops playback 
+     */
     void Stop() { playing_ = false; }
 
-    /** \return position of the play head */
+    /** 
+     * Returns the current position of playback
+     * @return position of the play head 
+     */
     double GetPos() { return pos_; }
 
     uint32_t GetSize() { return size_; }
 
-    /** Sets whether or not the current file will repeat after completing playback. 
-    \param loop To loop or not to loop.
-    */
+    /** 
+     * Sets whether or not the current file will repeat after completing playback. 
+     * @param loop To loop or not to loop.
+     */
     inline void SetLooping(bool loop) { looping_ = loop; }
 
     /** \return Whether the SamplePlayer is looping or not. */
     inline bool GetLooping() const { return looping_; }
 
-    /** Sets the pitch at which it plays and updates the sample speed
-     * \param pitch_ the pitch
-    */
+    /** 
+     * Sets the pitch at which it plays and updates the sample speed
+     * @param pitch_ the pitch
+     */
     inline void SetPitch(float pitch_) { 
       pitch = pitch_; 
       samplePerStep = (((double) wave->format.SampleRate) / ((double) samplerate)) * pow(2.0f, (pitch / 12.0f)); 
     } 
 
-    /** \return the pitch it plays at */
+    /** 
+     * Gets the current pitch
+     * @return the pitch it plays at 
+     */
     inline float GetPitch() const { return pitch; }
 
+    /**
+     * Gets playing value
+     * @return value of playing
+     */
     inline bool IsPlaying() { return playing_; }
 
     uint16_t* GetVisual (int length);

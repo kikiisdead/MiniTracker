@@ -14,7 +14,8 @@
         "../DaisyExamples/libDaisy//**",
         "../DaisyExamples/DaisySP//**",
         "../DaisyExamples/DaisySP/DaisySP-LGPL//**",
-        "${workspaceFolder}/DaisySeedGFX2//**"
+        "${workspaceFolder}/DaisySeedGFX2//**",
+        "${workspaceFolder}/tgx//**"
       ],
       "name": "Win32",
       "windowsSdkVersion": "10.0.17763.0"
@@ -33,7 +34,8 @@
         "../DaisyExamples/libDaisy//**",
         "../DaisyExamples/DaisySP//**",
         "../DaisyExamples/DaisySP/DaisySP-LGPL//**",
-        "${workspaceFolder}/DaisySeedGFX2//**"
+        "${workspaceFolder}/DaisySeedGFX2//**",
+        "${workspaceFolder}/tgx//**"
       ],
       "name": "macOS"
     }

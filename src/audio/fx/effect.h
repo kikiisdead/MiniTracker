@@ -17,6 +17,9 @@ using namespace DadGFX;
 
 class Effect {
 public:
+    Effect(){}
+    virtual ~Effect(){}
+
     enum EFFECT_TYPE { NOFX, FILTER, DISTORTION, COMPRESSION, AUTOPAN, REDUX };
 
     bool selected;

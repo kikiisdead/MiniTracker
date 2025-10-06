@@ -3,7 +3,7 @@
 #define step_h
 
 /**
- * Step can be represented in 20 bytes including one byte telling program that it is a Step
+ * Step can be represented in 16 bytes including one byte telling program that it is a Step
  */
 
 class Step {

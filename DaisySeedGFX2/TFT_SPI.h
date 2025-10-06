@@ -8,7 +8,7 @@
 #include "per/spi.h"
 #include "per/gpio.h"
 #include "sys/system.h"
-#include "../src/UI/UserConfig.h"
+#include "UserConfig.h"
 
 // TFT Generic commands
 #define TFT_NOP     0x00    // No operation
@@ -34,7 +34,7 @@
 #define TFT_MAD_RGB 0x00    // Red-Green-Blue pixel order
 
 using namespace daisy;
-// extern DaisySeed hw;
+extern DaisySeed hw;
 
 enum class SPIMode {
     Mode0, // SPI Mode 0

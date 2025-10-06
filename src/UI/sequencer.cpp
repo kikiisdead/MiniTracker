@@ -492,8 +492,10 @@ void Sequencer::AltPlayButton() {
 
 void Sequencer::AltAButton() {
     for (Lane* lane : activePattern->lanes) {
-        lane->length += 1;
-        lane->sequence.push_back(new Step(lane->length - 1));
+        for (int i = 0; i < lane->length; i ++) {
+            lane->sequence.push_back(new Step(i + lane->length));
+        }
+        lane->length *= 2;
     }
     updateStep = true;
     updateSidebar = true;
@@ -501,10 +503,13 @@ void Sequencer::AltAButton() {
 
 void Sequencer::AltBButton() {
     if (currentLane->length <= 1) return;
-    if (currentStep->index >= currentLane->length - 1) currentStep = currentLane->sequence.at(currentStep->index - 1);
+    if (currentStep->index >= currentLane->length / 2) currentStep = currentLane->sequence.at((currentLane->length / 2) - 1);
     for (Lane* lane : activePattern->lanes) {
-        lane->length -= 1;
-        lane->sequence.erase(--lane->sequence.end()); //get rid of last
+        lane->length /= 2;
+        for (int i = 0; i < lane->length; i ++) {
+            delete lane->sequence.back(); // free the memory allocated by new
+            lane->sequence.erase(--lane->sequence.end()); // get rid of last
+        }
     }
     updateStep = true;
     updateSidebar = true;

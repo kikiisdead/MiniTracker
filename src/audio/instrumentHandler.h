@@ -35,6 +35,12 @@ public:
 
     InstrumentHandler(){}
 
+    /**
+     * Initializes the Instrument handler object
+     * @param instVector_ pointer to the global instrument vector (shared between handlers)
+     * @param samplerate_ samplerate, used to initialize instruments and effects
+     * @param MainFont main font to be displayed, used to initilize effects which have a display component
+     */
     void Init(std::vector<Instrument*>* instVector_, float samplerate_, cFont* MainFont) {
         instVector = instVector_;
         activeInst = NULL;
@@ -48,8 +54,13 @@ public:
         effects.back()->Init(samplerate, MainFont);
     }
 
+    /**
+     * Processes audio in instruments and effects 
+     * @param left left audio channel passed by reference
+     * @param right right audio channel passed by reference
+     */
     void Process(float& left, float& right) {
-        if (activeInst == NULL) {
+        if (activeInst == nullptr) {
             left = 0.0f;
             right = 0.0f;
             return;
@@ -62,31 +73,17 @@ public:
                 effect->Process(left, right);
             }
         }
-    }
 
-    float Process() {
-        if (activeInst == NULL) {
-            return 0.0f;
-        } 
-
-        float _left = activeInst->Process();;
-        float _right = 0.0f;
-       
-        if (!preview) { // only process with effects if playing from sequence
-            for (Effect* effect : effects) {
-                effect->Process(_left, _right);
-            }
+        if (!activeInst->IsPlaying()) {
+            activeInst = nullptr;
         }
-
-        return _left;
-
     }
 
     // only triggered when changing next note occurs
     void Update(Step* step) {
         preview = false;
         if (step->instrument != -1) {
-            if (step->instrument == -2 && activeInst != NULL) activeInst->Release();
+            if (step->instrument == -2 && activeInst != nullptr) activeInst->Release();
             else if (step->instrument >= 0) {
                 if (step->instrument >= (int) instVector->size()) return;
                 activeInst = instVector->at(step->instrument);
@@ -95,28 +92,52 @@ public:
         }
     }
 
+    /**
+     * Called from the smaple menu to test a note
+     * @param inst instrument to be triggered
+     * @param note note to be played
+     */
     void Preview(Instrument* inst, int note) {
         activeInst = inst;
         activeInst->Trigger(note);
         preview = true;
     }
 
+    /**
+     * Adds an effect tot eh effect vector
+     * @param type the type of effect to load and initialize
+     */
     void AddEffect(Effect::EFFECT_TYPE type) {
         effects.push_back(GetEffect(type));
         effects.back()->Init(samplerate, MainFont);
     }
 
+    /**
+     * Overloads previous to allow for passing of a char buffer on project load
+     * @param type the effect type to be loaded
+     * @param buf char buffer containing saved data from an effect
+     */
     void AddEffect(Effect::EFFECT_TYPE type, char* buf) {
         effects.push_back(GetEffect(type));
         effects.back()->Load(buf, samplerate, MainFont);
     }
 
+    /**
+     * Removes an effect from the effect list
+     * @param index index of effect to be removed
+     */
     void RemoveEffect(size_t index) {
         auto it  = effects.begin();
         std::advance(it, index);
+        delete (*it); // freeing memory
         effects.erase(it);
     }
 
+    /**
+     * Changes effect by removing previous and adding new
+     * @param index index of effect to be swapped
+     * @param type the type of effect to be loaded
+     */
     void ChangeEffect(size_t index, Effect::EFFECT_TYPE type) {
         if (index >= effects.size() - 1) {
             effects.pop_back();
@@ -131,6 +152,10 @@ public:
         }
     }
 
+    /**
+     * creates and returns a new effect based on the type 
+     * @param type the type of effect to be created
+     */
     Effect* GetEffect(Effect::EFFECT_TYPE type) {
         if (type == Effect::NOFX)             return new NoEffect;
         else if (type == Effect::FILTER)      return new Filter;
@@ -141,8 +166,14 @@ public:
         else                                  return new NoEffect;
     }
 
+   /**
+    * clears the effect vector and frees memory
+    * called by CLEAR function in main program on project load
+    */
     void ClearFX() {
-        effects.clear();
+        for (size_t i = 0; i < effects.size(); i++) {
+            RemoveEffect(0);
+        }
     }
 
 };

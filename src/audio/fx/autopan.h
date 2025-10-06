@@ -208,12 +208,6 @@ public:
         
         void* ptr = &buf[0];
 
-        // *(static_cast<float*>(ptr)) = samplerate;
-        // ptr = static_cast<char*>(ptr) + sizeof(samplerate);
-
-        // *((cFont**) ptr) = MainFont;
-        // ptr = static_cast<char*>(ptr) + sizeof(MainFont);
-
         *(static_cast<float*>(ptr)) = rate;
         ptr = static_cast<float*>(ptr) + 1;
 

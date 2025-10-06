@@ -150,9 +150,7 @@ void SongDisplay::UpdateDisplay(cLayer* display) {
             else if (pos < 0) continue;
 
             Node<File>* node = currentNode->children.at(pos);
-
-            if (node->data.attrib & (AM_DIR)) sprintf(strbuff, "/%.23s", *node->data.name);
-            else sprintf(strbuff, "%.24s", *node->data.name);
+            sprintf(strbuff, "%.24s", *node->data.name);
             
             WriteString(display, strbuff, x, y, MAIN);
             y += CHAR_HEIGHT + 8; 
@@ -237,24 +235,12 @@ void SongDisplay::WriteString(cLayer* display, char* strbuff, int x, int y, DadG
 
 void SongDisplay::AButton(){
     if (load) {
-        if (currentNode->children.at(row)->data.attrib & (AM_DIR)) {
-            currentNode = currentNode->children.at(row);
-            lev += 1;
-            if (lev > 2) {
-                col = 2;
-            } else {
-                col = lev;
-            }
-            row = 0;
-            scrRow = 0;
-        } else {
-            std::string name = std::string(*currentNode->children.at(row)->data.name);
-            if (name.find(".mtrk") != std::string::npos) {
-                projSaverLoader->LoadProject(*currentNode->children.at(row)->data.name);
-                projName = name;
-            }
-            load = false;
+        std::string name = std::string(*currentNode->children.at(row)->data.name);
+        if (name.find(".mtrk") != std::string::npos) {
+            projSaverLoader->LoadProject(*currentNode->children.at(row)->data.name);
+            projName = name;
         }
+        load = false;
     } else if (saveas) {
         std::string val = std::string(keyboard[keyV][keyH]->GetVal());
 
@@ -269,12 +255,13 @@ void SongDisplay::AButton(){
         } else if (val.compare("SPACE") == 0) {
             tempName += " ";
         } else if (val.compare("OK") == 0) {
-            projSaverLoader->SaveProject(tempName.c_str());
             projName = tempName + std::string(".mtrk");
+            projSaverLoader->SaveProject(projName.c_str());
             rootNode->children.push_back(new Node<File>);
             void* ptr = search_buffer_allocate(256);
             rootNode->children.back()->data.name = (char (*)[256]) ptr;
             sprintf(*rootNode->children.back()->data.name, "%s%s", tempName.c_str(), ".mtrk");
+            rootNode->children.back()->data.attrib = 0;
             saveas = false;
         } else {
             tempName += val;
