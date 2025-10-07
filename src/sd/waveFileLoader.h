@@ -37,17 +37,16 @@ public:
 
     /**
      * creates an instrument object from 
-     * @param index selects the index of what file to read, if index is a dir, will call open dir instead
-     * @return an instrument that the sampleDisplay UI thing will append it to the Instruments vector
-     * Need to create a case where it opens a dir and returns a nullptr
+     * @param node the node from which to open
+     * @overload of function that turns node into search path
+     * @return a new instrument object pointer
      */
     Instrument* CreateInstrument(Node<File>* node);
 
     /**
      * creates an instrument object from 
-     * \param index selects the index of what file to read, if index is a dir, will call open dir instead
-     * \return an instrument that the sampleDisplay UI thing will append it to the Instruments vector
-     * Need to create a case where it opens a dir and returns a nullptr
+     * @param path the search path of where to find the object
+     * @return a new instrument object pointer
      */
     Instrument* CreateInstrument(std::string path);
 

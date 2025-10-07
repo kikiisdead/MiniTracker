@@ -42,6 +42,182 @@ void ProjSaverLoader::ResetAndPush() {
     memset(buf, 0, sizeof(buf)); 
 }
 
+void ProjSaverLoader::ReadPattern() {
+    uint32_t HEADER;
+
+    // Sequencer Header
+    f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
+
+    // BPM
+    float bpm;
+    f_read(fil, &bpm, sizeof(bpm), &bytesWritten);
+    sequencer->SetBPM(bpm);
+
+    //SONG HEADER
+    f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
+
+    // Song Order length
+    size_t songOrderLength;
+    f_read(fil, &songOrderLength, sizeof(songOrderLength), &bytesWritten);
+
+    // indeces * length
+    for (size_t i = 0; i < songOrderLength; i ++) {
+        int pattIndex;
+        f_read(fil, &pattIndex, sizeof(pattIndex), &bytesWritten);
+        sequencer->GetSongOrder()->push_back(pattIndex);
+    }
+
+    // Num Patterns
+    size_t numPatterns;
+    f_read(fil, &numPatterns, sizeof(numPatterns), &bytesWritten);
+
+    for (size_t patt = 0; patt < numPatterns; patt ++) {
+        //PATTERN HEADER
+        f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
+
+        sequencer->GetPatterns()->push_back(new Pattern);
+        sequencer->GetPatterns()->back()->index = patt;
+
+        // Num Lanes
+        int numLanes;
+        f_read(fil, &numLanes, sizeof(numLanes), &bytesWritten);
+        sequencer->GetPatterns()->back()->numLanes = numLanes;
+
+        for (int lane = 0; lane < numLanes; lane ++) {
+            // LANE HEADER
+            f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
+            sequencer->GetPatterns()->back()->lanes.push_back(new Lane);
+            sequencer->GetPatterns()->back()->lanes.back()->index = lane;
+
+            // LENGTH
+            int sequenceLength; 
+            f_read(fil, &sequenceLength, sizeof(sequenceLength), &bytesWritten);
+            sequencer->GetPatterns()->back()->lanes.back()->length = sequenceLength;
+
+            for (int step = 0; step < sequenceLength; step++) {
+                // LANE HEADER
+                f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
+
+                int8_t inst;
+                uint8_t note;
+                uint8_t fx;
+                uint8_t fxAmount;
+
+                // inst
+                f_read(fil, &inst, sizeof(inst), &bytesWritten);
+                // note
+                f_read(fil, &note, sizeof(note), &bytesWritten);
+                // fx
+                f_read(fil, &fx, sizeof(fx), &bytesWritten);
+                // fxAmount
+                f_read(fil, &fxAmount, sizeof(fxAmount), &bytesWritten);
+
+                sequencer->GetPatterns()->back()->lanes.back()->sequence.push_back(new Step(inst, note, fx, fxAmount, step));
+            }
+        }
+    }
+}
+
+void ProjSaverLoader::ReadFX() {
+    uint32_t HEADER;
+
+    //Fcon HEADER
+    f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
+
+    // lanecount
+    uint32_t lanecount;
+    f_read(fil, &lanecount, sizeof(lanecount), &bytesWritten);
+
+    for (uint32_t lane = 0; lane < lanecount; lane ++) {
+
+        //HAND HEADER
+        f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
+
+        uint32_t fxcount;
+        f_read(fil, &fxcount, sizeof(fxcount), &bytesWritten);
+
+        for (uint32_t fx = 0; fx < fxcount; fx++) {
+
+            //FX HEADER
+            f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
+
+            // effect type
+            int type;
+            f_read(fil, &type, sizeof(type), &bytesWritten);
+
+            // effect specific params
+            char effectBuff[32];
+
+            for (size_t i = 0; i < sizeof(effectBuff); i ++) {
+                f_read(fil, &effectBuff[i], sizeof(char), &bytesWritten);
+            }
+            // creating effect
+            instHandler->at(lane)->AddEffect((Effect::EFFECT_TYPE) type, effectBuff);
+        }
+    }
+
+}
+
+void ProjSaverLoader::ReadInstruments() {
+
+    uint32_t HEADER;
+
+    //Icon HEADER
+    f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
+
+    uint32_t numInst;
+    f_read(fil, &numInst, sizeof(numInst), &bytesWritten);
+    
+    for (uint32_t inst = 0; inst < numInst; inst ++) {
+        //INST HEADER
+        f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
+
+        instCfg.push_back(new Instrument::Config);
+
+        uint32_t numSlices, pathLength;
+
+        // attack
+        f_read(fil, &instCfg.back()->Attack, sizeof(instCfg.back()->Attack), &bytesWritten);
+
+        // decay
+        f_read(fil, &instCfg.back()->Decay, sizeof(instCfg.back()->Decay), &bytesWritten);
+
+        // sustain
+        f_read(fil, &instCfg.back()->Sustain, sizeof(instCfg.back()->Sustain), &bytesWritten);
+
+        // release
+        f_read(fil, &instCfg.back()->Release, sizeof(instCfg.back()->Release), &bytesWritten);
+
+        // gain
+        f_read(fil, &instCfg.back()->Gain, sizeof(instCfg.back()->Gain), &bytesWritten);
+
+        // pitch
+        f_read(fil, &instCfg.back()->Pitch, sizeof(instCfg.back()->Pitch), &bytesWritten);
+
+        // numSlices
+        f_read(fil, &numSlices, sizeof(numSlices), &bytesWritten);
+
+        for (uint32_t i = 0; i < numSlices; i ++) {
+            float slice;
+
+            // numSlices
+            f_read(fil, &slice, sizeof(slice), &bytesWritten);
+            instCfg.back()->slices.push_back(slice);
+        }
+
+        // pathLength
+        f_read(fil, &pathLength, sizeof(pathLength), &bytesWritten);
+
+        searchPaths.push_back(new std::string);
+
+        for (uint32_t i = 0; i < pathLength; i ++) {
+            char c;
+            f_read(fil, &c, sizeof(c), &bytesWritten);
+            *searchPaths.back() += c; // sometimes still have the issue where FatFS timesout because it can't get the package
+        }
+    }
+}
+
 void ProjSaverLoader::LoadProject(const char* name) {
     std::string save = savePath + std::string(name);
 
@@ -49,184 +225,29 @@ void ProjSaverLoader::LoadProject(const char* name) {
 
         CLEAR();
 
-        uint32_t HEADER;
+        ReadPattern();
 
-        // Sequencer Header
-        f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
+        ReadFX();
 
-        // BPM
-        float bpm;
-        f_read(fil, &bpm, sizeof(bpm), &bytesWritten);
-        sequencer->SetBPM(bpm);
-
-        //SONG HEADER
-        f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
-
-        // Song Order length
-        size_t songOrderLength;
-        f_read(fil, &songOrderLength, sizeof(songOrderLength), &bytesWritten);
-
-        // indeces * length
-        for (size_t i = 0; i < songOrderLength; i ++) {
-            int pattIndex;
-            f_read(fil, &pattIndex, sizeof(pattIndex), &bytesWritten);
-            sequencer->GetSongOrder()->push_back(pattIndex);
-        }
-
-        // Num Patterns
-        size_t numPatterns;
-        f_read(fil, &numPatterns, sizeof(numPatterns), &bytesWritten);
-
-        for (size_t patt = 0; patt < numPatterns; patt ++) {
-            //PATTERN HEADER
-            f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
-
-            sequencer->GetPatterns()->push_back(new Pattern);
-            sequencer->GetPatterns()->back()->index = patt;
-
-            // Num Lanes
-            int numLanes;
-            f_read(fil, &numLanes, sizeof(numLanes), &bytesWritten);
-            sequencer->GetPatterns()->back()->numLanes = numLanes;
-
-            for (int lane = 0; lane < numLanes; lane ++) {
-                // LANE HEADER
-                f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
-                sequencer->GetPatterns()->back()->lanes.push_back(new Lane);
-                sequencer->GetPatterns()->back()->lanes.back()->index = lane;
-
-                // LENGTH
-                int sequenceLength; 
-                f_read(fil, &sequenceLength, sizeof(sequenceLength), &bytesWritten);
-                sequencer->GetPatterns()->back()->lanes.back()->length = sequenceLength;
-
-                for (int step = 0; step < sequenceLength; step++) {
-                    // LANE HEADER
-                    f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
-
-                    int8_t inst;
-                    uint8_t note;
-                    uint8_t fx;
-                    uint8_t fxAmount;
-
-                    // inst
-                    f_read(fil, &inst, sizeof(inst), &bytesWritten);
-                    // note
-                    f_read(fil, &note, sizeof(note), &bytesWritten);
-                    // fx
-                    f_read(fil, &fx, sizeof(fx), &bytesWritten);
-                    // fxAmount
-                    f_read(fil, &fxAmount, sizeof(fxAmount), &bytesWritten);
-
-                    sequencer->GetPatterns()->back()->lanes.back()->sequence.push_back(new Step(inst, note, fx, fxAmount, step));
-                }
-            }
-        }
-
-        //Fcon HEADER
-        f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
-
-        // lanecount
-        uint32_t lanecount;
-        f_read(fil, &lanecount, sizeof(lanecount), &bytesWritten);
-
-        for (uint32_t lane = 0; lane < lanecount; lane ++) {
-            for (int fx = 0; fx < 3; fx++) {
-
-                //FX HEADER
-                f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
-
-                // effect type
-                int type;
-                f_read(fil, &type, sizeof(type), &bytesWritten);
-
-                // effect specific params
-                char effectBuff[32];
-
-                for (size_t i = 0; i < sizeof(effectBuff); i ++) {
-                    f_read(fil, &effectBuff[i], sizeof(char), &bytesWritten);
-                }
-                // creating effect
-                instHandler->at(lane)->AddEffect((Effect::EFFECT_TYPE) type, effectBuff);
-            }
-        }
-
-        //Icon HEADER
-        f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
-
-        uint32_t numInst;
-        f_read(fil, &numInst, sizeof(numInst), &bytesWritten);
-        // reading 0 for num instruments
-        Instrument::Config* instCfg[numInst];
+        ReadInstruments();
         
-        std::string* searchPaths[numInst];
-
-        // std::vector<Instrument::Config*> instCfg;
-        // std::vector<std::string*> searchPaths;
-        
-        for (uint32_t inst = 0; inst < numInst; inst ++) {
-            //INST HEADER
-            f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
-
-            instCfg[inst] = new Instrument::Config;
-
-            uint32_t numSlices, pathLength;
-
-            // attack
-            f_read(fil, &instCfg[inst]->Attack, sizeof(instCfg[inst]->Attack), &bytesWritten);
-
-            // decay
-            f_read(fil, &instCfg[inst]->Decay, sizeof(instCfg[inst]->Decay), &bytesWritten);
-
-            // sustain
-            f_read(fil, &instCfg[inst]->Sustain, sizeof(instCfg[inst]->Sustain), &bytesWritten);
-
-            // release
-            f_read(fil, &instCfg[inst]->Release, sizeof(instCfg[inst]->Release), &bytesWritten);
-
-            // gain
-            f_read(fil, &instCfg[inst]->Gain, sizeof(instCfg[inst]->Gain), &bytesWritten);
-
-            // pitch
-            f_read(fil, &instCfg[inst]->Pitch, sizeof(instCfg[inst]->Pitch), &bytesWritten);
-
-            // numSlices
-            f_read(fil, &numSlices, sizeof(numSlices), &bytesWritten);
-
-            for (uint32_t i = 0; i < numSlices; i ++) {
-                float slice;
-
-                // numSlices
-                f_read(fil, &slice, sizeof(slice), &bytesWritten);
-                instCfg[inst]->slices.push_back(slice);
-            }
-
-            // pathLength
-            f_read(fil, &pathLength, sizeof(pathLength), &bytesWritten);
-
-            // search path
-            searchPaths[inst] = new std::string("");
-
-            for (uint32_t c = 0; c < pathLength; c ++) {
-                char chr;
-                f_read(fil, &chr, sizeof(chr), &bytesWritten);
-                *searchPaths[inst] += chr;
-            }
-
-        }
-
         f_close(fil);
+        System::Delay(15); // adding delay to maybe help with loading time
 
-        // creating instruments
-        for (uint32_t i = 0; i < numInst; i ++) {
-            Instrument* inst = waveFileLoader->CreateInstrument(*searchPaths[i]);
+        for (size_t i = 0; i < instCfg.size(); i ++) {
+            Instrument* inst = waveFileLoader->CreateInstrument(searchPaths.at(i)->c_str());
             if (inst != nullptr) {
-                inst->Load(*instCfg[i]);
+                inst->Load(*instCfg.at(i));
                 instVector->push_back(inst);
             }
             delete searchPaths[i]; // free up that memory
             delete instCfg[i];
+
+            System::Delay(15); // adding delay to maybe help with loading time
         }
+
+        searchPaths.clear();
+        instCfg.clear();
 
     }
 
@@ -302,7 +323,12 @@ void ProjSaverLoader::SaveProject(const char* name) {
 
         for (uint32_t lane = 0; lane < instHandler->size(); lane ++) {
 
+            Write(0x444E4148);
+
             InstrumentHandler* handler = instHandler->at(lane);
+
+            // Num fxcount
+            Write((uint32_t) handler->effects.size());
 
             for (Effect* effect : handler->effects) {
 
@@ -364,7 +390,7 @@ void ProjSaverLoader::SaveProject(const char* name) {
                 std::string path = inst->GetPath();
 
                 // SEARCH PATH LENGTH
-                Write((uint32_t) path.length()); 
+                Write(static_cast<uint32_t>(path.length())); 
 
                 for (int8_t chr : path) {
                     Write(chr);

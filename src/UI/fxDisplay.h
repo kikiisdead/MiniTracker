@@ -11,11 +11,21 @@
 
 using namespace daisy;
 
+/**
+ * FXDisplay 
+ * controls the effect interfaces belonging to all the instrument handlers
+ */
 class FXDisplay : public buttonInterface {
 public:
     FXDisplay(){}
     ~FXDisplay(){}
 
+    /**
+     * Initializes the FXDisplay (needs to have none important constructor due to waiting for hardware init)
+     * @param samplerate_ the samplerate of the program
+     * @param handler_ pointer to a vector holding all instrumenthandlers which have the effects
+     * @param MainFont pointer to main font for UI design consistency
+     */
     void Init(float samplerate_, std::vector<InstrumentHandler*>* handler_, cFont* MainFont) {
         handler = handler_;
         samplerate = samplerate_;
@@ -25,6 +35,9 @@ public:
         this->MainFont = MainFont;
     }
 
+    /**
+     * INHERITED FROM BUTTON INTERFACE
+     */
     void AButton();
     void BButton();
     void UpButton();
@@ -54,14 +67,6 @@ private:
     int param;
     bool changeEffect;
     int type;
-    cFont* MainFont;
-
-    void WriteString(cLayer* display, char* strbuff, int x, int y, DadGFX::sColor color) {
-        display->setCursor(x, y);
-        display->setFont(MainFont);
-        display->setTextFrontColor(color);
-        display->drawText(strbuff);
-    }
     
     void EffectNormal() {
         CURRENT_EFFECT->selected = true;

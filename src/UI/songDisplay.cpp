@@ -71,6 +71,7 @@ void SongDisplay::Process(float& left, float& right) {
 
 void SongDisplay::UpdateDisplay(cLayer* display) {
     display->eraseLayer();
+    display->drawFillRect(0, 0, 320, 240, BACKGROUND);
     
     /**
      * Drawing Save Save as and Load
@@ -224,13 +225,6 @@ void SongDisplay::Decrement() {
             sequencer->SetBPM(20);
         }
     }
-}
-
-void SongDisplay::WriteString(cLayer* display, char* strbuff, int x, int y, DadGFX::sColor color) {
-    display->setCursor(x, y);
-    display->setFont(MainFont);
-    display->setTextFrontColor(color);
-    display->drawText(strbuff);
 }
 
 void SongDisplay::AButton(){

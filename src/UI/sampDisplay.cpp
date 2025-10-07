@@ -87,6 +87,7 @@ void SampDisplay::AltPlayButton(){}
 
 void SampDisplay::UpdateDisplay(cLayer* display){
     display->eraseLayer();
+    display->drawFillRect(0, 0, 320, 240, BACKGROUND);
 
     double sdramUsage = (double) *bufferIndex / (double) MAX_BUFFER_SIZE;
 
@@ -179,11 +180,4 @@ void SampDisplay::UpdateDisplay(cLayer* display){
             yOffset += CHAR_HEIGHT + 8;
         }
     }
-}
-
-void SampDisplay::WriteString(cLayer* display, char* strbuff, int x, int y, DadGFX::sColor color) {
-    display->setCursor(x, y);
-    display->setFont(MainFont);
-    display->setTextFrontColor(color);
-    display->drawText(strbuff);
 }

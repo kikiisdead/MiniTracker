@@ -94,6 +94,8 @@ private:
     FIL *writeFIL;
     UINT bytesWritten;
     Sequencer* sequencer; 
+    std::vector<Instrument::Config*> instCfg;
+    std::vector<std::string*> searchPaths;
     std::vector<Instrument*>* instVector;
     std::vector<InstrumentHandler*>* instHandler;
     WaveFileLoader* waveFileLoader;
@@ -126,6 +128,12 @@ private:
     void ResetAndPush();
 
     void* writePtr; 
+
+    void ReadPattern();
+
+    void ReadFX();
+
+    void ReadInstruments();
 
 };
 

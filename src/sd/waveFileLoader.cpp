@@ -68,13 +68,12 @@ Instrument* WaveFileLoader::CreateInstrument(std::string path) {
         f_read(fil, (void*)&(wave.SubChunk2ID), sizeof(wave.SubChunk2ID), &bytesread);
         f_read(fil, (void*)&(wave.SubCHunk2Size), sizeof(wave.SubCHunk2Size), &bytesread);
 
-        std::string file = std::string(path);
         std::string name;
-        size_t index = file.find_last_of('/');
+        size_t index = path.find_last_of('/');
         if (index != std::string::npos) {
-            name = file.substr(index + 1, file.length() - (index + 1));
+            name = path.substr(index + 1, path.length() - (index + 1));
         } else {
-            name = file;
+            name = path;
         }
 
         sprintf(sample->name, "%s", name.c_str());

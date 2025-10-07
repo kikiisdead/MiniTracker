@@ -1,12 +1,12 @@
 #include "instrument.h"
 
-void Instrument::Init(float samplerate, WavFile* sample, std::string path) {
+void Instrument::Init(float samplerate, WavFile* sample, std::string  path) {
     Config cfg;
     cfg.Defaults();
     Init(samplerate, sample, path, cfg);
 }
 
-void Instrument::Init(float samplerate, WavFile* sample, std::string path, Config cfg) {
+void Instrument::Init(float samplerate, WavFile* sample, std::string  path, Config cfg) {
     samplePlayer.Init(sample, samplerate);
     env.Init(samplerate);
     this->path = path;

@@ -11,6 +11,7 @@ void InstrumentDisplay::Init(std::vector<Instrument*>* instruments_, InstrumentH
 
 void InstrumentDisplay::UpdateDisplay(cLayer* display) {
     display->eraseLayer();
+    display->drawFillRect(0, 0, 320, 240, BACKGROUND);
 
     if (!instruments->empty() && active < 0) {
         active = 0;
@@ -153,7 +154,7 @@ void InstrumentDisplay::UpdateDisplay(cLayer* display) {
         for (int i = 0; i < (int) instruments->size(); i++) {
             sprintf(strbuff, "%s", instruments->at(i)->GetName());
             if (i == active) {
-                display->drawFillRect(WAVEWIDTH, yOffset - CHAR_HEIGHT, 100, CHAR_HEIGHT + 4, ACCENT2);
+                display->drawFillRect(WAVEWIDTH, yOffset - (CHAR_HEIGHT + 4), 100, CHAR_HEIGHT + 8, ACCENT2);
                 WriteString(display, strbuff, WAVEWIDTH + 2, yOffset, MAIN);
             } else {
                 WriteString(display, strbuff, WAVEWIDTH + 2, yOffset, ACCENT1);
@@ -168,13 +169,6 @@ void InstrumentDisplay::UpdateDisplay(cLayer* display) {
         sprintf(strbuff, "LOADED");
         WriteString(display, strbuff, 160 - (3 * CHAR_WIDTH), 120 + CHAR_HEIGHT + 2, MAIN);
     }
-}
-
-void InstrumentDisplay::WriteString(cLayer* display, char* strbuff, int x, int y, DadGFX::sColor color) {
-    display->setCursor(x, y);
-    display->setFont(MainFont);
-    display->setTextFrontColor(color);
-    display->drawText(strbuff);
 }
 
 void InstrumentDisplay::AButton() {

@@ -92,7 +92,6 @@ private:
     Sequencer *sequencer;
     float vol;
     char strbuff[256];
-    cFont *MainFont;
     PARAM param;
     ProjSaverLoader* projSaverLoader;
     std::string projName;
@@ -109,8 +108,6 @@ private:
     bool load, saveas;
 
     int row, col, lev, scrRow;
-
-    void WriteString(cLayer* display, char* strbuff, int x, int y, DadGFX::sColor color);
 
     void NextParam();
     void PrevParam();

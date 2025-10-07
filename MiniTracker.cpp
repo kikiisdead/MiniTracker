@@ -18,7 +18,6 @@
 #include "src/sd/waveFileLoader.h"
 #include "src/sd/dirLoader.h"
 #include "src/sd/projSaverLoader.h"
-// #include "src/displayDriver/ST7789Driver.h"
 
 #define LANE_NUMBER 4
 
@@ -38,6 +37,12 @@
 using namespace daisy;
 using namespace daisysp;
 using namespace DadGFX;
+
+/**
+ * TODO
+ * FatFS is still fucked and I don't know if its a problem on my end or not
+ * 
+ */
 
 // using this because issue with creating FIL objects on stack
 #define DSY_TEXT __attribute__((section(".text")))

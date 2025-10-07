@@ -64,7 +64,7 @@ public:
      * @param path the path to the file in the sdcard
      * @param cfg configuration to help with loading from project file
      */
-    void Init(float samplerate, WavFile* sample, std::string path, Config cfg);
+    void Init(float samplerate, WavFile* sample, std::string  path, Config cfg);
 
     /**
      * Loads configurations from project save file

@@ -27,7 +27,7 @@ CPP_SOURCES += DaisySeedGFX2/cDisplay.cpp
 CPP_SOURCES += DaisySeedGFX2/GFX.cpp
 CPP_SOURCES += DaisySeedGFX2/TFT_SPI.cpp
 
-# Bootload into QSPI Flash instead of ARM Chip Flash
+# Bootload into SRAM instead of ARM Chip Flash
 APP_TYPE = BOOT_SRAM
 
 # Library Locations

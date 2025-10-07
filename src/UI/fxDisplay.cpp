@@ -5,6 +5,7 @@ void FXDisplay::UpdateDisplay(cLayer* display) {
     CURRENT_EFFECT->selected = true;
 
     display->eraseLayer();
+    display->drawFillRect(0, 0, 320, 240, BACKGROUND);
 
     for (size_t i = 0; i < handler->at(currentLane)->effects.size(); i++) {
         handler->at(currentLane)->effects.at(i)->Display(display, i * (FX_WIDTH + FX_BUFFER), 20);

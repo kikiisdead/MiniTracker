@@ -53,52 +53,11 @@ public:
     int index;
 };
 
+/**
+ * Sequencer
+ * Interface for the main sequencing page of the project (literally the most important thing)
+ */
 class Sequencer : public buttonInterface {
-private:
-    std::vector<InstrumentHandler*>* handler_;
-    std::vector<Pattern*>* patterns; // holds all the possible patterns made
-    std::vector<int>* songOrder; // holds the order of the patterns
-    Pattern* activePattern;
-
-    cFont* MainFont;
-
-    Step* currentStep;
-    Lane* currentLane;
-    int currentPattern;
-
-    bool playing_;
-    bool stepEdit_;
-    bool song_;
-    bool updateStep, updatePattern, updateSidebar;
-    float bpm;
-    float timePerTick;
-    char strbuff[20];
-    int laneOffset;
-    uint32_t lastTrigger;
-    uint32_t triggerTime;
-    Metro tick;
-    
-    void DrawStep( cLayer *display, int x, int y, Step* step);
-
-    void DrawSquare(cLayer *display, int index, int x, int y, bool fill);
-
-    void DrawArrow(cLayer *display, int x, int y, int direction); // 1 = left, 2 = right, 3 = up, 4 = down
-
-    void WriteString(cLayer* display, char* strbuff, int x, int y, DadGFX::sColor color);
-
-    void GetNoteString(char* strbuff, int note);
-    void GetFxString(char* strbuff, int fx, int fxAmount);
-    void GetFxString(char* strbuff, int fx);
-
-    void NextStep();
-    void PreviousStep();
-    void NextLane();
-    void PreviousLane();
-    void NextPattern();
-    void PreviousPattern();
-
-    void NewPattern();
-
 public:
 
     Sequencer(){};
@@ -127,9 +86,9 @@ public:
     
     /**
      * Initializes display
-     * \param display to write to
-     * \param handler voice for each lane
-     * \param samplerate samplerate to intialize Metro object
+     * @param display to write to
+     * @param handler voice for each lane
+     * @param samplerate samplerate to intialize Metro object
      */
     void Init(std::vector<InstrumentHandler*>* handler, float samplerate, cFont* MainFont, std::vector<Pattern*>* patterns, std::vector<int>* songOrder) {
         //display_ = display;
@@ -156,17 +115,15 @@ public:
 
     std::vector<int>* GetSongOrder() { return songOrder; } 
 
+    /**
+     * Clears sequences (for loading)
+     */
     void Clear();
 
-    void Safe();
-
     /**
-     * Called by the Display object to refresh the screen, not called internally because it interupts audio playback 
+     * marks sequences as safe (for loading)
      */
-    void UpdateDisplay(cLayer *display);
-
-
-    
+    void Safe();  
 
     /**
      * INHERITED FROM BUTTON INTERFACE
@@ -186,6 +143,53 @@ public:
     void AltLeftButton();
     void AltRightButton();
     void AltPlayButton();
+
+    /**
+     * Called by the Display object to refresh the screen, not called internally because it interupts audio playback 
+     * @param display pointer to display / layer to be written on
+     */
+    void UpdateDisplay(cLayer *display);
+private:
+    std::vector<InstrumentHandler*>* handler_;
+    std::vector<Pattern*>* patterns; // holds all the possible patterns made
+    std::vector<int>* songOrder; // holds the order of the patterns
+    Pattern* activePattern;
+
+    Step* currentStep;
+    Lane* currentLane;
+    int currentPattern;
+
+    bool playing_;
+    bool stepEdit_;
+    bool song_;
+    bool updateStep, updatePattern, updateSidebar;
+    float bpm;
+    float timePerTick;
+    char strbuff[20];
+    int laneOffset;
+    uint32_t lastTrigger;
+    uint32_t triggerTime;
+    Metro tick;
+    
+    void DrawStep( cLayer *display, int x, int y, Step* step);
+
+    void DrawSquare(cLayer *display, int index, int x, int y, bool fill);
+
+    void DrawArrow(cLayer *display, int x, int y, int direction); // 1 = left, 2 = right, 3 = up, 4 = down
+
+    void GetNoteString(char* strbuff, int note);
+    void GetFxString(char* strbuff, int fx, int fxAmount);
+    void GetFxString(char* strbuff, int fx);
+
+    void NextStep();
+    void PreviousStep();
+    void NextLane();
+    void PreviousLane();
+    void NextPattern();
+    void PreviousPattern();
+
+    void NewPattern();
+
 };
 
 #endif

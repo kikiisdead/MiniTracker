@@ -11,16 +11,29 @@
 #define ACTIVEINST instruments->at(active)
 
 using namespace daisy;
-using MyOledDisplay = OledDisplay<SSD130xI2c128x64Driver>;
 
+/**
+ * Instrument Display
+ * interface that display all isntruments and allows simple editing like
+ * ADSR, sample slicing, gain, and pitch shifting
+ */
 class InstrumentDisplay : public buttonInterface {
 public:
 
     InstrumentDisplay(){};
     ~InstrumentDisplay(){};
 
+    /**
+     * Initializes the the Instrument Display
+     * @param instruments_ a pointer to a vector containing all the instruments (pointer because issues with passing container and mutability)
+     * @param handler_ one of the instrument handlers to allow for preview playback
+     * @param MainFont pointer to the main font used throughout for display consistency
+     */
     void Init(std::vector<Instrument*>* instruments_, InstrumentHandler* handler_, cFont *MainFont);
 
+    /**
+     * INHERITED FROM BUTTONINTERFACE (ALLOWS FOR HID CONTROL)
+     */
     void AButton();
     void BButton();
     void UpButton();
@@ -40,7 +53,6 @@ public:
     void UpdateDisplay(cLayer* tft);
 
 private:
-    // MyOledDisplay* display;
     std::vector<Instrument*>* instruments;
     InstrumentHandler* handler; 
     std::vector<Instrument*>::iterator activeInst;
@@ -48,9 +60,7 @@ private:
     size_t currentSlice;
     char strbuff[256];
     bool sliceEdit;
-    cFont* MainFont;
 
-    void WriteString(cLayer* display, char* strbuff, int x, int y, DadGFX::sColor color);
 };
 
 #endif

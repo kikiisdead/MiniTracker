@@ -174,6 +174,7 @@ public:
         for (size_t i = 0; i < effects.size(); i++) {
             RemoveEffect(0);
         }
+        effects.clear();
     }
 
 };

@@ -187,19 +187,12 @@ void Sequencer::GetNoteString(char* strbuff, int note) {
     }
 }
 
-void Sequencer::WriteString(cLayer* display, char* strbuff, int x, int y, DadGFX::sColor color) {
-    display->setCursor(x, y);
-    display->setFont(MainFont);
-    display->setTextFrontColor(color);
-    display->drawText(strbuff);
-}
-
 void Sequencer::UpdateDisplay(cLayer *display) {
     /**
      * CLEAR
      */
     display->eraseLayer();
-
+    display->drawFillRect(0, 0, 320, 240, BACKGROUND);
 
 
     /**
