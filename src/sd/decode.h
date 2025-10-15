@@ -1,5 +1,10 @@
 #pragma once
 
+/**
+ * A Helper file that has decoding algorithms for ALaw and MuLaw encoded
+ * Wave Files. u=Used in Wave File Loader
+ */
+
 #include "daisy.h"
 #include <cmath>
 

@@ -31,7 +31,6 @@ void Sequencer::Clear() {
     stepEdit_ = false;
     song_ = false;
     currentPattern = 0;
-    lastTrigger = 0;
     laneOffset = 0;
     updateStep = true;
     updateSidebar = true;
@@ -47,7 +46,6 @@ void Sequencer::Safe() {
     stepEdit_ = false;
     song_ = false;
     currentPattern = 0;
-    lastTrigger = 0;
     laneOffset = 0;
     updateStep = true;
     updateSidebar = true;
@@ -84,8 +82,7 @@ void Sequencer::DrawStep(cLayer* display, int x, int y, Step* step) {
     
     // Writing instrument
     if (step->instrument < 0) sprintf(strbuff, "--");
-    else if (step->instrument < 10) sprintf(strbuff, "0%d", step->instrument);
-    else sprintf(strbuff, "%d", step->instrument);
+    else sprintf(strbuff, "%02d", step->instrument);
     if (step->selected && stepEdit_ && step->paramEdit == Step::i) WriteString(display, strbuff, x + 2, y + 2 + CHAR_HEIGHT, BACKGROUND);
     else WriteString(display, strbuff, x + 2, y + 2 + CHAR_HEIGHT, MAIN);
 
@@ -104,8 +101,7 @@ void Sequencer::DrawStep(cLayer* display, int x, int y, Step* step) {
 
      // Writing fx amount
     if (step->instrument < 0 || step->fx <= 0) sprintf(strbuff, "--");
-    else if (step->fxAmount < 10) sprintf(strbuff, "0%d", step->fxAmount);
-    else sprintf(strbuff, "%d", step->fxAmount);
+    else sprintf(strbuff, "%02x", step->fxAmount);
     if (step->selected && stepEdit_ && step->paramEdit == Step::fa) WriteString(display, strbuff, x + (CHAR_WIDTH * 8) + 2, y + 2 + CHAR_HEIGHT, BACKGROUND);
     else WriteString(display, strbuff, x + (CHAR_WIDTH * 8) + 2, y + 2 + CHAR_HEIGHT, MAIN);
 
@@ -191,9 +187,7 @@ void Sequencer::UpdateDisplay(cLayer *display) {
     /**
      * CLEAR
      */
-    display->eraseLayer();
-    display->drawFillRect(0, 0, 320, 240, BACKGROUND);
-
+    display->eraseLayer(BACKGROUND);
 
     /**
      * Drawing Steps
@@ -234,7 +228,7 @@ void Sequencer::UpdateDisplay(cLayer *display) {
      */
     display->drawFillRect(28*9, 0, 100, (CHAR_HEIGHT + 4) * 3 + 4, BACKGROUND);
 
-    sprintf(strbuff, "BPM %3d", (int) bpm);
+    sprintf(strbuff, "BPM %3d", (int) bpm_);
     WriteString(display, strbuff, 320 - (CHAR_WIDTH * 7), CHAR_HEIGHT + 4, ACCENT1);
 
     
@@ -296,6 +290,10 @@ void Sequencer::PlayButton() {
     if (playing_) {
         for (Lane* lane : activePattern->lanes) {
             handler_->at(lane->index)->Update(lane->sequence.at(currentStep->index)); 
+        }
+    } else {
+        for (Lane* lane : activePattern->lanes) {
+            handler_->at(lane->index)->Update(nullptr); 
         }
     }
 }
@@ -479,6 +477,10 @@ void Sequencer::AltPlayButton() {
     if (playing_) {
         for (Lane* lane : activePattern->lanes) {
             handler_->at(lane->index)->Update(lane->sequence.at(currentStep->index)); 
+        }
+    } else {
+        for (Lane* lane : activePattern->lanes) {
+            handler_->at(lane->index)->Update(nullptr); 
         }
     }
 }

@@ -13,7 +13,17 @@ using namespace daisy;
 
 /**
  * FXDisplay 
- * controls the effect interfaces belonging to all the instrument handlers
+ * A UI object that displays the FX being used
+ * FX are 3 per Lane and can be ay of the following
+ *  - Filter
+ *  - Distortion
+ *  - Compression
+ *  - Autopan
+ *  - Redux
+ * More FX will be added as development continues
+ * 
+ * @author Kiyoko Iuchi-Fung
+ * @version 0.1.0
  */
 class FXDisplay : public buttonInterface {
 public:
@@ -57,17 +67,20 @@ public:
     void UpdateDisplay(cLayer* tft);
 
 private:
-    float samplerate;
-    size_t currentLane;
-    size_t currentEffect;
-    char strbuff[20];
-    InstrumentHandler* Lane;
-    Effect* effect;
-    std::vector<InstrumentHandler*>* handler;
-    int param;
-    bool changeEffect;
-    int type;
+    float                               samplerate;     /**< Samplerate */
+    size_t                              currentLane;    /**< Index of the current Lane */
+    size_t                              currentEffect;  /**< Index of current Effect */
+    char                                strbuff[20];    /**< string buffer for writing to display */
+    InstrumentHandler                  *Lane;           /**< Pointer to active lane */
+    Effect                             *effect;         /**< Pointer to active effect */
+    std::vector<InstrumentHandler*>    *handler;        /**< Pointer to active instrument handler */
+    int                                 param;          /**< Param to be edited */
+    bool                                changeEffect;   /**< Change effect toggle */
+    int                                 type;           /**< Type of effect to displayed */
     
+    /**
+     * Normalizes the selected effects
+     */
     void EffectNormal() {
         CURRENT_EFFECT->selected = true;
         type = (int) CURRENT_EFFECT->effectType;

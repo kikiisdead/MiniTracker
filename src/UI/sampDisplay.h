@@ -10,7 +10,10 @@
 
 /**
  * SampDisplay
- * an interface that displays samples to be loaded
+ * The UI screen that displays the file directory and allow for file saving and loading
+ * 
+ * @author Kiyoko Iuchi-Fung
+ * @version 0.1.0
  */
 class SampDisplay : public buttonInterface {
 public:
@@ -50,12 +53,15 @@ public:
     void UpdateDisplay(cLayer* tft);
 
 private:
-    WaveFileLoader* fileLoader;
-    std::vector<Instrument*>* instruments;
-    Node<File> *currentNode;
-    char strbuff[256];
-    size_t* bufferIndex;
-    int row, col, lev, scrRow;
+    WaveFileLoader             *fileLoader;     /**< Pointer to the wave file loader object */
+    std::vector<Instrument*>   *instruments;    /**< Pointer to the instrument vector */
+    Node<File>                 *currentNode;    /**< The current node in the file directory being observed */
+    char                        strbuff[256];   /**< A string buffer to help display strings to the screen */
+    size_t                     *bufferIndex;    /**< Pointer to the buffer index to display memory usage */
+    int                         row;            /**< Selected row  */
+    int                         col;            /**< Selected column */
+    int                         lev;            /**< Selected column relative to screen */
+    int                         scrRow;         /**< Selected row relative to screen */
 
 };
 

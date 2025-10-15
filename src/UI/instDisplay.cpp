@@ -10,8 +10,7 @@ void InstrumentDisplay::Init(std::vector<Instrument*>* instruments_, InstrumentH
 }
 
 void InstrumentDisplay::UpdateDisplay(cLayer* display) {
-    display->eraseLayer();
-    display->drawFillRect(0, 0, 320, 240, BACKGROUND);
+    display->eraseLayer(BACKGROUND);
 
     if (!instruments->empty() && active < 0) {
         active = 0;

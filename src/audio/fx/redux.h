@@ -7,12 +7,25 @@
 #define REDUXSCALE samplerate * pow(1.0f - crush, 1.5f) + 20.0f
 #define OSCDISPRATE FX_WIDTH - 16.0f
 
+/**
+ * Bitcrush and downsampling effect
+ * Wraps DaisySP Decimator in the Effect abstract class
+ * 
+ * @author Kiyoko Iuchi-Fung
+ * @version 0.1.0
+ */
 class Redux : public Effect {
 public:
     Redux(){}
     ~Redux(){}
 
-    void Init(float samplerate, cFont* MainFont) {
+    /**
+     * Initializes the redux effect
+     * Overrides init in abstract effect
+     * @param samplerate the samplerate
+     * @param MainFont pointer to the main font
+     */
+    void Init(float samplerate, cFont* MainFont) override {
         param = 0;
         paramNum = 2;
         selected = false;
@@ -34,12 +47,25 @@ public:
         bitcrushR.SetDownsampleFactor(crush);
     }
 
-    void Process(float& left, float& right) {
+    /**
+     * Processes incoming audio through the decimator
+     * Overrides Process in abstract effect
+     * @param left left audio channel passed by reference to change the value
+     * @param right right audio channel passed by reference to change the value
+     */
+    void Process(float& left, float& right) override {
         left  = bitcrushL.Process(left);
         right = bitcrushR.Process(right);
     }
 
-    void Display(cLayer *display, int x, int y){
+    /**
+     * Displays the effect to the screen
+     * Overrides Display in abstract effect
+     * @param display pointer to display to write to
+     * @param x the x offset
+     * @param y the y offset
+     */
+    void Display(cLayer *display, int x, int y) override {
 
         sColor color = (selected) ? ACCENT2 : ACCENT1;
 
@@ -90,7 +116,11 @@ public:
 
     }
 
-    void Increment(){
+    /**
+     * Increments the selected param
+     * Overrides Increment in abstract effect
+     */
+    void Increment() override {
         if (param == 0) {
             crush -= 0.01f;
             if (crush < 0.0f) {
@@ -108,7 +138,11 @@ public:
         }
     }
 
-    void Decrement(){
+    /**
+     * Decrements the selected param
+     * Overrides Decrement in abstract effect
+     */
+    void Decrement() override {
         if (param == 0) {
             crush += 0.01f;
             if (crush > 1.0f) {
@@ -126,15 +160,15 @@ public:
         }
     }
 
+    /**
+     * Creates a config buffer
+     * Overrides GetSnapshot in abstract effect
+     * @param buf the char buf to write to 
+     * NOTE only 32 byte buffer but no type safety
+     */
     void GetSnapshot(char *buf) {
         
         void* ptr = &buf[0];
-
-        // *(static_cast<float*>(ptr)) = samplerate;
-        // ptr = static_cast<char*>(ptr) + sizeof(samplerate);
-
-        // *((cFont**) ptr) = MainFont;
-        // ptr = static_cast<char*>(ptr) + sizeof(MainFont);
 
         *(static_cast<float*>(ptr)) = crush;
         ptr = static_cast<float*>(ptr) + 1;
@@ -143,6 +177,13 @@ public:
         ptr = static_cast<int*>(ptr) + 1;
     }
 
+    /**
+     * Loads from a config buffer
+     * Overrides Load in abstract effect
+     * @param buf the char buf to load from
+     * @param samplerate the samplerate
+     * @param MainFont pointer to the main font
+     */
     void Load(char* buf, float samplerate, cFont* MainFont) {
         param = 0;
         paramNum = 2;

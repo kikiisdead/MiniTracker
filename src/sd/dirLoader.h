@@ -13,24 +13,33 @@
  * Maybe need to think of where it is being stored
  */
 
- /**
- * WAVEFILELOADER
- * loads wave files from SD Card into SDRAM
- * will return an instrument object with WavFile struct (file info + file name + void pointer to start index in SDRAM)
+/**
+ * The File struct is used to store a pointer to the name of the file in SDRAM
+ * and the attribute of the file (whether dir, hid, fil, etc.)
  */
-
 struct File {
     char (*name)[256];
     BYTE attrib;
 };
 
+/**
+ * The DirLoader reads the directories of the SDCard at program start and
+ * builds a tree based on the file directory
+ * 
+ * This allows for easy searching, displaying, saving, and loading to the SD Card
+ * 
+ * @author Kiyoko Iuchi-Fung
+ * @version 0.1.0
+ */
 class DirLoader {
 public:
     DirLoader(){}
     ~DirLoader(){}
 
     /**
-     * Initializes the wave file object
+     * Initializes the dir loader object
+     * @param search_buffer_allocate a function callback that allocates space in SDRAM
+     * @param path the initial root path to be explored in the SD card
      */
     void Init(void* (*search_buffer_allocate)(size_t size), const char* path);
 
@@ -42,13 +51,22 @@ public:
 
     /**
      * Search for node by its name
+     * @param name the name of the node to be retrieved
+     * @param dir node of whose children are being searched
      * @return corresponding node
      */
     Node<File>* GetNode(std::string name, Node<File>* dir);
 
 private:
-    Node<File> rootNode;
-    bool safe = false;
+    Node<File>  rootNode;       /**< The root node of the file directory */
+    bool        safe = false;   /**< Safe toggle */
+
+    /**
+     * A callback that allocates space within SDRAM for file names 
+     * used because file names are big and were clogging SRAM
+     * @param size the size in bytes of the file name to be loaded
+     * @return a void pointer to the start of the memory allocated
+     */
     void* (*search_buffer_allocate)(size_t size);
 
     /**

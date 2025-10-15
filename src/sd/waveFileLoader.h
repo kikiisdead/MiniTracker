@@ -15,16 +15,21 @@ using namespace daisy;
 
 #define FILE_PTR false
 
-
+/**
+ * A struct that organizes 3 24 bit integers into 3 32 bit integers for decoding
+ */
 struct Bit24x4 {
     int32_t val1;
     int32_t val2;
     int32_t val3;
 };
 
-
-
-
+/**
+ * The WaveFileoader loads wave files from an SD card and into SDRAM
+ * 
+ * @author Kiyoko Iuchi-Fung
+ * @version 0.1.0
+ */
 class WaveFileLoader {
 public:
     WaveFileLoader(){}
@@ -51,8 +56,14 @@ public:
     Instrument* CreateInstrument(std::string path);
 
 private:
-    FIL*   fil;
-    float samplerate;
+    FIL    *fil;        /**< A pointer to the FIL object (needs to be global in scope) */
+    float   samplerate; /**< The samplerate passed at Init */
+
+    /**
+     * A call back that allocates space inside SDRAM
+     * @param size the size in bytes to be allocated inside SDRAM
+     * @return a void pointer to the start of allocated memory
+     */
     void* (*sample_buffer_allocate)(size_t size);
 };
 

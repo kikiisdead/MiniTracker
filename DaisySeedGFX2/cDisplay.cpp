@@ -590,7 +590,7 @@ void cDisplay::flush() {
                 }
                 // Add the processed block to the FIFO for transmission
                 while (AddBloc(blocX, blocY) == false) {
-                    System::DelayUs(50); // Wait if the FIFO is full
+                    // System::Delay(1); // Wait if the FIFO is full
                 }
                 sendDMA(); // Transmit the block
             }

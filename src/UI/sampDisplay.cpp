@@ -86,8 +86,7 @@ void SampDisplay::AltRightButton(){}
 void SampDisplay::AltPlayButton(){}
 
 void SampDisplay::UpdateDisplay(cLayer* display){
-    display->eraseLayer();
-    display->drawFillRect(0, 0, 320, 240, BACKGROUND);
+    display->eraseLayer(BACKGROUND);
 
     double sdramUsage = (double) *bufferIndex / (double) MAX_BUFFER_SIZE;
 

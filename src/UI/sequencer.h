@@ -7,6 +7,7 @@
 #include "../audio/instrumentHandler.h"
 #include "step.h"
 #include <vector>
+#include "../globals.h"
 
 #define OFF -1
 
@@ -56,6 +57,11 @@ public:
 /**
  * Sequencer
  * Interface for the main sequencing page of the project (literally the most important thing)
+ * Controls all the sequencing things including triggering
+ * Basically the main orchestrator for the audio components of the project
+ * 
+ * @author Kiyoko Iuchi-Fung
+ * @version 0.1.0
  */
 class Sequencer : public buttonInterface {
 public:
@@ -63,26 +69,21 @@ public:
     Sequencer(){};
 
     /**
-     * Sends triggers to the instrument handlers and moves sequencer forward
+     * Update()
+     * Sends a step object to the instrument handler at specific rate defined by
+     * metro object (tick)
      */
     void Update();
 
-    
-
     /**
-     * Updates the BPM
-     * \param bpm new bpm that will be changed to
+     * Updates the BPM based on the global BPM held in globals.h
      */
-    void SetBPM(float bpm_) {
-        bpm = bpm_;
-        tick.SetFreq((bpm / 60.0f) * 4.0f);
-        triggerTime = (1.0f / ((bpm / 60.0f) * 4.0f)) * 1000;
+    void SetBPM() {
+        __disable_irq();
+        bpm_ = BPM;
+        tick.SetFreq((BPM / 60.0f) * 4.0f);
+        __enable_irq();
     }
-
-    /**
-     * Returns the BPM
-     */
-    float GetBPM() { return bpm; }
     
     /**
      * Initializes display
@@ -101,9 +102,8 @@ public:
         songOrder->push_back(0);
         currentPattern = 0;
         tick.Init(1.0f, samplerate);
-        SetBPM(178.0f);
+        SetBPM();
         NewPattern();
-        lastTrigger = 0;
         laneOffset = 0;
         this->MainFont = MainFont;
         updateStep = true;
@@ -111,17 +111,32 @@ public:
         updatePattern = true;
     }
     
+    /**
+     * Gets the pattern vector pointer from the sequencer (mostly for backwards compatibility)
+     * @return the pattern vector pointer 
+     */
     std::vector<Pattern*>* GetPatterns() { return patterns; } 
 
+    /**
+     * Gets the song order vector pointer from the sequencer (mostly for backwards compatibility)
+     * @return the song order vector pointer 
+     */
     std::vector<int>* GetSongOrder() { return songOrder; } 
 
     /**
-     * Clears sequences (for loading)
+     * Clears all patterns from the sequencer
+     *  - Gets rid of all steps and lanes and patterns
+     *  - Gets rid of all ints in song order
+     *  - Marks the sequence as unsafe so that steps are not sent to the 
+     *    instrument handler to avoid null pointer exception
      */
     void Clear();
 
     /**
-     * marks sequences as safe (for loading)
+     * Follows the Clear() function once all patterns and song orders
+     * are loaded by the project saver loader
+     * This marks the sequencer as safe so that steps are once again
+     * sent to the instrument handlers
      */
     void Safe();  
 
@@ -145,49 +160,141 @@ public:
     void AltPlayButton();
 
     /**
-     * Called by the Display object to refresh the screen, not called internally because it interupts audio playback 
+     * Called by the Display object to refresh the screen, not called internally 
+     * because it interupts audio playback 
      * @param display pointer to display / layer to be written on
      */
     void UpdateDisplay(cLayer *display);
+
 private:
-    std::vector<InstrumentHandler*>* handler_;
-    std::vector<Pattern*>* patterns; // holds all the possible patterns made
-    std::vector<int>* songOrder; // holds the order of the patterns
-    Pattern* activePattern;
-
-    Step* currentStep;
-    Lane* currentLane;
-    int currentPattern;
-
-    bool playing_;
-    bool stepEdit_;
-    bool song_;
-    bool updateStep, updatePattern, updateSidebar;
-    float bpm;
-    float timePerTick;
-    char strbuff[20];
-    int laneOffset;
-    uint32_t lastTrigger;
-    uint32_t triggerTime;
-    Metro tick;
+    /**
+     * These are the pointers to the vectors dealing with all sequencing
+     * basically the main data structures that are used to do the actual
+     * sequencing. Not instance variables for Singleton approach and to 
+     * make sure that changes propagate throughout the program
+     */
+    std::vector<InstrumentHandler*>    *handler_;   /**< Pointer to instrument Handler vector */
+    std::vector<Pattern*>              *patterns;   /**< Pointer to pattern vector */
+    std::vector<int>                   *songOrder;  /**< Pointer to song order vector */
     
+    /**
+     * Pointers to specific objects withint he above arrays to determine
+     * the specific objects that we are using and editing (used in both
+     * display, audio playback, and UI editing)
+     */
+    Pattern    *activePattern;  /**< The active pattern being used */
+    Step       *currentStep;    /**< The current step being used */
+    Lane       *currentLane;    /**< The current lane being used */
+    int         currentPattern; /**< The current pattern within songOrder */
+
+    /**
+     * These fields control audio playback specifically the tick rate
+     */
+    bool    playing_;       /**< Controls whether sequencer is playing or not */
+    bool    song_;          /**< Controls whther patterns are triggered sequentially or not */
+    float   bpm_;           /**< the bpm retreived from the global CPM */
+    Metro   tick;           /**< the tick object that controls the timing of triggers */
+    bool    updateStep;     /**< Controls whether it is safe to access steps */
+    bool    updatePattern;  /**< Controls whether it is safe to access Patterns */
+    bool    updateSidebar;  /**< Controls whether it is safe to access sidebar */
+    
+    /**
+     * Helpful fields that facilitate displaying items 
+     */
+    char    strbuff[20];    /**< string buffer for use when printing strings to the screen */
+    int     laneOffset;     /**< the lane offset position when displaying the lanes */
+    bool    stepEdit_;      /**< controls whether steps can be edited or not */
+    
+    /**
+     * Draws a step to the display based on
+     * @param display the display being drawn to
+     * @param x the x offset
+     * @param y the y offset
+     * @param step a pointer to the step object being drawn
+     */
     void DrawStep( cLayer *display, int x, int y, Step* step);
 
+    /**
+     * Draws a square to the display for the song order
+     * @param display the display being drawn to
+     * @param index the pattern index being written 
+     * @param x the x offset
+     * @param y the y offset
+     * @param fill whether the square is filled or not
+     */
     void DrawSquare(cLayer *display, int index, int x, int y, bool fill);
 
-    void DrawArrow(cLayer *display, int x, int y, int direction); // 1 = left, 2 = right, 3 = up, 4 = down
+    /**
+     * Draws an arrow for the song order UI
+     * @param display the display being drawn to
+     * @param x the x offset
+     * @param y the y offset
+     * @param direction the direction the arrow points: 
+     *  1 = left, 2 = right, 3 = up, 4 = down
+     */
+    void DrawArrow(cLayer *display, int x, int y, int direction); 
 
+    /**
+     * Turns a note value into a string from a step
+     * @param strbuff the string buffer to write to with sprintf
+     * @param note the note value to be turned into a string
+     */
     void GetNoteString(char* strbuff, int note);
+
+    /**
+     * Turns an fx value into a string from a step
+     * @param strbuff the string buffer to write to
+     * @param fx the fx value to be written
+     * @param fxAmount the fxAmount value to be written
+     */
     void GetFxString(char* strbuff, int fx, int fxAmount);
+
+    /**
+     * Turns an fx value into a string from a step to be displayed
+     * @param strbuff the string buffer to write to
+     * @param fx the fx value to be written
+     */
     void GetFxString(char* strbuff, int fx);
 
+    /**
+     * Increments the position of current step to move the sequence
+     * forward. Also called by user input
+     */
     void NextStep();
+
+    /**
+     * Decrements the position of current step to move the sequence
+     * backward. Mainly called by user input
+     */
     void PreviousStep();
+
+    /**
+     * Increments the lane position being displayed to the screen
+     * Called by user input
+     */
     void NextLane();
+
+    /**
+     * Decrements the lane position being displayed to the screen
+     * Called by user input
+     */
     void PreviousLane();
+
+    /**
+     * Increments the pattern position based on the indeces held in
+     * the song Order vector
+     */
     void NextPattern();
+
+    /**
+     * Decrements the pattern position based on the indeces held in
+     * the song Order vector
+     */
     void PreviousPattern();
 
+    /**
+     * Creates a new pattern that is added to the pattern vector
+     */
     void NewPattern();
 
 };

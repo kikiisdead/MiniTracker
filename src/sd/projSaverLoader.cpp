@@ -48,10 +48,15 @@ void ProjSaverLoader::ReadPattern() {
     // Sequencer Header
     f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
 
+    
     // BPM
+    // disable interupts as it is global to avoid concurrent modification / access
+    __disable_irq();
     float bpm;
     f_read(fil, &bpm, sizeof(bpm), &bytesWritten);
-    sequencer->SetBPM(bpm);
+    BPM = bpm;
+    sequencer->SetBPM();
+    __enable_irq();
 
     //SONG HEADER
     f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
@@ -264,7 +269,9 @@ void ProjSaverLoader::SaveProject(const char* name) {
         Write(0x20514553); // "SEQ "
  
         // BPM
-        Write(sequencer->GetBPM());
+        __disable_irq();
+        Write(BPM);
+        __enable_irq();
 
         // SONG ORDER HEADER
         Write(0x474E4F53); // "SONG"

@@ -14,20 +14,25 @@
 namespace daisy
 {
 
-/** Struct containing details of Wav File. */
-
+/** 
+ * Struct containing details of Wav File. 
+ */
 struct WavFile
 {
-    WAV_FormatTypeDef           format;                 /**< Raw wav data */
-    char                        name[WAV_FILENAME_MAX]; /**< Wav filename */
-    void*                       start;                  /**< start index in SDRAM buffer */
+    WAV_FormatTypeDef format;                 /**< Raw wav data */
+    char              name[WAV_FILENAME_MAX]; /**< Wav filename */
+    void*             start;                  /**< start index in SDRAM buffer */
 };
 
-/* 
-TODO:
-- Make template-y to reduce memory usage.
-*/
 
+/**
+ * The SamplePlayer manages sample playback by retrieving samples from SDRAM
+ * and intrepolates between them using Hermite interpolation (adapted from 
+ * Daisy DelayLine)
+ * 
+ * @author Kiyoko Iuchi-Fung
+ * @version 0.1.0
+ */
 class SamplePlayer
 {
 public:
@@ -69,6 +74,10 @@ public:
      */
     double GetPos() { return pos_; }
 
+    /**
+     * Gets the number of samples in the instrument
+     * @return the length of the instrument sample array
+     */
     uint32_t GetSize() { return size_; }
 
     /** 
@@ -101,28 +110,30 @@ public:
      */
     inline bool IsPlaying() { return playing_; }
 
+    /**
+     * Creates an array of averages to display a waveform
+     * @param length the width of the area to display to 
+     * @return an array of average amplitudes
+     */
     uint16_t* GetVisual (int length);
 
+    /**
+     * Gets the name of the wave file
+     * @return the name of the wave file
+     */
     char* GetName() { return wave->name; }
-
-    int GetNumChannels() { return wave->format.NbrChannels; }
-
-    int GetSampleRate() { return wave->format.SubChunk2ID; }
-    
-    int GetBitsPerSample() { return wave->format.SubCHunk2Size; }
-
-    int GetRawSize() { return wave->format.AudioFormat; }
 
 private:
 
-    WavFile                 *wave;
-    int                     numChannels;
-    uint32_t                size_;
-    bool                    looping_, playing_;
-    float                   samplerate;
-    double                  pos_;
-    float                   samplePerStep;
-    float                   pitch;
+    WavFile                 *wave;              /**< A pointer to the wave file object */
+    int                     numChannels;        /**< Number of channels (affects sample retrieval) */
+    uint32_t                size_;              /**< Number of samples in file */
+    bool                    looping_;           /**< Looping toggle */
+    bool                    playing_;           /**< Playing toggle */
+    float                   samplerate;         /**< Samplerate */
+    double                  pos_;               /**< position within the file */
+    float                   samplePerStep;      /**< Number of samples per step (can be < 1) */
+    float                   pitch;              /**< The pitch of the sample playback */
 };
 
 } 

@@ -7,55 +7,70 @@
 #include "sequencer.h"
 #include "../sd/dirLoader.h"
 #include "../sd/projSaverLoader.h"
+#include "../globals.h"
 
 /**
- * Helper class for the keyboard letters
+ * A UI screen that displays the song settings and project saving / loading
+ * Implements the buttonInterface to allow for user input
+ * 
+ * @author Kiyoko Iuchi-Fung
+ * @version 0.1.0
  */
-class Letter {
-public:
-    Letter(const char* dataLow, const char* dataHigh, int size) {
-        this->dataLow = dataLow;
-        this->dataHigh = dataHigh;
-        selected = false;
-        capital = false;
-        this->size = size;
-    }
+class SongDisplay : public buttonInterface {
 
-    const char* GetVal() {
-        if (capital) return dataHigh;
-        else return dataLow;
-    }
+    /**
+     * Internal class to create key board letters
+     * 
+     * @author Kiyoko Iuchi-Fung
+     * @version 0.1.0
+     */
+    class Letter {
+    public:
+        Letter(const char* dataLow, const char* dataHigh, int size) {
+            this->dataLow = dataLow;
+            this->dataHigh = dataHigh;
+            selected = false;
+            capital = false;
+            this->size = size;
+        }
 
-    void Display(cLayer* display, cFont* MainFont, int x, int y) {
+        const char* GetVal() {
+            if (capital) return dataHigh;
+            else return dataLow;
+        }
 
-        int width = 24 * size;
-        if (selected) display->drawFillRect(x, y, width + 1, 25, ACCENT2);
-        display->drawRect(x, y, width + 1, 25, 1, MAIN);
+        void Display(cLayer* display, cFont* MainFont, int x, int y) {
 
-        int len = strlen(dataLow);
-        int xOffset = (width / 2) - ((len * CHAR_WIDTH) / 2);
-        int yOffset = CHAR_HEIGHT + ((25 / 2) - (CHAR_HEIGHT / 2));
+            int width = 24 * size;
+            if (selected) display->drawFillRect(x, y, width + 1, 25, ACCENT2);
+            display->drawRect(x, y, width + 1, 25, 1, MAIN);
 
-        display->setCursor(x + xOffset, y + yOffset);
-        display->setFont(MainFont);
+            int len = strlen(dataLow);
+            int xOffset = (width / 2) - ((len * CHAR_WIDTH) / 2);
+            int yOffset = CHAR_HEIGHT + ((25 / 2) - (CHAR_HEIGHT / 2));
+
+            display->setCursor(x + xOffset, y + yOffset);
+            display->setFont(MainFont);
         display->setTextFrontColor(MAIN);
         if (capital) display->drawText(dataHigh);
         else display->drawText(dataLow);
-    }
+        }
 
-    const char* dataLow;
-    const char* dataHigh;
-    bool selected;
-    bool capital;
-    int size;
-};
+        const char* dataLow;
+        const char* dataHigh;
+        bool selected;
+        bool capital;
+        int size;
+    };
 
-class SongDisplay : public buttonInterface {
 public:
     SongDisplay(){}
     ~SongDisplay(){}
 
-    enum PARAM { SAVE, SAVEAS, LOAD, VOL, BPM };
+    /**
+     * Possible parameters that can be edited based on user input
+     */
+    enum PARAM { SAVE, SAVEAS, LOAD, VOL, TEMPO };
 
     /**
      * Initialize the Song Display
@@ -89,31 +104,56 @@ public:
     void UpdateDisplay(cLayer* display);
 
 private:
-    Sequencer *sequencer;
-    float vol;
-    char strbuff[256];
-    PARAM param;
-    ProjSaverLoader* projSaverLoader;
-    std::string projName;
+    Sequencer          *sequencer;          /**< Pointer to the sequencer object (should only be one) */
+    float               vol;                /**< The output volume */
+    char                strbuff[256];       /**< Used to write strings to be displayed */
+    PARAM               param;              /**< The parameter selected to be edited / modified */
+    ProjSaverLoader    *projSaverLoader;    /**< Pointer to the saving and loading object */
+    std::string         projName;           /**< A string that contains the current project name */
+    Node<File>*         currentNode;        /**< The current node in the file directory that is being observed */
+    Node<File>*         rootNode;           /**< The root node of the file directory that this object has access to */
+    Letter*             keyboard[4][9];     /**< an array for the keyboard object */
+    std::string         tempName;           /**< Temporary name used to display name to be saved */
 
-    Node<File>* currentNode;
-    Node<File>* rootNode;
-    Letter* keyboard[4][9];
-    std::string tempName;
-
+    /**
+     * A function callback to allocate space for a new file name in the file buffer
+     * @param size the size in bytes to be allocated for the name
+     * @return a void pointer to the start of the allocated memory
+     */
     void* (*search_buffer_allocate)(size_t size);
 
-    int keyV, keyH;
+    int     keyV;   /**< vertical position of cursor in keyboard */
+    int     keyH;   /**< horizontal position of cursor in keyboard */
+    bool    load;   /**< Load toggle */
+    bool    saveas; /**< Save as toggle */
+    int     row;    /**< Row of current selected node */
+    int     col;    /**< Column of current selected node */
+    int     lev;    /**< Selected column relative to screen */
+    int     scrRow; /**< Selected row relative to screen */
 
-    bool load, saveas;
-
-    int row, col, lev, scrRow;
-
+    /**
+     * Increments the parameter to be edited
+     * Called by user input
+     */
     void NextParam();
+
+    /**
+     * Decrements the parameter to be edited
+     * Called by user input
+     */
     void PrevParam();
+
+    /**
+     * Increments the selected parameter
+     * Called by user input
+     */
     void Increment();
+
+    /**
+     * Decrements the selected parameter
+     * Called by user input
+     */
     void Decrement();  
-    
 };
 
 

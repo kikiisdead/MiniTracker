@@ -13,25 +13,32 @@
 #include "fx/autopan.h"
 #include "fx/redux.h"
 #include "dev/oled_ssd130x.h"
+#include "../globals.h"
 
-using MyOledDisplay = OledDisplay<SSD130xI2c128x64Driver>;
+using namespace daisy;
 
-/*
-the purpose of this class is to abstract the function of the instruments. a way for the sequencer to interface with the instruments. 
-only one instance of this object which handles any number of instances of the instrument objects
-*/
-
+/**
+ * The InstrumentHandler interfaces with the instruments and adds more sequencing functionality
+ * The purpose of this class is to abstract the function of the instruments. a way for the sequencer 
+ * to interface with the instruments. 
+ * Only one instance of this object which handles any number of instances of the instrument objects
+ * 
+ * @author Kiyoko Iuchi-Fung
+ * @version 0.1.0
+ */
 class InstrumentHandler {
 private:
-    Instrument* activeInst;
-    std::vector<Instrument*>* instVector;
-    float samplerate;
-    bool preview;
-    cFont* MainFont;
+    Instrument*                 activeInst;     /**< Pointer to active instrument */
+    std::vector<Instrument*>*   instVector;     /**< Pointer to instrument vector */
+    float                       samplerate;     /**< Samplerate */
+    bool                        preview;        /**< Preview sound toggle */
+    cFont*                      MainFont;       /**< Pointer to the display font */
+    Step*                       currentStep;    /**< The current step */
+    int                         tickCount = 0;  /**< The current sub tick */
+    Metro                       tick;           /**< Metro object to control sub ticks */   
 
 public:
-    
-    std::vector<Effect*> effects;
+    std::vector<Effect*> effects; /**< The effect vector for the lane */
 
     InstrumentHandler(){}
 
@@ -43,7 +50,8 @@ public:
      */
     void Init(std::vector<Instrument*>* instVector_, float samplerate_, cFont* MainFont) {
         instVector = instVector_;
-        activeInst = NULL;
+        activeInst = nullptr;
+        currentStep = nullptr;
         samplerate = samplerate_;
         this->MainFont = MainFont;
         effects.push_back(new NoEffect);
@@ -52,6 +60,7 @@ public:
         effects.back()->Init(samplerate, MainFont);
         effects.push_back(new NoEffect);
         effects.back()->Init(samplerate, MainFont);
+        tick.Init(14, samplerate);
     }
 
     /**
@@ -60,6 +69,25 @@ public:
      * @param right right audio channel passed by reference
      */
     void Process(float& left, float& right) {
+        // sub tick count
+        if (tick.Process()) {
+            if (currentStep != nullptr) {
+                // roll based on fx
+                if (currentStep->fx == 1 && activeInst != nullptr) {
+                    if (currentStep->fxAmount == 0) {
+                        activeInst->Trigger(currentStep->note);
+                    } else if (tickCount % currentStep->fxAmount == 0) {
+                        activeInst->Trigger(currentStep->note);
+                    }
+                } 
+            }
+            
+            tickCount += 1;
+            if (tickCount >= 16) {
+                tickCount = 0;
+            }
+        }
+
         if (activeInst == nullptr) {
             left = 0.0f;
             right = 0.0f;
@@ -79,9 +107,17 @@ public:
         }
     }
 
-    // only triggered when changing next note occurs
+    // triggered for every step
     void Update(Step* step) {
+        currentStep = step;
+        SetTick();
+        tick.Reset();
+        tickCount = 0;
         preview = false;
+        // skip last if passed a nullptr
+        if (step == nullptr) 
+            return;
+
         if (step->instrument != -1) {
             if (step->instrument == -2 && activeInst != nullptr) activeInst->Release();
             else if (step->instrument >= 0) {
@@ -166,15 +202,24 @@ public:
         else                                  return new NoEffect;
     }
 
-   /**
-    * clears the effect vector and frees memory
-    * called by CLEAR function in main program on project load
-    */
+    /**
+     * clears the effect vector and frees memory
+     * called by CLEAR function in main program on project load
+     */
     void ClearFX() {
         for (size_t i = 0; i < effects.size(); i++) {
             RemoveEffect(0);
         }
         effects.clear();
+    }
+
+    /**
+     * Updates sub tick speed based on global BPM
+     */
+    void SetTick() {
+        __disable_irq();
+        tick.SetFreq(((BPM / 60.0f) * 4.0f) * 16.0f);
+        __enable_irq();
     }
 
 };

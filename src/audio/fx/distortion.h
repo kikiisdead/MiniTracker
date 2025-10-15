@@ -8,6 +8,12 @@ public:
     Distortion(){}
     ~Distortion(){}
     
+    /**
+     * Initializes the Distortion effect
+     * Overrides Init in abstract effect
+     * @param samplerate the samplerate
+     * @param MainFont pointer to the main font
+     */
     void Init(float samplerate, cFont* MainFont) {
         overdrive.Init();
 
@@ -22,11 +28,24 @@ public:
         this->MainFont = MainFont;
     }
 
+    /**
+     * Processes audio through overdrive
+     * Overrides Process in abstract effect
+     * @param left left audio channel passed by reference to change the value
+     * @param right right audio channel passed by reference to change the value
+     */
     void Process(float& left, float& right) {
         left = overdrive.Process(left);
         right = overdrive.Process(right);
     }
 
+    /**
+     * Displays the effect to the screen
+     * Overrides Display in abstract effect
+     * @param display pointer to display to write to
+     * @param x the x offset
+     * @param y the y offset
+     */
     void Display(cLayer *display, int x, int y) {
         if (selected) display->drawRect(x + FX_BUFFER, y + FX_BUFFER, FX_WIDTH, FX_HEIGHT, 1, ACCENT2);
         else display->drawRect(x + FX_BUFFER, y + FX_BUFFER, FX_WIDTH, FX_HEIGHT, 1, ACCENT1);
@@ -67,6 +86,10 @@ public:
         }
     }
 
+    /**
+     * Increments the selected param
+     * Overrides Increment in abstract effect
+     */
     void Increment() {
         drive += 0.01f;
         if (drive >= 1.0f) {
@@ -74,6 +97,11 @@ public:
         }
         overdrive.SetDrive(drive);
     }
+    
+    /**
+     * Decrements the selected param
+     * Overrides Decrement in abstract effect
+     */
     void Decrement() {
         drive -= 0.01f;
         if (drive <= 0.0f) {
@@ -82,6 +110,12 @@ public:
         overdrive.SetDrive(drive);
     }
 
+    /**
+     * Creates a config buffer
+     * Overrides GetSnapshot in abstract effect
+     * @param buf the char buf to write to 
+     * NOTE only 32 byte buffer but no type safety
+     */
     void GetSnapshot(char *buf) {
         
         void* ptr = &buf[0];
@@ -97,6 +131,13 @@ public:
 
     }
 
+    /**
+     * Loads from a config buffer
+     * Overrides Load in abstract effect
+     * @param buf the char buf to load from
+     * @param samplerate the samplerate
+     * @param MainFont pointer to the main font
+     */
     void Load(char* buf, float samplerate, cFont* MainFont) {
 
         void* ptr = &buf[0];

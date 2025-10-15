@@ -18,6 +18,7 @@
 #include "src/sd/waveFileLoader.h"
 #include "src/sd/dirLoader.h"
 #include "src/sd/projSaverLoader.h"
+#include "src/globals.h"
 
 #define LANE_NUMBER 4
 
@@ -41,7 +42,7 @@ using namespace DadGFX;
 /**
  * TODO
  * FatFS is still fucked and I don't know if its a problem on my end or not
- * 
+ * Add step FX and shit
  */
 
 // using this because issue with creating FIL objects on stack
@@ -67,8 +68,6 @@ std::vector<Pattern*> patterns; // holds all the possible patterns made
 
 std::vector<int> songOrder; // holds the order of the patterns
 
-float bpm = 178.0f;
-
 bool shift;
 
 bool projSafe = true;
@@ -77,7 +76,7 @@ bool projSafe = true;
  * SDRAM STUFF
  * Make sure to not allocate the entire SDRAM because TFT relies on SDRAM for frame buffer
  */
-#define CUSTOM_POOL_SIZE (48*1024*1024)
+#define CUSTOM_POOL_SIZE (48*1024*1024) // 48MB
 
 DSY_SDRAM_BSS char sample_buffer[CUSTOM_POOL_SIZE];
 
@@ -102,7 +101,7 @@ bool sample_buffer_clear() {
   return true;
 }
 
-#define FILE_BUFFER_SIZE (1024*1024)
+#define FILE_BUFFER_SIZE (1024*1024) // 1MB
 
 DSY_SDRAM_BSS char file_buffer[FILE_BUFFER_SIZE];
 
@@ -512,31 +511,10 @@ int main(void) {
 
   hw.StartAudio(AudioCallback);
 
-  uint32_t time = System::GetNow();  
-
-  float flushTime = 0; 
-  float processTime = 0;
-
-  char strbuff[20];
-
   for (;;) {
-    if (System::GetNow() > time + 17) {
-      (*userInterface)->UpdateDisplay(pMain); 
-      sprintf(strbuff, "%.0fms", flushTime);
-      pMain->setCursor(0, CHAR_HEIGHT);
-      pMain->setFont(&MainFont);
-      pMain->setTextFrontColor(MAIN);
-      pMain->drawText(strbuff);
-      sprintf(strbuff, "%.0fms", processTime);
-      pMain->setCursor(0, CHAR_HEIGHT * 2 + 4);
-      pMain->setFont(&MainFont);
-      pMain->setTextFrontColor(MAIN);
-      pMain->drawText(strbuff);
-      processTime = ((float) (System::GetNow() - time));
-      __Display.flush();
-      flushTime = ((float) (System::GetNow() - time)) - processTime;
-      time = System::GetNow();
-    }
+    (*userInterface)->UpdateDisplay(pMain); 
+    __Display.flush();
+
     while (eventQueue.size() != 0) {
       eventQueue.front()->Execute((*userInterface), shift);
       eventQueue.pop();

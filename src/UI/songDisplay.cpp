@@ -70,8 +70,7 @@ void SongDisplay::Process(float& left, float& right) {
 }
 
 void SongDisplay::UpdateDisplay(cLayer* display) {
-    display->eraseLayer();
-    display->drawFillRect(0, 0, 320, 240, BACKGROUND);
+    display->eraseLayer(BACKGROUND);
     
     /**
      * Drawing Save Save as and Load
@@ -110,7 +109,11 @@ void SongDisplay::UpdateDisplay(cLayer* display) {
     sprintf(strbuff, "%.2f", vol);
     WriteString(display, strbuff, 244, 200 + 2 * (CHAR_HEIGHT + 4), MAIN);
 
-    height = sequencer->GetBPM() / 300.0f;
+    __disable_irq();
+    float bpm_ = BPM;
+    __enable_irq();
+    
+    height = bpm_ / 300.0f;
 
     display->drawFillRect(283, 1 + (1.0f - height) * 200, 35, height * 200, ACCENT1);
 
@@ -119,7 +122,7 @@ void SongDisplay::UpdateDisplay(cLayer* display) {
     sprintf(strbuff, "BPM");
     WriteString(display, strbuff, 284, 200 + CHAR_HEIGHT + 4, MAIN);
 
-    sprintf(strbuff, "%.0f", sequencer->GetBPM());
+    sprintf(strbuff, "%.0f", bpm_);
     WriteString(display, strbuff, 284, 200 + 2 * (CHAR_HEIGHT + 4), MAIN);
 
     if (!load && !saveas) {
@@ -187,14 +190,14 @@ void SongDisplay::NextParam() {
     if (param == SAVE) param = SAVEAS;
     else if (param == SAVEAS) param = LOAD;
     else if (param == LOAD) param = VOL;
-    else if (param == VOL) param = BPM;
+    else if (param == VOL) param = TEMPO;
 }
 
 void SongDisplay::PrevParam() {
     if (param == SAVEAS) param = SAVE;
     else if (param == LOAD) param = SAVEAS;
     else if (param == VOL) param = LOAD;
-    else if (param == BPM) param = VOL;
+    else if (param == TEMPO) param = VOL;
 }
 
 void SongDisplay::Increment() {
@@ -204,11 +207,14 @@ void SongDisplay::Increment() {
             vol = 6.0f;
         }
     }
-    else if (param == BPM) {
-        sequencer->SetBPM(sequencer->GetBPM() + 1);
-        if (sequencer->GetBPM() > 300) {
-            sequencer->SetBPM(300);
+    else if (param == TEMPO) {
+        __disable_irq();
+        BPM += 1;
+        if (BPM > 300) {
+            BPM = 300;
         }
+        __enable_irq();
+        sequencer->SetBPM();
     }
 }
 
@@ -219,11 +225,14 @@ void SongDisplay::Decrement() {
             vol = -70.0f;
         }
     }
-    else if (param == BPM) {
-        sequencer->SetBPM(sequencer->GetBPM() - 1);
-        if (sequencer->GetBPM() < 20) {
-            sequencer->SetBPM(20);
+    else if (param == TEMPO) {
+        __disable_irq();
+        BPM -= 1;
+        if (BPM < 20) {
+            BPM = 20;
         }
+        __enable_irq();
+        sequencer->SetBPM();
     }
 }
 

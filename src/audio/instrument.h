@@ -15,14 +15,22 @@ using namespace daisysp;
 #define WAVEWIDTH 240
 #define WAVEHEIGHT 168
 
-/* 
-This class will have all the audio objects for each individual object (FX, slicepoints, pitch, etc. )
-Will have a public process function which will get called if its playing. pointer to the object will be passed through each lane in sequencer
-*/
-
+/**
+ * The Instrument class wraps the sample player object adding volume, 
+ * ADSR, and slice control. It essentially functions as a boilerplate
+ * for the instrument handler to interface with
+ * 
+ * @author Kiyoko Iuchi-Fung
+ * @version 0.1.0
+ */
 class Instrument {
 public:
 
+    /**
+     * The config struct serves as an easy way to instantiate the Instrument 
+     * object without having a constructor / init function with an overwhelming
+     * amount of parameters
+     */
     struct Config {
         float Attack;
         float Decay;
@@ -44,8 +52,14 @@ public:
 
     };
 
+    /**
+     * Enumeration containing the possible parameters
+     */
     enum param { p, g, a, d, s, r };
 
+    /**
+     * Constructor not used as hardware needs to be initialized
+     */
     Instrument(){};
 
     /**
@@ -85,64 +99,128 @@ public:
      */
     void Trigger(int note);
 
+    /**
+     * Releases the ADSR
+     */
     void Release();
 
+    /**
+     * Checks if the instrument is playing or not
+     * @return a boolean: true if playing, false if not
+     */
     bool IsPlaying() { return playing; }
 
     /**
-     * Getters and Setters
+     * Gets the slice vector of the instrument
+     * @return a vector of doubles corresponding to the slices
      */
-
     std::vector<double> GetSlices() { return slices; }
 
+    /**
+     * Gets the size of the instrument sample array
+     * @return size of the instrument sample array
+     */
     uint32_t GetSize() { return samplePlayer.GetSize(); }
 
+    /**
+     * Gets the pitch in semitones
+     * @return the pitch of the isntrument
+     */
     float GetPitch() { return pitch; }
 
+    /**
+     * Gets the attack time in ms
+     * @return the attack time
+     */
     float GetAttack() { return att; }
 
+    /**
+     * Gets the decay time in ms
+     * @return the decay time
+     */
     float GetDecay() { return dec; }
 
+    /**
+     * Gets the sustain level in %
+     * @return the sustain level
+     */
     float GetSustain() {return sus; }
 
+    /**
+     * Gets the release time in ms
+     * @return the release time
+     */
     float GetRelease() {return rel; }
 
+    /**
+     * Gets the gain in dB
+     * @return the gain
+     */
     float GetGain() { return gain; }
 
+    /**
+     * Gets the path of the sample in file directory
+     * @return the path as a string
+     */
     std::string GetPath() { return path; }
 
+    /**
+     * Gets the name of the sample as a char array 
+     * @return the name of the sample as a char array
+     */
     char* GetName() { return samplePlayer.GetName(); }
 
+    /**
+     * Gets the selected param to edit
+     * @return the param being edited
+     */
     param GetEdit() { return edit; }
 
+    /**
+     * Increments the param to the next param
+     */
     void NextParam();
+
+    /**
+     * Decrements the param to the next param
+     */
     void PrevParam();
+
+    /**
+     * Increments the selected parameter
+     */
     void Increment();
+
+    /**
+     * Decrements the selected parameter
+     */
     void Decrement();
 
-
-    /**
-     * array of averages from the sample for display
-     */
-    uint16_t* visual;
-
-    /**
-     * the slices / subsections of the sample to be played
-     */
-    std::vector<double> slices;
+    uint16_t*           visual; /**< array of averages from the sample for display */
+    std::vector<double> slices; /**< the slices / subsections of the sample to be played */
 
 private:
-    SamplePlayer samplePlayer;
-    Adsr env;
-    float env_out;
-    double volume;
-    size_t currentSlice;
-    bool playing;
-    float att, dec, sus, rel, pitch, gain;
-    param edit;
+    SamplePlayer    samplePlayer;   /**< The sample player object playing the sample */
+    Adsr            env;            /**< The adsr object */
+    float           env_out;        /**< A float to hold the output of the envelope */
+    double          volume;         /**< The volume applied after the ADSR */
+    size_t          currentSlice;   /**< The index of the current slice */
+    bool            playing;        /**< Playing toggle */
+    float           att;            /**< Attack time in ms */
+    float           dec;            /**< Decay time in ms */
+    float           sus;            /**< Sustain level in % */
+    float           rel;            /**< Release time in ms */
+    float           pitch;          /**< Pitch in semitones */
+    float           gain;           /**< Gain in dB */
+    param           edit;           /**< The param to be edited */
+    std::string     path;           /**< Path to the sample in file direction */
 
-    std::string path;
-
+    /**
+     * Scales the parameter being edited to be logarithmic
+     * Used for scaling the attack, decay, and release times
+     * @param num the input to be scaled
+     * @return the logarithmically scaled number
+     */
     float Scaling(float num) { return pow(num, ((num / 5.0f) + 1.0f) / 2.0f) / 10.0f; }
 
 };

@@ -14,8 +14,11 @@ using namespace daisy;
 
 /**
  * Instrument Display
- * interface that display all isntruments and allows simple editing like
+ * A UI object that display all isntruments and allows simple editing like
  * ADSR, sample slicing, gain, and pitch shifting
+ * 
+ * @author Kiyoko Iuchi-Fung
+ * @version 0.1.0
  */
 class InstrumentDisplay : public buttonInterface {
 public:
@@ -53,13 +56,13 @@ public:
     void UpdateDisplay(cLayer* tft);
 
 private:
-    std::vector<Instrument*>* instruments;
-    InstrumentHandler* handler; 
-    std::vector<Instrument*>::iterator activeInst;
-    int active;
-    size_t currentSlice;
-    char strbuff[256];
-    bool sliceEdit;
+    std::vector<Instrument*>           *instruments;    /**< Pointer to the instrument vector (prevents concurrent modification) */
+    InstrumentHandler                  *handler;        /**< Pointer to the instrument handler object */
+    std::vector<Instrument*>::iterator  activeInst;     /**< An iterator belonging to the vector to display the active instrument */
+    int                                 active;         /**< The position of the active instruent being edited */
+    size_t                              currentSlice;   /**< The current slice being edited */
+    char                                strbuff[256];   /**< A string buffer to help with writing strings to the display */
+    bool                                sliceEdit;      /**< Whether we are editing slices or not */
 
 };
 

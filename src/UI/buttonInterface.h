@@ -20,6 +20,9 @@ using MyOledDisplay = OledDisplay<SSD130xI2c128x64Driver>;
  * also includes some generic common utilities for UI like writestring 
  * though all methods are pure virtual, interfaces are not required to fully implement
  * all methods if button has no use for that specific interface
+ * 
+ * @author Kiyoko Iuchi-Fung
+ * @version 0.1.0
  */
 class buttonInterface {
 public:
@@ -67,7 +70,7 @@ public:
     }
 
 protected:
-    cFont* MainFont;
+    cFont*  MainFont;   /**< The main font used in screens */
 };
 
 #endif
