@@ -143,21 +143,77 @@ public:
     /**
      * INHERITED FROM BUTTON INTERFACE
      */
-    void AButton();
-    void BButton();
-    void UpButton();
-    void DownButton();
-    void LeftButton();
-    void RightButton();
-    void PlayButton();
 
-    void AltAButton();
-    void AltBButton();
-    void AltUpButton();
-    void AltDownButton();
-    void AltLeftButton();
-    void AltRightButton();
-    void AltPlayButton();
+    /**
+     * Toggles STEP EDIT
+     * @note If selected step is off, turns it on
+     */
+    void AButton() override;
+
+    /**
+     * Selected step is turned off
+     */
+    void BButton() override;
+
+    /**
+     * Moves selector to previous step
+     */
+    void UpButton() override;
+
+    /**
+     * Moves selector to next step
+     */
+    void DownButton() override;
+
+    /**
+     * Moves selector to previous lane
+     */
+    void LeftButton() override;
+
+    /**
+     * Moves selector to next lane
+     */
+    void RightButton() override;
+
+    /**
+     * Toggles playing to play pattern
+     */
+    void PlayButton() override;
+
+    /**
+     * Doubles the length of the current pattern
+     */
+    void AltAButton() override;
+
+    /**
+     * Halves the length of the current pattern
+     */
+    void AltBButton() override;
+
+    /**
+     * Moves pattern selector to previous pattern
+     */
+    void AltUpButton() override;
+
+    /**
+     * Moves pattern selector to next pattern
+     */
+    void AltDownButton() override;
+
+    /**
+     * Changes selected pattern to previous pattern
+     */
+    void AltLeftButton() override;
+
+    /**
+     * Changes selected pattern to next pattern
+     */
+    void AltRightButton() override;
+
+    /**
+     * Plays song (patterns don't loop)
+     */
+    void AltPlayButton() override;
 
     /**
      * Called by the Display object to refresh the screen, not called internally 

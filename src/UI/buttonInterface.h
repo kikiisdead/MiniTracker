@@ -18,7 +18,6 @@ using MyOledDisplay = OledDisplay<SSD130xI2c128x64Driver>;
  * buttonInterface is an abstract class that controls HID and UI
  * inherited by all screens to allow for polymorphic control of various interfaces
  * also includes some generic common utilities for UI like writestring 
- * though all methods are pure virtual, interfaces are not required to fully implement
  * all methods if button has no use for that specific interface
  * 
  * @author Kiyoko Iuchi-Fung
@@ -29,24 +28,26 @@ public:
     /**
      * Controls main button controls
      */
-    virtual void AButton() = 0;
-    virtual void BButton() = 0;
-    virtual void UpButton() = 0;
-    virtual void DownButton() = 0;
-    virtual void LeftButton() = 0;
-    virtual void RightButton() = 0;
-    virtual void PlayButton() = 0;
+
+    virtual void AButton(){};
+    virtual void BButton(){};
+    virtual void UpButton(){};
+    virtual void DownButton(){};
+    virtual void LeftButton(){};
+    virtual void RightButton(){};
+    virtual void PlayButton(){};
 
     /**
      * Controls alternative button controls (when shift is held)
      */
-    virtual void AltAButton() = 0;
-    virtual void AltBButton() = 0;
-    virtual void AltUpButton() = 0;
-    virtual void AltDownButton() = 0;
-    virtual void AltLeftButton() = 0;
-    virtual void AltRightButton() = 0;
-    virtual void AltPlayButton() = 0;
+    
+    virtual void AltAButton(){};
+    virtual void AltBButton(){};
+    virtual void AltUpButton(){};
+    virtual void AltDownButton(){};
+    virtual void AltLeftButton(){};
+    virtual void AltRightButton(){};
+    virtual void AltPlayButton(){};
 
     /**
      * Updates display
@@ -69,8 +70,42 @@ public:
         display->drawText(strbuff);
     }
 
+    /**
+     * Gets the next button interface
+     * @return pointer to said interface
+     */
+    buttonInterface* GetNext() {
+        return next;
+    }
+
+    /**
+     * Updates the pointer to the next buttonInterface object
+     * @param next interface object
+     */
+    void SetNext(buttonInterface* next) {
+        this->next = next;
+    }
+
+    /**
+     * Gets the prev button interface
+     * @return pointer to said interface
+     */
+    buttonInterface* GetPrev() {
+        return prev;
+    }
+
+    /**
+     * Updates the pointer to the prev buttonInterface object
+     * @param prev interface object
+     */
+    void SetPrev(buttonInterface* prev) {
+        this->prev = prev;
+    }
+
 protected:
     cFont*  MainFont;   /**< The main font used in screens */
+    buttonInterface* next;  /**< Pointer to next ui screen */
+    buttonInterface* prev;  /**< Pointer to prev ui screen */
 };
 
 #endif

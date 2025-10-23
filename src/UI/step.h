@@ -26,6 +26,8 @@ public:
         this->selected = false;
         this->paramEdit = Step::i;
         this->index = index;
+        this->next = nullptr;
+        this->prev = nullptr;
     }
 
     /**
@@ -64,9 +66,11 @@ public:
     /**
      * These fields have to do with UI access and display
      */
-    bool selected;      /**< Describes whether the step is selected or not */
-    int index;          /**< Position within the step vector */
-    param paramEdit;    /**< Param to be edited */
+    bool    selected;   /**< Describes whether the step is selected or not */
+    int     index;      /**< Position within the step vector */
+    param   paramEdit;  /**< Param to be edited */
+    Step*   next;       /**< Pointer to next step */
+    Step*   prev;       /**< Pointer to prev step */
 
     /**
      * Increments paramEdit within some constraints
@@ -109,6 +113,150 @@ public:
     }
 };
 
+
+// /**
+//  * Lane class that manages steps like a circular doubly linked list
+//  * Allows for dynamic memory management without dealing with std::vector.
+//  * Could load Steps into SDRAM 
+//  * 
+//  * @author Kiyoko Iuchi-Fung
+//  * @version 0.1.0
+//  */
+
+// class Lane {
+// public:
+
+//     /**
+//      * Constructor and destructor
+//      */
+//     Lane() {
+//         head = nullptr;
+//         tail = nullptr;
+//         current = nullptr;
+//         size = 0;
+//     }
+//     ~Lane(){}
+
+//     /**
+//      * Add step to the back of the pattern
+//      * @param step pointer to the step object to be added
+//      * @return boolean indicating success
+//      */
+//     bool push(Step* step) {
+//         if (step == nullptr)
+//             return false;
+        
+//         if (size == 0) {
+//             head = step;
+//             tail = step;
+//             current = step;
+//         }
+
+//         else {
+//             // adding to back
+//             tail->next = step;
+//             step->prev = tail;
+
+//             // updating tail
+//             tail       = step;
+
+//             // maintaining circularity
+//             head->prev = tail;
+//             tail->next = head; 
+//         }
+
+//         size++;
+
+//         return true;
+//     }
+
+//     /**
+//      * Remove step from the back of the pattern
+//      * @note does not free memory of object
+//      * @return pointer to the removed object
+//      */
+//     Step* remove() {
+//         if (size == 0) 
+//             return nullptr;
+
+//         Step* n = tail;
+
+//         if (current == tail) 
+//             current = tail->prev;
+
+//         // update tail
+//         tail = tail->prev;
+
+//         // maintain circularity
+//         tail->next = head;
+//         head->prev = tail;
+
+//         size--;
+
+//         return n;
+//     }
+
+//     /**
+//      * Gets the current step of the pattern
+//      * @return pointer to the current Step
+//      */
+//     Step* get_current() {
+//         return current;
+//     }
+
+//     /**
+//      * Increments the value of current step
+//      * @note circularly linked therefore does note check if it reaches the end
+//      */
+//     void increment() {
+//         current = current->next;
+//     }
+
+//     /**
+//      * Decrements the value of current step
+//      * @note circularly linked therefore does note check if it reaches the end
+//      */
+//     void decrement() {
+//         current = current->prev;
+//     }
+
+//     /**
+//      * Checks if the current step is the tail or not
+//      * @note This is how to check if we need to move to the next pattern
+//      * @return bool of whether tail or not
+//      */
+//     bool is_tail() {
+//         return current == tail;
+//     }
+
+//     /**
+//      * Checks if the current step is the head
+//      * @return bool of whether head or not
+//      */
+//     bool is_head() {
+//         return current == head;
+//     }
+
+//     /**
+//      * Gets the size of the pattern
+//      * @return size of the pattern
+//      */
+//     size_t getSize() {
+//         return size;
+//     }
+
+// private:
+//     Step* head;
+//     Step* tail;
+//     Step* current;
+
+//     size_t size;
+// };
+
+// class Pattern {
+// public:
+
+// };
 
 
 #endif

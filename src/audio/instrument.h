@@ -177,6 +177,18 @@ public:
     param GetEdit() { return edit; }
 
     /**
+     * Gets pointer to the start of sample in SDRAM
+     * @return void pointer to start of sample
+     */
+    void* GetStart() { return samplePlayer.GetStart(); }
+
+    /**
+     * Sets pointer to start of sample in SDRAM
+     * @param start new start position
+     */
+    void SetStart(void* start) { samplePlayer.SetStart(start); }
+
+    /**
      * Increments the param to the next param
      */
     void NextParam();

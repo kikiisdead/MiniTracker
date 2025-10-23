@@ -86,19 +86,31 @@ Instrument* WaveFileLoader::CreateInstrument(std::string path) {
          * READ MULAW
          */
         if (wave.AudioFormat == WAVE_FORMAT_ULAW) {
+
+            __disable_irq();
             sample->start = sample_buffer_allocate((wave.SubCHunk2Size / sizeof(uint8_t)) * sizeof(float));
+            __enable_irq();
+
             if (sample->start == 0) return nullptr;
-  
+
+            __disable_irq();
             void* writePtr = sample->start;
+            __enable_irq();
+
             while (readIndex < wave.SubCHunk2Size) {
                 uint8_t val;
+
                 if (f_read(fil, (void*)&val, sizeof(val), &bytesread) == FR_OK) { // reading sd card 1 byte at a time
                     int16_t temp = MuLaw2Lin((val * -1) - 1); // decode mulaw
                     float samp = s162f(temp); // turn to float
                     readIndex += 1; 
+
+                    __disable_irq();
                     *(static_cast<float*>(writePtr)) = samp; // add to sdram
                     writePtr = static_cast<float*>(writePtr) + 1;
-                } else break;
+                    __enable_irq();
+                } else 
+                    break;
             }
         } 
 
@@ -106,10 +118,17 @@ Instrument* WaveFileLoader::CreateInstrument(std::string path) {
          * READ ALAW
          */
         else if (wave.AudioFormat == WAVE_FORMAT_ALAW) {
+
+            __disable_irq();
             sample->start = sample_buffer_allocate((wave.SubCHunk2Size / sizeof(uint8_t)) * sizeof(float));
+            __enable_irq();
+
             if (sample->start == 0) return nullptr;
   
+            __disable_irq();
             void* writePtr = sample->start;
+            __enable_irq();
+
             while (readIndex < wave.SubCHunk2Size) {
 
                 uint8_t val;
@@ -118,9 +137,14 @@ Instrument* WaveFileLoader::CreateInstrument(std::string path) {
                     int16_t temp = ALaw2Lin((val * -1) - 1); // decode mulaw
                     float samp = s162f(temp); // turn to float
                     readIndex += 1; 
+
+                    __disable_irq();
                     *(static_cast<float*>(writePtr)) = samp; // add to sdram
                     writePtr = static_cast<float*>(writePtr) + 1;
-                } else break;
+                    __enable_irq();
+
+                } else 
+                    break;
             }
         } 
 
@@ -128,20 +152,32 @@ Instrument* WaveFileLoader::CreateInstrument(std::string path) {
          * READ 16bit PCM
          */
         else if (wave.AudioFormat == WAVE_FORMAT_PCM && wave.BitPerSample == 16) {
+
+            __disable_irq();
             sample->start = sample_buffer_allocate((wave.SubCHunk2Size / sizeof(int16_t)) * sizeof(float));
+            __enable_irq();
+            
             if (sample->start == 0) return nullptr;
   
+            __disable_irq();
             void* writePtr = sample->start;
+            __enable_irq();
+            
             while (readIndex < wave.SubCHunk2Size / sizeof(int16_t)) {
 
                 int16_t val;
 
                 if (f_read(fil, (void*)&val, sizeof(val), &bytesread) == FR_OK) { // reading sd card 2 bytes at a time
+
                     float samp = s162f(val); // turn to float
                     readIndex += 1; 
+
+                    __disable_irq();
                     *(static_cast<float*>(writePtr)) = samp; // add to sdram
                     writePtr = static_cast<float*>(writePtr) + 1;
-                } else break;
+                    __enable_irq();
+                } else 
+                    break;
             }
 
             sample->format.SubCHunk2Size = sample->format.SubCHunk2Size / sizeof(int16_t);
@@ -152,34 +188,37 @@ Instrument* WaveFileLoader::CreateInstrument(std::string path) {
         else if (((wave.AudioFormat == WAVE_FORMAT_EXTENSIBLE) 
             ||  wave.AudioFormat == WAVE_FORMAT_PCM)
             &&  wave.BitPerSample == 24) {
+
+            __disable_irq();
             sample->start = sample_buffer_allocate((wave.SubCHunk2Size / (sizeof(int8_t) * 3)) * sizeof(float));
+            __enable_irq();
+
             if (sample->start == 0) return nullptr;
   
+            __disable_irq();
             void* writePtr = sample->start;
-            while (readIndex < wave.SubCHunk2Size / sizeof(Bit24x4)) {
+            __enable_irq();
 
-                Bit24x4 bit;
-                f_read(fil, (void*)&bit, sizeof(bit), &bytesread);
-                
-                int32_t temp1 = ((bit.val1      ) & 0x00FFFFFF);
-                int32_t temp2 = ((bit.val1 >> 24) & 0x000000FF) | ((bit.val2 <<  8) & 0x00FFFF00);
-                int32_t temp3 = ((bit.val2 >> 16) & 0x0000FFFF) | ((bit.val3 << 16) & 0x00FF0000);
-                int32_t temp4 = ((bit.val3 >>  8) & 0x00FFFFFF);
+            while (readIndex < wave.SubCHunk2Size / sizeof(Bit3x8)) {
 
-                
-                float samp1 = s242f(temp1);
-                float samp2 = s242f(temp2);
-                float samp3 = s242f(temp3);
-                float samp4 = s242f(temp4);
-                readIndex += 1; 
-                *(static_cast<float*>(writePtr)) = samp1; // add to sdram
-                writePtr = static_cast<float*>(writePtr) + 1;
-                *(static_cast<float*>(writePtr)) = samp2; // add to sdram
-                writePtr = static_cast<float*>(writePtr) + 1;
-                *(static_cast<float*>(writePtr)) = samp3; // add to sdram
-                writePtr = static_cast<float*>(writePtr) + 1;
-                *(static_cast<float*>(writePtr)) = samp4; // add to sdram
-                writePtr = static_cast<float*>(writePtr) + 1;
+                Bit3x8 bit;
+
+                if (f_read(fil, (void*)&bit, sizeof(bit), &bytesread) == FR_OK) {
+                    int32_t MASK = 0x000000FF;
+                    // little endian order so biggest goes first
+                    int32_t temp = bit.b3 & MASK;
+                    temp = (temp << 8) | (bit.b2 & MASK);
+                    temp = (temp << 8) | (bit.b1 & MASK);
+                    
+                    float samp = s242f(temp);
+                    readIndex += 1; 
+
+                    __disable_irq(); // disabling interrupts while adding to sdram
+                    *(static_cast<float*>(writePtr)) = samp; // add to sdram
+                    writePtr = static_cast<float*>(writePtr) + 1;
+                    __enable_irq();
+                } else 
+                    break;
             }
 
             sample->format.SubCHunk2Size = sample->format.SubCHunk2Size / (sizeof(int8_t) * 3);
@@ -188,23 +227,32 @@ Instrument* WaveFileLoader::CreateInstrument(std::string path) {
          * READ 32bit float
          */
         else if (wave.AudioFormat == WAVE_FORMAT_IEEE_FLOAT) {
+
+            __disable_irq(); // accessing void pointer to SDRAM, interrupts disabled for priority
             sample->start = sample_buffer_allocate((wave.SubCHunk2Size / sizeof(float)) * sizeof(float));
+            __enable_irq();
+
             if (sample->start == 0) return nullptr;
   
+            __disable_irq();
             void* writePtr = sample->start;
+            __enable_irq();
+
             while (readIndex < wave.SubCHunk2Size / sizeof(float)) {
 
                 float val;
 
+                __disable_irq();
                 if (f_read(fil, (void*)&val, sizeof(val), &bytesread) == FR_OK) { // reading sd card 2 bytes at a time
                     readIndex += 1; 
                     *(static_cast<float*>(writePtr)) = val; // add to sdram
                     writePtr = static_cast<float*>(writePtr) + 1;
                 } else break;
+                __enable_irq();
             }
             sample->format.SubCHunk2Size = sample->format.SubCHunk2Size / sizeof(float);
         } 
-        else { // if code does not match any type we can read
+        else { // wave format does not match any type we can read
             f_close(fil);
             return nullptr;
         }

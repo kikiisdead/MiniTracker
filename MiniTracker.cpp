@@ -1,3 +1,35 @@
+/**
+ * @file MiniTracker.cpp
+ * @author Kiyoko Iuchi-Fung
+ * @brief 
+ * 
+ * LIBRARIES USED
+ *  - DadGFX
+ *  - libDaisy
+ *  - DaisySP
+ * 
+ * TODO
+ * FatFS is still fucked and I don't know if its a problem on my end or not
+ * Add step FX and shit
+ * Implement custom allocator before I die of memory fragmentation
+ * 
+ * KNOWN BUGS / ISSUES
+ *  - Noise from TFT and from SD card when loading / reading
+ *  - The position of the 5th slice disappears
+ *  - Incorrectly reads 32 bit float wave files
+ *  - Worried about memory fragmentation from EventQueue and patterns
+ *     - Implement custom allocator?
+ * 
+ * CHANGES TO LIBRARY
+ * SD_TIMEOUT in sd_diskio.c changed to 1000 ticks instead of 30 * 1000
+ * 
+ * @version 0.1
+ * @date 2025-10-22
+ * 
+ * @copyright Copyright (c) 2025
+ * 
+ */
+
 #include "daisy_seed.h"
 #include "daisysp.h"
 #include "fatfs.h"
@@ -13,14 +45,21 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <stm32h7xx_hal.h>
+#include <stm32h750xx.h>
 #include "DaisySeedGFX2/cDisplay.h"
 #include "src/UI/util/KodeMono_Regular8pt7b.h"
 #include "src/sd/waveFileLoader.h"
 #include "src/sd/dirLoader.h"
 #include "src/sd/projSaverLoader.h"
 #include "src/globals.h"
+#include "src/UI/command.h"
 
 #define LANE_NUMBER 4
+
+/**
+ * Update these macros based on your pin set up
+ */
 
 #define UpPin 18
 #define DownPin 17
@@ -39,36 +78,30 @@ using namespace daisy;
 using namespace daisysp;
 using namespace DadGFX;
 
-/**
- * TODO
- * FatFS is still fucked and I don't know if its a problem on my end or not
- * Add step FX and shit
- */
-
 // using this because issue with creating FIL objects on stack
 #define DSY_TEXT __attribute__((section(".text")))
 
 DaisySeed hw;
 
-SdmmcHandler   sd;
-
+SdmmcHandler            sd;
 DSY_TEXT FatFSInterface fsi;
-DSY_TEXT FIL            readFIL;
-DSY_TEXT FIL            writeFIL;
+DSY_TEXT FIL            readFIL; /* passing by pointer to loading functions */
+DSY_TEXT FIL            writeFIL; /* passing by pointer to saving functions */
 
 DECLARE_DISPLAY(__Display)
 DECLARE_LAYER(MainLayer, 320, 240)
 DadGFX::cFont MainFont(&KodeMono_Regular8pt7b);
 
+/**
+ * Creating important memory vectors globally
+ * Some worries about memory fragmentation so maybe use
+ * lined lists instead
+ */
+
 std::vector<InstrumentHandler*> handler;
-
 std::vector<Instrument*> instruments;
-
 std::vector<Pattern*> patterns; // holds all the possible patterns made
-
 std::vector<int> songOrder; // holds the order of the patterns
-
-bool shift;
 
 bool projSafe = true;
 
@@ -83,7 +116,11 @@ DSY_SDRAM_BSS char sample_buffer[CUSTOM_POOL_SIZE];
 size_t buffer_index = 0;
 int allocation_count = 0;
 
-// allocating space in buffer
+/**
+ * Allocates space inside of SDRAM
+ * @param size in bytes to allocate
+ * @return pointer to allocation start in buffer
+ */
 void* sample_buffer_allocate(size_t size)
 {
   if (buffer_index + size >= CUSTOM_POOL_SIZE)
@@ -95,8 +132,30 @@ void* sample_buffer_allocate(size_t size)
   return ptr;
 }
 
+/**
+ * Deallocates space inside SDRAM
+ * moves everything to prevent fragmentation
+ * @param start the starting memory position
+ * @param size in bytes to deallocate
+ */
+void sample_buffer_deallocate(void* start, size_t size) {
+
+  // getting an int value offset from the beginning of the buffer
+  std::uintptr_t begin = reinterpret_cast<uintptr_t>(start) - reinterpret_cast<uintptr_t>(&sample_buffer[0]);
+
+  // moving and overwriting
+  memmove(start, static_cast<uint8_t*>(start) + size, buffer_index - (begin + size)); 
+
+  // udpating the write position 
+  buffer_index -= size; 
+
+}
+
+/**
+ * Clears the entire sample buffer by reseting buffer_index
+ * erasing by ommision (buffer does not need to be 0)
+ */
 bool sample_buffer_clear() {
-  memset(sample_buffer, 0, CUSTOM_POOL_SIZE);
   buffer_index = 0;
   return true;
 }
@@ -139,9 +198,7 @@ DirLoader projDirLoader;
 /**
  * USER INTERFACES
  */
-std::vector<buttonInterface*> interfaces;
-
-std::vector<buttonInterface*>::iterator userInterface;
+buttonInterface* userInterface;
 
 Sequencer sequencer;
 
@@ -153,126 +210,12 @@ SampDisplay sampDisplay;
 
 SongDisplay songDisplay;
 
-
 /**
  * BUTTONS
  * Callbacks
  * Objects
  * and Vectors
 */
-class Command {
-public:
-  Command(){}
-  ~Command(){}
-
-  virtual void Execute(buttonInterface* interface, bool shift) = 0;
-};
-
-class ACommand : public Command {
-public:
-  ACommand(){}
-  ~ACommand(){}
-
-  void Execute(buttonInterface* interface, bool shift) {
-    if (shift) interface->AltAButton();
-    else interface->AButton();
-  }
-};
-
-class BCommand : public Command {
-public:
-  BCommand(){}
-  ~BCommand(){}
-
-  void Execute(buttonInterface* interface, bool shift) {
-    if (shift) interface->AltBButton();
-    else interface->BButton();
-  }
-};
-
-class PlayCommand : public Command {
-public:
-  PlayCommand(){}
-  ~PlayCommand(){}
-
-  void Execute(buttonInterface* interface, bool shift) {
-    if (shift) interface->AltPlayButton();
-    else interface->PlayButton();
-  }
-};
-
-class UpCommand : public Command {
-public:
-  UpCommand(){}
-  ~UpCommand(){}
-
-  void Execute(buttonInterface* interface, bool shift) {
-    if (shift) interface->AltUpButton();
-    else interface->UpButton();
-  }
-};
-
-class DownCommand : public Command {
-public:
-  DownCommand(){}
-  ~DownCommand(){}
-
-  void Execute(buttonInterface* interface, bool shift) {
-    if (shift) interface->AltDownButton();
-    else interface->DownButton();
-  }
-};
-
-class LeftCommand : public Command {
-public:
-  LeftCommand(){}
-  ~LeftCommand(){}
-
-  void Execute(buttonInterface* interface, bool shift) {
-    if (shift) interface->AltLeftButton();
-    else interface->LeftButton();
-  }
-};
-
-class RightCommand : public Command {
-public:
-  RightCommand(){}
-  ~RightCommand(){}
-
-  void Execute(buttonInterface* interface, bool shift) {
-    if (shift) interface->AltRightButton();
-    else interface->RightButton();
-  }
-};
-
-class LeftShoulderCommand : public Command {
-public:
-  LeftShoulderCommand(){}
-  ~LeftShoulderCommand(){}
-
-  void Execute(buttonInterface* interface, bool shift) {
-    if (userInterface == interfaces.begin()) {
-      userInterface = interfaces.begin();
-    } else {
-      userInterface--;
-    }
-  }
-};
-
-class RightShoulderCommand : public Command {
-public:
-  RightShoulderCommand(){}
-  ~RightShoulderCommand(){}
-
-  void Execute(buttonInterface* interface, bool shift) {
-    if (userInterface != interfaces.end() - 1) {
-      userInterface++;
-    } else {
-      userInterface = interfaces.end() - 1;
-    }
-  }
-};
-
 std::queue<Command*> eventQueue;
 
 void APress() {
@@ -314,8 +257,14 @@ Button Right;
 Button LeftShoulder;
 Button RightShoulder;
 
+bool shift;
+
 std::vector<Button*> buttons;
 
+/**
+ * Handles update of all buttons
+ * button callbacks push a new command object on the queue
+ */
 void InputHandle() {  
   shift = Shift.RawState();
   for (uint16_t i = 0; i < buttons.size(); i++) {
@@ -407,7 +356,7 @@ int main(void) {
   /**
    * Initializing Seed Audio
    */
-  hw.SetAudioBlockSize(64); // number of samples handled per callback
+  hw.SetAudioBlockSize(128); // number of samples handled per callback
   hw.SetAudioSampleRate(SaiHandle::Config::SampleRate::SAI_48KHZ);
 
   float samplerate = hw.AudioSampleRate();
@@ -422,6 +371,7 @@ int main(void) {
   sd_cfg.clock_powersave = true; // turn clock off when not in use to save power
   sd_cfg.speed = SdmmcHandler::Speed::VERY_FAST; // very fast because wav files are big
   sd_cfg.width = SdmmcHandler::BusWidth::BITS_4; // same here
+  
   sd.Init(sd_cfg);
 
   // FatFS Interface
@@ -498,26 +448,37 @@ int main(void) {
   sequencer.Init(&handler, samplerate, &MainFont, &patterns, &songOrder);
   instDisplay.Init(&instruments, handler.at(0), &MainFont);
   fxDisplay.Init(samplerate, &handler, &MainFont);
-  sampDisplay.Init(&waveFileLoader, &instruments, &MainFont, &buffer_index, sampleDirLoader.GetRootNode());
+  sampDisplay.Init(&waveFileLoader, &instruments, &MainFont, &buffer_index, sampleDirLoader.GetRootNode(), sample_buffer_deallocate);
   songDisplay.Init(&sequencer, projDirLoader.GetRootNode(), &projSaverLoader, &MainFont, file_buffer_allocate);
 
-  interfaces.push_back(&songDisplay);
-  interfaces.push_back(&sampDisplay);
-  interfaces.push_back(&sequencer);
-  interfaces.push_back(&instDisplay);
-  interfaces.push_back(&fxDisplay);
+  songDisplay.SetPrev(nullptr);
+  songDisplay.SetNext(&sampDisplay);
+  sampDisplay.SetPrev(&songDisplay);
+  sampDisplay.SetNext(&sequencer);
+  sequencer.SetPrev(&sampDisplay);
+  sequencer.SetNext(&instDisplay);
+  instDisplay.SetPrev(&sequencer);
+  instDisplay.SetNext(&fxDisplay);
+  fxDisplay.SetPrev(&instDisplay);
+  fxDisplay.SetNext(nullptr);
   
-  userInterface = interfaces.begin() + 2;
+  userInterface = &sequencer;
 
   hw.StartAudio(AudioCallback);
 
   for (;;) {
-    (*userInterface)->UpdateDisplay(pMain); 
+    userInterface->UpdateDisplay(pMain); 
     __Display.flush();
 
     while (eventQueue.size() != 0) {
-      eventQueue.front()->Execute((*userInterface), shift);
+      Command* command = eventQueue.front(); 
+      command->Execute(userInterface, shift);
       eventQueue.pop();
+      delete command; // pointer is deleted at end of loop
     }
+
+    
+    
   }
 }
+

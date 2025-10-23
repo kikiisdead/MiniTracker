@@ -25,7 +25,7 @@
 #define ALTACCENT2 sColor(176, 44, 75, 255)
 
 #define BACKGROUND sColor(0, 0, 0, 255)
-#define ALTBACKGROUND sColor(48, 48, 48, 255)
+#define ALTBACKGROUND sColor(0, 0, 0, 255)
 
 #endif
 
@@ -41,7 +41,7 @@
 #define ALTACCENT2 sColor(160, 184, 150, 255)
 
 #define BACKGROUND sColor(255, 251, 240, 255)
-#define ALTBACKGROUND sColor(255, 251, 240, 255)
+#define ALTBACKGROUND sColor(207, 237, 190, 255)
 
 #endif
 

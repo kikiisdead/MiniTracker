@@ -1,3 +1,8 @@
+/**
+ * This file contains global variables that need to be accessed throughout the program. 
+ * Created here to avoid adding yet another thing to my bloated constructors
+ */
+
 #pragma once
 #ifndef GLOBALS_H
 #define GLOBALS_H

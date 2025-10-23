@@ -299,12 +299,14 @@ void Sequencer::PlayButton() {
 }
 
 void Sequencer::AButton() {
-    stepEdit_ = true;
+    stepEdit_ = !stepEdit_;
+    if (currentStep->instrument == -2 && stepEdit_) 
+        currentStep->instrument = 0;
     updateStep = true;
 }
 
 void Sequencer::BButton() {
-    stepEdit_ = false;
+    currentStep->instrument = -1;
     updateStep = true;
 }
 
@@ -406,8 +408,12 @@ void Sequencer::PreviousPattern() {
 }
 
 void Sequencer::AltUpButton() {
-    currentStep->selected = false; //deselecting step
+    if (!playing_ && stepEdit_ && songOrder->at(currentPattern) > -1) {
+        PreviousStep();
+        return;
+    }
 
+    currentStep->selected = false; //deselecting step
     // if the index of pattern were moving away from is -1, remove from songOrder
     if (songOrder->at(currentPattern) == -1) {
         auto it = songOrder->begin();
@@ -431,6 +437,11 @@ void Sequencer::AltUpButton() {
 }
 
 void Sequencer::AltDownButton() {
+    if (!playing_ && stepEdit_ && songOrder->at(currentPattern) > -1) {
+        NextStep();
+        return;
+    }
+
     currentStep->selected = false;
     if (songOrder->at(currentPattern) == -1) {
         auto it = songOrder->begin();

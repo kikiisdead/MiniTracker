@@ -4,6 +4,7 @@ void InstrumentDisplay::Init(std::vector<Instrument*>* instruments_, InstrumentH
     instruments = instruments_;
     handler = handler_;
     active = -1;
+    scrRow = 0;
     currentSlice = 0;
     sliceEdit = true;
     this->MainFont = MainFont;
@@ -20,6 +21,21 @@ void InstrumentDisplay::UpdateDisplay(cLayer* display) {
 
     if (!instruments->empty()) {
         /**
+         * Drawing slice lines
+         */
+        for (size_t i = 0; i < ACTIVEINST->slices.size(); i++) {
+            int x = ACTIVEINST->slices.at(i) * WAVEWIDTH;
+            if (currentSlice == i && sliceEdit) {
+                double next;
+                if (i + 1 >= ACTIVEINST->slices.size()) next = 1.0f;
+                else next = ACTIVEINST->slices.at(i + 1);
+                int x1 = (next * WAVEWIDTH) - x;
+                if (sliceEdit) display->drawFillRect(x, 0, x1, WAVEHEIGHT, ALTBACKGROUND);
+            }
+            display->drawFillRect(x, 0, 1, WAVEHEIGHT, ACCENT2);
+        }
+
+        /**
          * Drawing waveform
          */
         for (int i = 0; i < WAVEWIDTH; i ++) {
@@ -30,17 +46,6 @@ void InstrumentDisplay::UpdateDisplay(cLayer* display) {
             y0 = y1 - range;
 
             display->drawLine(i, y0, i, y1, ACCENT1);
-        }
-
-        /**
-         * Drawing slice lines
-         */
-        auto it = ACTIVEINST->slices.begin();
-        while (it != ACTIVEINST->slices.end()) {
-            int x = *it * WAVEWIDTH;
-            if (ACTIVEINST->slices.begin() + currentSlice == it && sliceEdit) display->drawFillRect(x, 0, 1, WAVEHEIGHT, ACCENT2);
-            else display->drawFillRect(x, 0, 1, WAVEHEIGHT, ALTACCENT2);
-            it++;
         }
 
         /**
@@ -149,14 +154,23 @@ void InstrumentDisplay::UpdateDisplay(cLayer* display) {
         /**
          * Drawing Instruments
          */
-        int yOffset = CHAR_HEIGHT + 4;
-        for (int i = 0; i < (int) instruments->size(); i++) {
-            sprintf(strbuff, "%s", instruments->at(i)->GetName());
-            if (i == active) {
-                display->drawFillRect(WAVEWIDTH, yOffset - (CHAR_HEIGHT + 4), 100, CHAR_HEIGHT + 8, ACCENT2);
-                WriteString(display, strbuff, WAVEWIDTH + 2, yOffset, MAIN);
+        if ((int) instruments->size() < scrRow) {
+            scrRow = instruments->size() - 1;
+        }
+        display->drawLine(320 - 80, 0, 320-80, 240, ACCENT2);
+        display->drawFillRect(240, 0, 80, 21, ACCENT2);
+        sprintf(strbuff, "SAMPLES");
+        WriteString(display, strbuff, 320 - 76, CHAR_HEIGHT + 3, MAIN);
+        int yOffset = CHAR_HEIGHT + 4 + CHAR_HEIGHT + 8;
+        for (int i = 0; i < INST_ROW_MAX; i++) {
+            int pos = active + (i - scrRow);
+            if (pos >= (int) instruments->size() || pos < 0)
+                continue;
+            sprintf(strbuff, "%d.%-15s", pos, instruments->at(pos)->GetName());
+            if (i == scrRow) {
+                WriteString(display, strbuff, WAVEWIDTH + 4, yOffset, ACCENT1);
             } else {
-                WriteString(display, strbuff, WAVEWIDTH + 2, yOffset, ACCENT1);
+                WriteString(display, strbuff, WAVEWIDTH + 4, yOffset, MAIN);
             }
             yOffset += CHAR_HEIGHT + 8;
         }
@@ -200,9 +214,8 @@ void InstrumentDisplay::BButton(){
 
 void InstrumentDisplay::UpButton(){
     if (sliceEdit) {
-        if (currentSlice > 0) {
-            currentSlice--;
-        }
+        ACTIVEINST->slices.at(currentSlice) -= (double) 0.002;
+        if (ACTIVEINST->slices.at(currentSlice) < 0.0) ACTIVEINST->slices.at(currentSlice) = (double) 0.0;
     } else {
         ACTIVEINST->Increment();
     }
@@ -210,10 +223,8 @@ void InstrumentDisplay::UpButton(){
 
 void InstrumentDisplay::DownButton(){
     if (sliceEdit) {
-        if (currentSlice < ACTIVEINST->slices.size() - 1) {
-            currentSlice++;
-        }
-        
+        ACTIVEINST->slices.at(currentSlice) += (double) 0.002;
+        if (ACTIVEINST->slices.at(currentSlice) > 1.0) ACTIVEINST->slices.at(currentSlice) = (double) 1.0;
     } else {
         ACTIVEINST->Decrement();
     }
@@ -221,8 +232,9 @@ void InstrumentDisplay::DownButton(){
 
 void InstrumentDisplay::LeftButton(){
     if (sliceEdit) {
-        ACTIVEINST->slices.at(currentSlice) -= (double) 0.002;
-        if (ACTIVEINST->slices.at(currentSlice) < 0.0) ACTIVEINST->slices.at(currentSlice) = (double) 0.0;
+        if (currentSlice > 0) {
+            currentSlice--;
+        }
     } else {
         ACTIVEINST->PrevParam();
     }
@@ -230,8 +242,9 @@ void InstrumentDisplay::LeftButton(){
 
 void InstrumentDisplay::RightButton(){
     if (sliceEdit) {
-        ACTIVEINST->slices.at(currentSlice) += (double) 0.002;
-        if (ACTIVEINST->slices.at(currentSlice) > 1.0) ACTIVEINST->slices.at(currentSlice) = (double) 1.0;
+        if (currentSlice < ACTIVEINST->slices.size() - 1) {
+            currentSlice++;
+        }
     } else {
         ACTIVEINST->NextParam();
     }
@@ -241,13 +254,14 @@ void InstrumentDisplay::PlayButton(){
     handler->Preview(ACTIVEINST, currentSlice + 48);
 };
 
-void InstrumentDisplay::AltAButton(){};
-void InstrumentDisplay::AltBButton(){};
-
 void InstrumentDisplay::AltUpButton(){
     active -= 1;
     if (active < 0) {
         active = 0;
+    }
+    scrRow -= 1;
+    if (scrRow < 0) {
+        scrRow = 0;
     }
     currentSlice = 0;
 };
@@ -257,11 +271,14 @@ void InstrumentDisplay::AltDownButton(){
     if (active >= (int) instruments->size()) {
         active = instruments->size() - 1;
     }
+    scrRow += 1;
+    if (scrRow >= (int) instruments->size()) {
+        scrRow -= 1;
+    } else if (scrRow >= INST_ROW_MAX) {
+        scrRow = INST_ROW_MAX - 1;
+    }
     currentSlice = 0;
 };
-
-void InstrumentDisplay::AltLeftButton(){};
-void InstrumentDisplay::AltRightButton(){};
 
 void InstrumentDisplay::AltPlayButton(){
     sliceEdit = !sliceEdit;

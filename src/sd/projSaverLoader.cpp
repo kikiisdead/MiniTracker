@@ -47,16 +47,15 @@ void ProjSaverLoader::ReadPattern() {
 
     // Sequencer Header
     f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
-
     
     // BPM
-    // disable interupts as it is global to avoid concurrent modification / access
-    __disable_irq();
     float bpm;
     f_read(fil, &bpm, sizeof(bpm), &bytesWritten);
+    __disable_irq();
     BPM = bpm;
-    sequencer->SetBPM();
     __enable_irq();
+    sequencer->SetBPM();
+
 
     //SONG HEADER
     f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
@@ -68,36 +67,48 @@ void ProjSaverLoader::ReadPattern() {
     // indeces * length
     for (size_t i = 0; i < songOrderLength; i ++) {
         int pattIndex;
+        
         f_read(fil, &pattIndex, sizeof(pattIndex), &bytesWritten);
+        __disable_irq();
         sequencer->GetSongOrder()->push_back(pattIndex);
+        __enable_irq();
     }
 
     // Num Patterns
     size_t numPatterns;
+
     f_read(fil, &numPatterns, sizeof(numPatterns), &bytesWritten);
 
     for (size_t patt = 0; patt < numPatterns; patt ++) {
         //PATTERN HEADER
         f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
-
+        
+        __disable_irq();
         sequencer->GetPatterns()->push_back(new Pattern);
         sequencer->GetPatterns()->back()->index = patt;
+        __enable_irq();
 
         // Num Lanes
         int numLanes;
         f_read(fil, &numLanes, sizeof(numLanes), &bytesWritten);
+        __disable_irq();
         sequencer->GetPatterns()->back()->numLanes = numLanes;
+        __enable_irq();
 
         for (int lane = 0; lane < numLanes; lane ++) {
             // LANE HEADER
             f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
+            __disable_irq();
             sequencer->GetPatterns()->back()->lanes.push_back(new Lane);
             sequencer->GetPatterns()->back()->lanes.back()->index = lane;
+            __enable_irq();
 
             // LENGTH
             int sequenceLength; 
             f_read(fil, &sequenceLength, sizeof(sequenceLength), &bytesWritten);
+            __disable_irq();
             sequencer->GetPatterns()->back()->lanes.back()->length = sequenceLength;
+            __enable_irq();
 
             for (int step = 0; step < sequenceLength; step++) {
                 // LANE HEADER
@@ -117,7 +128,9 @@ void ProjSaverLoader::ReadPattern() {
                 // fxAmount
                 f_read(fil, &fxAmount, sizeof(fxAmount), &bytesWritten);
 
+                __disable_irq();
                 sequencer->GetPatterns()->back()->lanes.back()->sequence.push_back(new Step(inst, note, fx, fxAmount, step));
+                __enable_irq();
             }
         }
     }
@@ -157,7 +170,9 @@ void ProjSaverLoader::ReadFX() {
                 f_read(fil, &effectBuff[i], sizeof(char), &bytesWritten);
             }
             // creating effect
+            __disable_irq();
             instHandler->at(lane)->AddEffect((Effect::EFFECT_TYPE) type, effectBuff);
+            __enable_irq();
         }
     }
 
@@ -167,14 +182,14 @@ void ProjSaverLoader::ReadInstruments() {
 
     uint32_t HEADER;
 
-    //Icon HEADER
+    // Icon HEADER
     f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
 
     uint32_t numInst;
     f_read(fil, &numInst, sizeof(numInst), &bytesWritten);
     
     for (uint32_t inst = 0; inst < numInst; inst ++) {
-        //INST HEADER
+        // INST HEADER
         f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
 
         instCfg.push_back(new Instrument::Config);
@@ -237,13 +252,16 @@ void ProjSaverLoader::LoadProject(const char* name) {
         ReadInstruments();
         
         f_close(fil);
+        
         System::Delay(15); // adding delay to maybe help with loading time
 
         for (size_t i = 0; i < instCfg.size(); i ++) {
             Instrument* inst = waveFileLoader->CreateInstrument(searchPaths.at(i)->c_str());
             if (inst != nullptr) {
+                __disable_irq();
                 inst->Load(*instCfg.at(i));
                 instVector->push_back(inst);
+                __enable_irq();
             }
             delete searchPaths[i]; // free up that memory
             delete instCfg[i];
@@ -387,11 +405,11 @@ void ProjSaverLoader::SaveProject(const char* name) {
                 Write(inst->GetPitch(), 4);
 
                 // Num Slices
-                Write((uint32_t) inst->GetSlices().size());
+                Write(static_cast<uint32_t>(inst->GetSlices().size()));
 
                 for (double slice : inst->GetSlices()) {
                     // Slice
-                    Write((float) slice);
+                    Write(static_cast<float>(slice));
                 }
 
                 std::string path = inst->GetPath();

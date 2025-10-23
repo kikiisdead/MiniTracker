@@ -1,15 +1,32 @@
 #include "sampDisplay.h"
 
-void SampDisplay::Init(WaveFileLoader* fileLoader, std::vector<Instrument*>* instruments, cFont *MainFont, size_t* bufferIndex, Node<File>* rootNode) {
+void SampDisplay::Init(WaveFileLoader* fileLoader, std::vector<Instrument*>* instruments, cFont *MainFont, size_t* bufferIndex, Node<File>* rootNode, void (*sample_buffer_deallocate)(void* start, size_t size)) {
     this->fileLoader = fileLoader;
     this->instruments = instruments;
     this->MainFont = MainFont;
     this->bufferIndex = bufferIndex;
     currentNode = rootNode;
+    this->sample_buffer_deallocate = sample_buffer_deallocate;
     row = 0;
     scrRow = 0;
     col = 0;
     lev = 0;
+    selectedInst = 0;
+    instRow = 0;
+}
+
+void SampDisplay::Init(Config config) {
+    this->fileLoader = config.fileLoader;
+    this->instruments = config.instruments;
+    this->MainFont = config.MainFont;
+    this->bufferIndex = config.bufferIndex;
+    currentNode = config.rootNode;
+    this->sample_buffer_deallocate = config.sample_buffer_deallocate;
+    row = 0;
+    scrRow = 0;
+    col = 0;
+    lev = 0;
+    instRow = 0;
 }
 
 void SampDisplay::AButton() {
@@ -26,7 +43,13 @@ void SampDisplay::AButton() {
         scrRow = 0;
     } else {
         Instrument* inst = fileLoader->CreateInstrument(currentNode->children.at(row));
-        if (inst != nullptr) instruments->push_back(inst);
+        if (inst != nullptr) {
+            instruments->push_back(inst);
+            selectedInst = instruments->size() - 1;
+            if (selectedInst >= 11) instRow = 10;
+            else instRow = selectedInst;
+        }
+
     }
 }
 
@@ -73,17 +96,48 @@ void SampDisplay::DownButton(){
     }
 }
 
-void SampDisplay::LeftButton(){}
-void SampDisplay::RightButton(){}
-void SampDisplay::PlayButton(){}
+void SampDisplay::AltBButton() {
+    if (instruments->size() == 0)
+        return;
+    
+    DeleteInstrument(selectedInst);
 
-void SampDisplay::AltAButton(){}
-void SampDisplay::AltBButton(){}
-void SampDisplay::AltUpButton(){}
-void SampDisplay::AltDownButton(){}
-void SampDisplay::AltLeftButton(){}
-void SampDisplay::AltRightButton(){}
-void SampDisplay::AltPlayButton(){}
+    if (selectedInst >= instruments->size()) 
+        selectedInst = instruments->size() - 1;
+}
+
+void SampDisplay::AltUpButton() {
+    if (instruments->size() == 0)
+        return;
+    
+    selectedInst -= 1;
+    if (selectedInst < 0) {
+        selectedInst = 0;
+    }
+
+    instRow -= 1;
+    if (instRow < 0) {
+        instRow = 0;
+    }
+}
+
+void SampDisplay::AltDownButton() {
+    if (instruments->size() == 0)
+        return;
+
+    selectedInst += 1;
+    if (selectedInst >= instruments->size()) {
+        selectedInst = instruments->size() - 1;
+    }
+
+    instRow += 1;
+    if (instRow >= (int) instruments->size()) {
+        instRow -= 1;
+    } else if (instRow >= 11) {
+        instRow = 11 - 1;
+    }
+    
+}
 
 void SampDisplay::UpdateDisplay(cLayer* display){
     display->eraseLayer(BACKGROUND);
@@ -166,17 +220,48 @@ void SampDisplay::UpdateDisplay(cLayer* display){
     /**
      * Drawing Instruments
      */
+    if ((int) instruments->size() < instRow) {
+        instRow = instruments->size() - 1;
+    }
+
+    
     display->drawLine(320 - 80, 0, 320-80, 240, ACCENT2);
     display->drawFillRect(240, 0, 80, 21, ACCENT2);
     sprintf(strbuff, "LOADED");
     WriteString(display, strbuff, 320 - 76, CHAR_HEIGHT + 3, MAIN);
     int yOffset = CHAR_HEIGHT + 4 + CHAR_HEIGHT + 8;
     if (!instruments->empty()) {
-        for (size_t i = 0; i < instruments->size(); i ++) {
-            if (instruments->at(i) == nullptr) sprintf(strbuff, "NOT LOAD");
-            else sprintf(strbuff, "%s", instruments->at(i)->GetName());
-            WriteString(display, strbuff, 320 - 76, yOffset, ACCENT1);
+        for (int i = 0; i < 11; i++) {
+            int pos = selectedInst + (i - instRow);
+            if (pos >= (int) instruments->size() || pos < 0)
+                continue;
+            sprintf(strbuff, "%d.%s", pos, instruments->at(pos)->GetName());
+            if (i == instRow) {
+                WriteString(display, strbuff, WAVEWIDTH + 4, yOffset, ACCENT1);
+            } else {
+                WriteString(display, strbuff, WAVEWIDTH + 4, yOffset, MAIN);
+            }
             yOffset += CHAR_HEIGHT + 8;
         }
     }
+}
+
+void SampDisplay::DeleteInstrument(int index) {
+    Instrument* inst = instruments->at(index);
+
+    size_t size = inst->GetSize() * sizeof(float);
+
+    sample_buffer_deallocate(inst->GetStart(), size);
+
+    instruments->erase(instruments->begin() + index);
+
+    auto it = instruments->begin() + index;
+
+    while (it != instruments->end()) {
+        void* newStart = static_cast<uint8_t*>((*it)->GetStart()) - size;
+        (*it)->SetStart(newStart); // update pointers to samples
+        it++;
+    }
+
+    delete inst; // finally delete the old instrument object
 }

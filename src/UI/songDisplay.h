@@ -85,22 +85,60 @@ public:
     /**
      * INHERITED FROM BUTTON INTERFACE
      */
-    void AButton();
-    void BButton();
-    void UpButton();
-    void DownButton();
-    void LeftButton();
-    void RightButton();
-    void PlayButton(){};
 
-    void AltAButton(){};
-    void AltBButton(){};
-    void AltUpButton(){};
-    void AltDownButton(){};
-    void AltLeftButton(){};
-    void AltRightButton(){};
-    void AltPlayButton(){};
+    /**
+     * Initiates selected action either
+     * Save, Save As, or Load
+     * 
+     * @note in SAVE AS, adds selected character to file name
+     * @note in LOAD, opens selected project
+     */
+    void AButton() override;
 
+    /**
+     * Initiates selected deselect action
+     * 
+     * @note in SAVE AS, closes the save as window
+     * @note in LOAD, moves selected DIR down a level
+     */
+    void BButton() override;
+
+    /**
+     * Increments selected param
+     * 
+     * @note in BPM, increments BPM
+     * @note in VOL, increments VOL
+     */
+    void UpButton() override;
+
+    /**
+     * Decrements selected param
+     * 
+     * @note in BPM, decrements BPM
+     * @note in VOL, decrements VOL
+     */
+    void DownButton() override;
+
+    /**
+     * Moves parameter select left
+     */
+    void LeftButton() override;
+
+    /**
+     * Moves parameter select right
+     */
+    void RightButton() override;
+
+    /**
+     * Updates display
+     * 
+     * Displays SAVE, SAVE AS, LOAD, BPM, and VOL along bottom  
+     * @note if in SAVE AS, displays a keyboard to write in projName  
+     * @note if in LOAD, displays save path file directory  
+     * @note displays sliders for BPM and VOL along right
+     * 
+     * @param display the display to be written to
+     */
     void UpdateDisplay(cLayer* display);
 
 private:

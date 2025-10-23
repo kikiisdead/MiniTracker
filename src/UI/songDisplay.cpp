@@ -108,21 +108,22 @@ void SongDisplay::UpdateDisplay(cLayer* display) {
 
     sprintf(strbuff, "%.2f", vol);
     WriteString(display, strbuff, 244, 200 + 2 * (CHAR_HEIGHT + 4), MAIN);
-
-    __disable_irq();
-    float bpm_ = BPM;
-    __enable_irq();
+   
     
-    height = bpm_ / 300.0f;
+    __disable_irq();
+    height = BPM / 300.0f;
+    __enable_irq();
 
     display->drawFillRect(283, 1 + (1.0f - height) * 200, 35, height * 200, ACCENT1);
 
-    if (param == BPM) display->drawFillRect(280, 200, 40, 40, ACCENT2);
+    if (param == TEMPO) display->drawFillRect(280, 200, 40, 40, ACCENT2);
 
     sprintf(strbuff, "BPM");
     WriteString(display, strbuff, 284, 200 + CHAR_HEIGHT + 4, MAIN);
 
-    sprintf(strbuff, "%.0f", bpm_);
+    __disable_irq();
+    sprintf(strbuff, "%.0f", BPM);
+    __enable_irq();
     WriteString(display, strbuff, 284, 200 + 2 * (CHAR_HEIGHT + 4), MAIN);
 
     if (!load && !saveas) {

@@ -16,12 +16,12 @@ using namespace daisy;
 #define FILE_PTR false
 
 /**
- * A struct that organizes 3 24 bit integers into 3 32 bit integers for decoding
+ * A struct that reads 3 unsigned chars for reading 24 bit wave files
  */
-struct Bit24x4 {
-    int32_t val1;
-    int32_t val2;
-    int32_t val3;
+struct Bit3x8 {
+    uint8_t b1;
+    uint8_t b2;
+    uint8_t b3;
 };
 
 /**
@@ -65,6 +65,7 @@ private:
      * @return a void pointer to the start of allocated memory
      */
     void* (*sample_buffer_allocate)(size_t size);
+
 };
 
 

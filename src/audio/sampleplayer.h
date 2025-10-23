@@ -123,6 +123,18 @@ public:
      */
     char* GetName() { return wave->name; }
 
+    /**
+     * Gets pointer to the start of sample in SDRAM
+     * @return void pointer to start of sample
+     */
+    void* GetStart() { return wave->start; }
+
+    /**
+     * Sets pointer to start of sample in SDRAM
+     * @param start new start position
+     */
+    void SetStart(void* start) { wave->start = start; }
+
 private:
 
     WavFile                 *wave;              /**< A pointer to the wave file object */

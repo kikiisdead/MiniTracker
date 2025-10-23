@@ -108,18 +108,6 @@ void FXDisplay::RightButton(){
     if (!changeEffect) CURRENT_EFFECT->Increment();
 }
 
-void FXDisplay::PlayButton(){
-
-}
-
-void FXDisplay::AltAButton(){
-
-}
-
-void FXDisplay::AltBButton(){
-
-}
-
 void FXDisplay::AltUpButton(){
     CURRENT_EFFECT->selected = false;
     currentLane -= 1;
@@ -156,8 +144,4 @@ void FXDisplay::AltRightButton(){
         currentEffect = handler->at(currentLane)->effects.size() - 1;
     }
     EffectNormal();
-}
-
-void FXDisplay::AltPlayButton(){
-    
 }

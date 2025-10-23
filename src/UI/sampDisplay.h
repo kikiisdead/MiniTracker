@@ -20,6 +20,15 @@ public:
     SampDisplay(){}
     ~SampDisplay(){}
 
+    struct Config {
+        WaveFileLoader* fileLoader;
+        std::vector<Instrument*>* instruments;
+        cFont *MainFont;
+        size_t* bufferIndex;
+        Node<File>* rootNode;
+        void (*sample_buffer_deallocate)(void* start, size_t size);
+    };
+
     /**
      * Initialize with all functionality to add and remove
      * Updated to pass directory root node separate from waveFileLoader for future implementation of project saving and loading
@@ -29,27 +38,58 @@ public:
      * @param bufferIndex pointer to the bufferIndex of sample_buffer in SDRAM (for figuring out how much space is left)
      * @param rootNode root node of tree representing samples in SDCard
      */
-    void Init(WaveFileLoader* fileLoader, std::vector<Instrument*>* instruments, cFont *MainFont, size_t* bufferIndex, Node<File>* rootNode);
+    void Init(WaveFileLoader* fileLoader, std::vector<Instrument*>* instruments, cFont *MainFont, size_t* bufferIndex, Node<File>* rootNode, void (*sample_buffer_deallocate)(void* start, size_t size));
+
+    void Init(Config config);
 
     /**
      * INHERITED FROM BUTTON INTERFACE
      */
-    void AButton();
-    void BButton();
-    void UpButton();
-    void DownButton();
-    void LeftButton();
-    void RightButton();
-    void PlayButton();
 
-    void AltAButton();
-    void AltBButton();
-    void AltUpButton();
-    void AltDownButton();
-    void AltLeftButton();
-    void AltRightButton();
-    void AltPlayButton();
+    /**
+     * Opens selected file object
+     *  - if that object is a DIR, open it and display contents
+     *  - if that object is a wave file, load it as instrument
+     *  - otherwise ignore it
+     */
+    void AButton() override;
 
+    /**
+     * Closes the selected DIR and moves user back one level
+     * If the node has no parent, then don't do anything
+     */
+    void BButton() override;
+
+    /**
+     * Moves selector up
+     */
+    void UpButton();    
+
+    /**
+     * Moves selector down
+     */
+    void DownButton(); 
+
+    /**
+     * Deletes the selected isntrument calling DeleteInstrument
+     */
+    void AltBButton() override;
+
+    /**
+     * Increments the instrument selector
+     */
+    void AltUpButton() override;
+
+    /**
+     * Decrements the instrument selector
+     */
+    void AltDownButton() override;
+
+    /**
+     * Updates display
+     * Shows open dirs on the left and loaded instruments on the write
+     * @param display the display to be written to
+     */
     void UpdateDisplay(cLayer* tft);
 
 private:
@@ -58,10 +98,27 @@ private:
     Node<File>                 *currentNode;    /**< The current node in the file directory being observed */
     char                        strbuff[256];   /**< A string buffer to help display strings to the screen */
     size_t                     *bufferIndex;    /**< Pointer to the buffer index to display memory usage */
-    int                         row;            /**< Selected row  */
-    int                         col;            /**< Selected column */
-    int                         lev;            /**< Selected column relative to screen */
-    int                         scrRow;         /**< Selected row relative to screen */
+    
+    int     row;            /**< Selected row  */
+    int     col;            /**< Selected column */
+    int     lev;            /**< Selected column relative to screen */
+    int     scrRow;         /**< Selected row relative to screen */
+    int     instRow;        /**< Selected row of inst relative to screen */
+    size_t  selectedInst;   /**< Index of Selected Instrument */
+
+    /**
+     * Deallocates space inside SDRAM
+     * moves everything to prevent fragmentation
+     * @param start the starting memory position
+     * @param size in bytes to deallocate
+     */
+    void (*sample_buffer_deallocate)(void* start, size_t size);
+
+    /**
+     * Deletes an instrument from the instrument array
+     * @param index position of instrument in the array
+     */
+    void DeleteInstrument(int index);
 
 };
 

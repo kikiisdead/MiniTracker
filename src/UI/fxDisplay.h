@@ -48,23 +48,67 @@ public:
     /**
      * INHERITED FROM BUTTON INTERFACE
      */
-    void AButton();
-    void BButton();
-    void UpButton();
-    void DownButton();
-    void LeftButton();
-    void RightButton();
-    void PlayButton();
 
-    void AltAButton();
-    void AltBButton();
-    void AltUpButton();
-    void AltDownButton();
-    void AltLeftButton();
-    void AltRightButton();
-    void AltPlayButton();
+    /**
+     * Opens change effect Menu
+     * 
+     * @note If change effect menu is open, will load selected effect
+     */
+    void AButton() override;
 
-    void UpdateDisplay(cLayer* tft);
+    /**
+     * Closes change effect menu
+     */
+    void BButton() override;
+
+    /**
+     * Moves selected param to previous param
+     */
+    void UpButton() override;
+
+    /**
+     * Moves selected param to next param
+     */
+    void DownButton() override;
+
+    /**
+     * Increments selected param
+     */
+    void LeftButton() override;
+
+    /**
+     * Decrements selected param
+     */
+    void RightButton() override;
+    
+    /**
+     * Changes current lane to previous lane
+     */
+    void AltUpButton() override;
+
+    /**
+     * Changes current lane to next lane
+     */
+    void AltDownButton() override;
+
+    /**
+     * Changes current effect to previous effect
+     */
+    void AltLeftButton() override;
+
+    /**
+     * Changes current effect to next effect
+     */
+    void AltRightButton() override;
+
+    /**
+     * Updates display
+     * 
+     * @note Displays lanes along the top
+     * @note Displays 3 Effects along bottom
+     * @note each effect has its own display function which gets called
+     */
+    void UpdateDisplay(cLayer* display);
 
 private:
     float                               samplerate;     /**< Samplerate */
