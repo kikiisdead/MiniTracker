@@ -4,6 +4,8 @@ a sample-based handheld hardware tracker built with the Daisy Seed inspired by R
 
 ## Video Demo
 
+<iframe width="560" height="315" src="https://www.youtube.com/embed/vmb1Rfg_a08?si=dH-W7hJLQ1btGEW2" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
 ## Installation
 
 Follow [this guide](https://daisy.audio/tutorials/cpp-dev-env/#3-vs-code) to intall the Daisy toolchain on your system / in your IDE of choice.
@@ -152,13 +154,13 @@ If BPM is selected, use the up and down buttons to change the value.
 
 ## Solved Problems
 
-There were many novel problems that I had to solve cheif among them were: sample playback, file directory / FatFS, and UI design. 
+There were many novel problems that I had to solve, chief among them were: sample playback, file directory / FatFS, and UI design. 
 
 ### Sample Playback
 
 Sample playback on the Daisy is tough because there is no built in capability. The built in library plays samples straight from an SD Card with no interpolation where as I needed to play samples from SDRAM with interpolation. I used the built-in Hermite interpolation algorithm which allowed for play back of samples at any sample rate. To get around different bitrate, I convert all samples to float values at load time. 
 
-Actually sample playback is achieved through a sample struct which holds a pointer to the start address of the sample in SDRAM and the number of values associated with the sample. From there, I interpolate by using a double precision float between 0 and 1 to determine position and use Hermite interpolation to get the next sample. 
+Actually sample playback is achieved through a sample struct which holds a pointer to the start address of the sample in SDRAM and the number of values associated with the sample. From there, I interpolate by using a double precision float between 0 and 1 to determine position and use Hermite interpolation to get the next sample. This essentailly allows me to treat the sample as continuous allowing very solid sounding pitch shifting and flexibility when it comes to sample rates. 
 
 ### File Directory
 
@@ -188,6 +190,12 @@ Biggest thing is running some kind of alpha test to find overlooked issues and i
 
 Next would be writing some kind of user manual as the controls are sometimes convoluted (might also just be a UX problem).
 
+### UX / Quality of Life Changes
+ - Add lane mute functionality
+ - Add a performance mode
+   - Mess around with an gyroscope?
+ - make step edit consistent across steps
+
 ### Known Bugs / Issues
  - Noise from TFT and from SD card when loading / reading (hardware issue)
  - The position of the 5th slice disappears when loading a file
@@ -196,7 +204,8 @@ Next would be writing some kind of user manual as the controls are sometimes con
     - Implement custom allocator?
  - Get NullPointerException when trying to access non-existent lane on FX 
  - Add PCB and enclosure files to repository
+ - PAM8302 Amp very noisy on output. 
 
 
 ### Changes to Library
- - SD_TIMEOUT in sd_diskio.c changed to 1000 ticks instead of 30 * 1000 ticks 
+ - `SD_TIMEOUT` in `sd_diskio.c` changed to 1000 ticks instead of 30 * 1000 ticks 
