@@ -3,25 +3,18 @@
 void Sequencer::NewPattern() {
     patterns->push_back(new Pattern);
 
-    patterns->back()->index = patterns->size() - 1;
-    patterns->back()->numLanes = handler_->size();
+    patterns->back()->setIndex(patterns->size() - 1);
     
-    songOrder->at(currentPattern) = patterns->back()->index;
+    songOrder->at(currentPattern) = patterns->back()->getIndex();
 
     activePattern = patterns->at(songOrder->at(currentPattern));
 
-    for (int i = 0; i < activePattern->numLanes; i ++) {
-        activePattern->lanes.push_back(new Lane);
-        currentLane = activePattern->lanes[i];
-        currentLane->length = 64;
-        currentLane->index = i;
-        for (int j = 0; j < activePattern->lanes[i]->length; j++) {
-            currentLane->sequence.push_back(new Step(j));
-        }
+    for (int i = 0; i < 64; i ++) {
+        activePattern->push(i);
     }
 
-    currentLane = activePattern->lanes[0];
-    currentStep = currentLane->sequence.at(0);
+    currentLane = 0;
+    currentStep = activePattern->get_current(currentLane);
 }
 
 void Sequencer::Clear() {
@@ -35,7 +28,7 @@ void Sequencer::Clear() {
     updateStep = true;
     updateSidebar = true;
     updatePattern = true;
-    currentLane = nullptr;
+    currentLane = 0;
     currentStep = nullptr;
     activePattern = nullptr;
 }
@@ -52,11 +45,11 @@ void Sequencer::Safe() {
     updatePattern = true;
 
     activePattern = patterns->at(songOrder->at(currentPattern));
-    currentLane = activePattern->lanes[0];
-    currentStep = currentLane->sequence.at(0);
+    currentLane = 0;
+    currentStep = activePattern->get_current()->steps[currentLane];
 }
 
-void Sequencer::DrawStep(cLayer* display, int x, int y, Step* step) {
+void Sequencer::DrawStep(cLayer* display, int x, int y, Step* step, bool active ) {
 
     // Drawing select things
     if (step->selected) {
@@ -80,43 +73,58 @@ void Sequencer::DrawStep(cLayer* display, int x, int y, Step* step) {
         display->drawFillRect(x + (10 * CHAR_WIDTH) + 3, y + CHAR_HEIGHT + 2, 1, 5, MAIN);  
     }
     
+    sColor main = (active) ? MAIN : ALTMAIN;
+
     // Writing instrument
     if (step->instrument < 0) sprintf(strbuff, "--");
     else sprintf(strbuff, "%02d", step->instrument);
-    if (step->selected && stepEdit_ && step->paramEdit == Step::i) WriteString(display, strbuff, x + 2, y + 2 + CHAR_HEIGHT, BACKGROUND);
-    else WriteString(display, strbuff, x + 2, y + 2 + CHAR_HEIGHT, MAIN);
+
+    if (step->selected && stepEdit_ && step->paramEdit == Step::i) 
+        WriteString(display, x + 2, y + 2 + CHAR_HEIGHT, BACKGROUND);
+    else 
+        WriteString(display, x + 2, y + 2 + CHAR_HEIGHT, main);
 
     // Writing note
     if (step->instrument == -1) sprintf(strbuff, "---");
     else if (step->instrument == -2) sprintf(strbuff, "OFF");
     else GetNoteString(strbuff, step->note);
-    if (step->selected && stepEdit_ && step->paramEdit == Step::n) WriteString(display, strbuff, x + (CHAR_WIDTH * 3) + 2, y + 2 + CHAR_HEIGHT, BACKGROUND);
-    else WriteString(display, strbuff, x + (CHAR_WIDTH * 3) + 2, y + 2 + CHAR_HEIGHT, MAIN);
+
+    if (step->selected && stepEdit_ && step->paramEdit == Step::n) 
+        WriteString(display, x + (CHAR_WIDTH * 3) + 2, y + 2 + CHAR_HEIGHT, BACKGROUND);
+    else 
+        WriteString(display, x + (CHAR_WIDTH * 3) + 2, y + 2 + CHAR_HEIGHT, main);
 
     // Writing fx
     if (step->instrument < 0) sprintf(strbuff, "-");
     else GetFxString(strbuff, step->fx);
-    if (step->selected && stepEdit_ && step->paramEdit == Step::f) WriteString(display, strbuff, x + (CHAR_WIDTH * 7) + 2, y + 2 + CHAR_HEIGHT, BACKGROUND);
-    else WriteString(display, strbuff, x + (CHAR_WIDTH * 7) + 2, y + 2 + CHAR_HEIGHT, MAIN);
+    if (step->selected && stepEdit_ && step->paramEdit == Step::f) 
+        WriteString(display, x + (CHAR_WIDTH * 7) + 2, y + 2 + CHAR_HEIGHT, BACKGROUND);
+    else 
+        WriteString(display, x + (CHAR_WIDTH * 7) + 2, y + 2 + CHAR_HEIGHT, main);
 
      // Writing fx amount
     if (step->instrument < 0 || step->fx <= 0) sprintf(strbuff, "--");
     else sprintf(strbuff, "%02x", step->fxAmount);
-    if (step->selected && stepEdit_ && step->paramEdit == Step::fa) WriteString(display, strbuff, x + (CHAR_WIDTH * 8) + 2, y + 2 + CHAR_HEIGHT, BACKGROUND);
-    else WriteString(display, strbuff, x + (CHAR_WIDTH * 8) + 2, y + 2 + CHAR_HEIGHT, MAIN);
+    if (step->selected && stepEdit_ && step->paramEdit == Step::fa) 
+        WriteString(display, x + (CHAR_WIDTH * 8) + 2, y + 2 + CHAR_HEIGHT, BACKGROUND);
+    else 
+        WriteString(display, x + (CHAR_WIDTH * 8) + 2, y + 2 + CHAR_HEIGHT, main);
 
 }
 
 void Sequencer::DrawSquare(cLayer *display, int index, int x, int y, bool fill) {
-    sprintf(strbuff, "%d", index);
     if (fill) {
         display->drawFillRect(x, y, 22, 22, ACCENT2);
-        if (index < 10) WriteString(display, strbuff, x + (22 - CHAR_WIDTH) / 2, y + CHAR_HEIGHT + (22 - CHAR_HEIGHT) / 2, MAIN);
-        else WriteString(display, strbuff, x + (22 - (CHAR_WIDTH * 2)) / 2, y + CHAR_HEIGHT + (22 - CHAR_HEIGHT) / 2, MAIN);
+        if (index < 10) 
+            WriteString(display, x + (22 - CHAR_WIDTH) / 2, y + CHAR_HEIGHT + (22 - CHAR_HEIGHT) / 2, MAIN, "%d", index);
+        else 
+            WriteString(display, x + (22 - (CHAR_WIDTH * 2)) / 2, y + CHAR_HEIGHT + (22 - CHAR_HEIGHT) / 2, MAIN, "%d", index);
     } else {
         display->drawFillRect(x, y, 22, 22, ALTACCENT2);
-        if (index < 10) WriteString(display, strbuff, x + (22 - CHAR_WIDTH) / 2, y + CHAR_HEIGHT + (22 - CHAR_HEIGHT) / 2, ALTMAIN);
-        else WriteString(display, strbuff, x + (22 - (CHAR_WIDTH * 2)) / 2, y + CHAR_HEIGHT + (22 - CHAR_HEIGHT) / 2, ALTMAIN);
+        if (index < 10) 
+            WriteString(display, x + (22 - CHAR_WIDTH) / 2, y + CHAR_HEIGHT + (22 - CHAR_HEIGHT) / 2, MAIN, "%d", index);
+        else 
+            WriteString(display, x + (22 - (CHAR_WIDTH * 2)) / 2, y + CHAR_HEIGHT + (22 - CHAR_HEIGHT) / 2, MAIN, "%d", index);
     }
 }
 
@@ -154,12 +162,12 @@ void Sequencer::GetFxString(char* strbuff, int fx, int fxAmount) {
 void Sequencer::GetFxString(char* strbuff, int fx) {
     if (fx == 0) sprintf(strbuff, "-");
     else {
-        if (fx == 1) sprintf(strbuff, "R");
-        else if (fx == 2) sprintf(strbuff, "U");
-        else if (fx == 3) sprintf(strbuff, "D");
-        else if (fx == 4) sprintf(strbuff, "I");
-        else if (fx == 5) sprintf(strbuff, "O");
-        else sprintf(strbuff, "F");
+        if      (fx == 1)   sprintf(strbuff, "R");  // fx 1 - ROLL
+        else if (fx == 2)   sprintf(strbuff, "U");  // fx 2 - PITCH UP
+        else if (fx == 3)   sprintf(strbuff, "D");  // fx 3 - PITCH DOWN
+        else if (fx == 4)   sprintf(strbuff, "V");  // fx 4 - VOLUME
+        else if (fx == 5)   sprintf(strbuff, "B");  // fx 5 - BACKWARDS
+        else                sprintf(strbuff, "F");  // fx 6 - FX AUTOMATION
     }
 }
 
@@ -197,29 +205,38 @@ void Sequencer::UpdateDisplay(cLayer *display) {
         display->drawFillRect(0, 0, (28 * 9), 240, BACKGROUND);
 
         currentStep->selected = true;
-        auto laneIt = activePattern->lanes.begin();
-        std::advance(laneIt, laneOffset);
-        for (int x = 0; x < 2; x++) {
-            auto stepIt = (*laneIt)->sequence.begin();
-            std::advance(stepIt, currentStep->index);
-            for (int y = 0; y < 12; y++) {
-                auto offset = stepIt + (y - 5);
-                if (offset < (*laneIt)->sequence.begin()) {
-                    continue;
+
+        
+        StepCluster<LANE_NUMBER>* clust = activePattern->get_current();
+        for (int i = 0; i < 5; i ++) {
+            clust = clust->prev;
+        }
+
+
+        int index = activePattern->get_current()->steps[0]->index;
+        int top = 5 - index;
+        int bottom = 7 - (activePattern->getSize() - index);
+
+        for (int y = 0; y < 12; y++) {
+            for (int x = 0; x < 2; x++) {
+                Step* step = clust->steps[laneOffset + x];
+
+                if (bottom > 0 && y >= 12 - bottom) {
+                    DrawStep(display, (((CHAR_WIDTH * 12) * x) + (CHAR_WIDTH * 4)), ((CHAR_HEIGHT + 8) * y), step, false);
+                } else if (y < top) {
+                    DrawStep(display, (((CHAR_WIDTH * 12) * x) + (CHAR_WIDTH * 4)), ((CHAR_HEIGHT + 8) * y), step, false);
+                } else {
+                    DrawStep(display, (((CHAR_WIDTH * 12) * x) + (CHAR_WIDTH * 4)), ((CHAR_HEIGHT + 8) * y), step, true);
                 }
-                else if (offset >= (*laneIt)->sequence.end()) {
-                    continue;
-                }
-                else {
-                    DrawStep(display, (((CHAR_WIDTH * 12) * x) + (CHAR_WIDTH * 4)), ((CHAR_HEIGHT + 8) * y), *offset);
-                    if ((*offset)->index % 4 == 0 && x == 0) {
-                        sprintf(strbuff, "%3d", (*offset)->index);
-                        if ((*offset)->index % 16 == 0) WriteString(display, strbuff, 0, ((CHAR_HEIGHT + 8) * (y + 1) - (CHAR_HEIGHT / 2)), ACCENT2);
-                        else WriteString(display, strbuff, 0, ((CHAR_HEIGHT + 8) * (y + 1) - (CHAR_HEIGHT / 2)), ACCENT1);
-                    }
-                }
+                
+                if (step->index % 4 == 0 && x == 0) {
+                    if (step->index % 16 == 0) 
+                        WriteString(display, 0, ((CHAR_HEIGHT + 8) * (y + 1) - (CHAR_HEIGHT / 2)), ACCENT2, "%3d", step->index);
+                    else 
+                        WriteString(display, 0, ((CHAR_HEIGHT + 8) * (y + 1) - (CHAR_HEIGHT / 2)), ACCENT1, "%3d", step->index);
+                }   
             }
-            std::advance(laneIt, 1);
+            clust = clust->next;
         } 
     }
     
@@ -228,20 +245,18 @@ void Sequencer::UpdateDisplay(cLayer *display) {
      */
     display->drawFillRect(28*9, 0, 100, (CHAR_HEIGHT + 4) * 3 + 4, BACKGROUND);
 
-    sprintf(strbuff, "BPM %3d", (int) bpm_);
-    WriteString(display, strbuff, 320 - (CHAR_WIDTH * 7), CHAR_HEIGHT + 4, ACCENT1);
+    WriteString(display, 320 - (CHAR_WIDTH * 7), CHAR_HEIGHT + 4, ACCENT1, "BPM %3d", (int) bpm_);
 
     
-    if (songOrder->at(currentPattern) > -1) sprintf(strbuff, "LANE%3d", currentLane->index + 1);
-    else sprintf(strbuff, "LANE");
-    WriteString(display, strbuff, 320 - (CHAR_WIDTH * 7), (CHAR_HEIGHT + 4) * 2, ACCENT1);
+    if (songOrder->at(currentPattern) > -1) 
+        WriteString(display, 320 - (CHAR_WIDTH * 7), (CHAR_HEIGHT + 4) * 2, ACCENT1, "LANE%3d", currentLane + 1);
+    else 
+        WriteString(display, 320 - (CHAR_WIDTH * 7), (CHAR_HEIGHT + 4) * 2, ACCENT1, "LANE");
 
     
-    if (songOrder->at(currentPattern) > -1) sprintf(strbuff, "LEN%4d", currentLane->length);
-    else sprintf(strbuff, "LEN");
-    WriteString(display, strbuff, 320 - (CHAR_WIDTH * 7), (CHAR_HEIGHT + 4) * 3, ACCENT1);
+    if (songOrder->at(currentPattern) > -1) WriteString(display, 320 - (CHAR_WIDTH * 7), (CHAR_HEIGHT + 4) * 3, ACCENT1, "LEN%4d", activePattern->getSize());
+    else WriteString(display, 320 - (CHAR_WIDTH * 7), (CHAR_HEIGHT + 4) * 3, ACCENT1, "LEN");
     
-
     /**
      * Drawing Pattern arrangement
      */
@@ -277,8 +292,8 @@ void Sequencer::Update() {
         if (tick.Process()) {
             //lastTrigger = System::GetNow();
             NextStep();
-            for (Lane* lane : activePattern->lanes) {
-                handler_->at(lane->index)->Update(lane->sequence.at(currentStep->index)); 
+            for (int i = 0; i < LANE_NUMBER; i ++) {
+                handler_->at(i)->Update(activePattern->get_current(i)); 
             }
         }
     }
@@ -288,12 +303,13 @@ void Sequencer::PlayButton() {
     playing_ = (playing_) ? false : true;
     song_ = false;
     if (playing_) {
-        for (Lane* lane : activePattern->lanes) {
-            handler_->at(lane->index)->Update(lane->sequence.at(currentStep->index)); 
+        tick.Reset();
+        for (int i = 0; i < LANE_NUMBER; i ++) {
+            handler_->at(i)->Update(activePattern->get_current(i)); 
         }
     } else {
-        for (Lane* lane : activePattern->lanes) {
-            handler_->at(lane->index)->Update(nullptr); 
+        for (int i = 0; i < LANE_NUMBER; i ++) {
+            handler_->at(i)->Update(activePattern->get_current(i)); 
         }
     }
 }
@@ -312,11 +328,8 @@ void Sequencer::BButton() {
 
 void Sequencer::PreviousStep() {
     currentStep->selected = false;
-    if (currentStep->index > 0) {
-        currentStep = currentLane->sequence.at(currentStep->index - 1);
-    } else {
-        currentStep = currentLane->sequence.at(currentLane->length - 1);
-    }
+    activePattern->decrement();
+    currentStep = activePattern->get_current(currentLane);
     updateStep = true;
 }
 
@@ -328,14 +341,15 @@ void Sequencer::UpButton() {
 
 void Sequencer::NextStep() {
     currentStep->selected = false;
-    if (currentStep->index < (currentLane->length - 1)) {
-        currentStep = currentLane->sequence.at(currentStep->index + 1);
+    if (activePattern->is_tail() && song_) {
+        NextPattern();
+        activePattern->reset();
     } else {
-        if (song_) {
-            NextPattern();
-        }
-        currentStep = currentLane->sequence.at(0);
+        activePattern->increment();
     }
+
+    currentStep = activePattern->get_current(currentLane);
+    
     updateStep = true;
 }
 
@@ -347,10 +361,13 @@ void Sequencer::DownButton() {
 
 void Sequencer::PreviousLane() {
     currentStep->selected = false;
-    if (currentLane->index > 0) {
-        currentLane = activePattern->lanes.at(currentLane->index - 1);
-        currentStep = currentLane->sequence.at(currentStep->index);
-        if (currentLane->index < 2) laneOffset = currentLane->index;
+    if (currentLane > 0) {
+        currentLane -= 1;
+        if (currentLane < 0) {
+            currentLane = 0;
+        }
+        currentStep = activePattern->get_current(currentLane);
+        if (currentLane < 2) laneOffset = currentLane;
     } 
     updateStep = true;
     updateSidebar = true;
@@ -364,10 +381,13 @@ void Sequencer::LeftButton() {
 
 void Sequencer::NextLane() {
     currentStep->selected = false;
-    if (currentLane->index < (activePattern->numLanes - 1)) {
-        currentLane = activePattern->lanes.at(currentLane->index + 1);
-        currentStep = currentLane->sequence.at(currentStep->index);
-        if (currentLane->index > 1) laneOffset = currentLane->index - 1;
+    if (currentLane < (LANE_NUMBER - 1)) {
+        currentLane += 1;
+        if (currentLane >= LANE_NUMBER) {
+            currentLane = LANE_NUMBER - 1;
+        }
+        currentStep = activePattern->get_current(currentLane);
+        if (currentLane> 1) laneOffset = currentLane - 1;
     }
     updateStep = true;
     updateSidebar = true;
@@ -383,8 +403,9 @@ void Sequencer::NextPattern() {
     currentStep->selected = false;
     currentPattern = (currentPattern >= (int) songOrder->size() - 1) ? 0 : currentPattern + 1;
     activePattern = patterns->at(songOrder->at(currentPattern));
-    currentLane = activePattern->lanes.at(currentLane->index);
-    currentStep = currentLane->sequence.at(0);
+    currentLane = 0;
+    activePattern->reset();
+    currentStep = activePattern->get_current(currentLane);
     currentStep->selected = true;
     updateStep = true;
     updatePattern = true;
@@ -398,8 +419,9 @@ void Sequencer::PreviousPattern() {
         playing_ = false;
     } else {
         activePattern = patterns->at(songOrder->at(currentPattern));
-        currentLane = activePattern->lanes.at(currentLane->index);
-        currentStep = currentLane->sequence.at(0);
+        currentLane = 0;
+        activePattern->reset();
+        currentStep = activePattern->get_current(currentLane);
         currentStep->selected = true;
     }
     updateStep = true;
@@ -430,8 +452,9 @@ void Sequencer::AltUpButton() {
 
     if (songOrder->at(currentPattern) > -1) {
         activePattern = patterns->at(songOrder->at(currentPattern));
-        currentLane = activePattern->lanes[0];
-        currentStep = currentLane->sequence.at(0);
+        currentLane = 0;
+        activePattern->reset();
+        currentStep = activePattern->get_current(currentLane);
     }
     updatePattern = true;
 }
@@ -454,8 +477,9 @@ void Sequencer::AltDownButton() {
     if (currentPattern >= (int) songOrder->size()) songOrder->push_back(-1); 
     else { //not seting active pattern to anything to avoid index out of range error
         activePattern = patterns->at(songOrder->at(currentPattern));
-        currentLane = activePattern->lanes[0];
-        currentStep = currentLane->sequence.at(0);
+        currentLane = 0;
+        activePattern->reset();
+        currentStep = activePattern->get_current(currentLane);
     }
     updatePattern = true;
 }
@@ -466,8 +490,9 @@ void Sequencer::AltLeftButton() {
     else songOrder->at(currentPattern) -= 1;
     if (songOrder->at(currentPattern) > -1) {
         activePattern = patterns->at(songOrder->at(currentPattern));
-        currentLane = activePattern->lanes[0];
-        currentStep = currentLane->sequence.at(0);
+        currentLane = 0;
+        activePattern->reset();
+        currentStep = activePattern->get_current(currentLane);
     }
     updatePattern = true;
 }
@@ -477,8 +502,9 @@ void Sequencer::AltRightButton() {
     songOrder->at(currentPattern) += 1;
     if (songOrder->at(currentPattern) > ((int) patterns->size() - 1)) NewPattern();
     activePattern = patterns->at(songOrder->at(currentPattern));
-    currentLane = activePattern->lanes[0];
-    currentStep = currentLane->sequence.at(0);
+    currentLane = 0;
+    activePattern->reset();
+    currentStep = activePattern->get_current(currentLane);
     updatePattern = true;
 }
 
@@ -486,37 +512,42 @@ void Sequencer::AltPlayButton() {
     playing_ = (playing_) ? false : true;
     song_ = (song_) ? false : true;
     if (playing_) {
-        for (Lane* lane : activePattern->lanes) {
-            handler_->at(lane->index)->Update(lane->sequence.at(currentStep->index)); 
+        tick.Reset();
+        for (int i = 0; i < LANE_NUMBER; i ++) {
+            handler_->at(i)->Update(activePattern->get_current(i)); 
         }
     } else {
-        for (Lane* lane : activePattern->lanes) {
-            handler_->at(lane->index)->Update(nullptr); 
+        for (int i = 0; i < LANE_NUMBER; i ++) {
+            handler_->at(i)->Update(activePattern->get_current(i)); 
         }
     }
 }
 
 void Sequencer::AltAButton() {
-    for (Lane* lane : activePattern->lanes) {
-        for (int i = 0; i < lane->length; i ++) {
-            lane->sequence.push_back(new Step(i + lane->length));
-        }
-        lane->length *= 2;
+    int size = activePattern->getSize();
+
+    for (int i = 0; i < size; i ++) {
+        activePattern->push(size + i);
     }
+
     updateStep = true;
     updateSidebar = true;
 }
 
 void Sequencer::AltBButton() {
-    if (currentLane->length <= 1) return;
-    if (currentStep->index >= currentLane->length / 2) currentStep = currentLane->sequence.at((currentLane->length / 2) - 1);
-    for (Lane* lane : activePattern->lanes) {
-        lane->length /= 2;
-        for (int i = 0; i < lane->length; i ++) {
-            delete lane->sequence.back(); // free the memory allocated by new
-            lane->sequence.erase(--lane->sequence.end()); // get rid of last
-        }
+    int size = activePattern->getSize();
+
+    if (size <= 1) 
+        return;
+    
+    if (currentStep->index >= size / 2) 
+        currentStep = activePattern->get_current(size / 2);
+    
+    for (int i = 0; i < size / 2; i ++) {
+        StepCluster<LANE_NUMBER>* back = activePattern->remove();
+        delete back;
     }
+    
     updateStep = true;
     updateSidebar = true;
 }

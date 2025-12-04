@@ -96,7 +96,6 @@ private:
     WaveFileLoader             *fileLoader;     /**< Pointer to the wave file loader object */
     std::vector<Instrument*>   *instruments;    /**< Pointer to the instrument vector */
     Node<File>                 *currentNode;    /**< The current node in the file directory being observed */
-    char                        strbuff[256];   /**< A string buffer to help display strings to the screen */
     size_t                     *bufferIndex;    /**< Pointer to the buffer index to display memory usage */
     
     int     row;            /**< Selected row  */

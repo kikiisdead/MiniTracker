@@ -38,8 +38,8 @@
 // GPIO configuration for SPI pins
 #define TFT_MOSI D10              // SPI MOSI (Master Out, Slave In) pin
 #define TFT_SCLK D8               // SPI clock (SCLK) pin
-#define TFT_DC   D11              // Data/Command control pin
-#define TFT_RST  D12              // Reset pin for the display
+#define TFT_DC   D12              // Data/Command control pin
+#define TFT_RST  D11              // Reset pin for the display
 
 //-------------------------------------------------------------------------
 // Define the block size used for partial screen updates

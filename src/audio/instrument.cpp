@@ -60,10 +60,10 @@ void Instrument::Trigger(int note) {
     currentSlice = note - 48;
     env.Retrigger(false);
     if (currentSlice >= 0 && currentSlice < slices.size()) {
-        samplePlayer.SetPitch(pitch);
+        samplePlayer.SetPitch(pitch + pitchOffset);
         samplePlayer.Play(slices.at(currentSlice) * samplePlayer.GetSize());
     } else {
-        samplePlayer.SetPitch(((float) note) - 48 + pitch);
+        samplePlayer.SetPitch(((float) note) - 48 + pitch + pitchOffset);
         samplePlayer.Play();
     }
     playing = true;

@@ -120,7 +120,6 @@ private:
     
     int     active;         /**< The position of the active instruent being edited */
     size_t  currentSlice;   /**< The current slice being edited */
-    char    strbuff[256];   /**< A string buffer to help with writing strings to the display */
     bool    sliceEdit;      /**< Whether we are editing slices or not */
     int     scrRow;         /**< The row of selected instrument on screen */                  
 

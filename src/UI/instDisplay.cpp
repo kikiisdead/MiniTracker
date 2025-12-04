@@ -53,20 +53,15 @@ void InstrumentDisplay::UpdateDisplay(cLayer* display) {
          */
         Instrument::param edit = ACTIVEINST->GetEdit();
         
+        WriteString(display, 0, WAVEHEIGHT + CHAR_HEIGHT + 4, ACCENT2, "PITCH");
 
-        sprintf(strbuff, "PITCH");
-        WriteString(display, strbuff, 0, WAVEHEIGHT + CHAR_HEIGHT + 4, ACCENT2);
+        if (edit == Instrument::p && !sliceEdit) WriteString(display, 0, WAVEHEIGHT + (CHAR_HEIGHT + 4) * 2, ACCENT1, "%.2fst", ACTIVEINST->GetPitch());
+        else                                     WriteString(display, 0, WAVEHEIGHT + (CHAR_HEIGHT + 4) * 2, MAIN, "%.2fst", ACTIVEINST->GetPitch());
 
-        sprintf(strbuff, "%.2fst", ACTIVEINST->GetPitch());
-        if (edit == Instrument::p && !sliceEdit) WriteString(display, strbuff, 0, WAVEHEIGHT + (CHAR_HEIGHT + 4) * 2, ACCENT1);
-        else                                     WriteString(display, strbuff, 0, WAVEHEIGHT + (CHAR_HEIGHT + 4) * 2, MAIN);
+        WriteString(display, 0, WAVEHEIGHT + (CHAR_HEIGHT + 4) * 3, ACCENT2, "GAIN");
 
-        sprintf(strbuff, "GAIN");
-        WriteString(display, strbuff, 0, WAVEHEIGHT + (CHAR_HEIGHT + 4) * 3, ACCENT2);
-
-        sprintf(strbuff, "%.2fdB", ACTIVEINST->GetGain());
-        if (edit == Instrument::g && !sliceEdit) WriteString(display, strbuff, 0, WAVEHEIGHT + (CHAR_HEIGHT + 4) * 4, ACCENT1);
-        else                                     WriteString(display, strbuff, 0, WAVEHEIGHT + (CHAR_HEIGHT + 4) * 4, MAIN);
+        if (edit == Instrument::g && !sliceEdit) WriteString(display, 0, WAVEHEIGHT + (CHAR_HEIGHT + 4) * 4, ACCENT1, "%.2fdB", ACTIVEINST->GetGain());
+        else                                     WriteString(display, 0, WAVEHEIGHT + (CHAR_HEIGHT + 4) * 4, MAIN, "%.2fdB", ACTIVEINST->GetGain());
 
 
         /**
@@ -112,8 +107,7 @@ void InstrumentDisplay::UpdateDisplay(cLayer* display) {
         xOffset += adsrWidth;
 
         if (edit == Instrument::a && !sliceEdit) {
-            sprintf(strbuff, "ATT");
-            WriteString(display, strbuff, xOffset, WAVEHEIGHT + CHAR_HEIGHT + 4, ACCENT2);
+            WriteString(display, xOffset, WAVEHEIGHT + CHAR_HEIGHT + 4, ACCENT2, "ATT");
 
             float att = ACTIVEINST->GetAttack() * 1000.0f;
 
@@ -121,10 +115,9 @@ void InstrumentDisplay::UpdateDisplay(cLayer* display) {
             else if (att < 1000.0f) sprintf(strbuff, "%.1fms", att);
             else sprintf(strbuff, "%.2fs", att / 1000.0f);
 
-            WriteString(display, strbuff, xOffset, WAVEHEIGHT + (CHAR_HEIGHT + 4) * 2, ACCENT1);
+            WriteString(display, xOffset, WAVEHEIGHT + (CHAR_HEIGHT + 4) * 2, ACCENT1);
         } else if (edit == Instrument::d && !sliceEdit) {
-            sprintf(strbuff, "DEC");
-            WriteString(display, strbuff, xOffset, WAVEHEIGHT + CHAR_HEIGHT + 4, ACCENT2);
+            WriteString(display, xOffset, WAVEHEIGHT + CHAR_HEIGHT + 4, ACCENT2, "DEC");
 
             float dec = ACTIVEINST->GetDecay() * 1000.0f;
 
@@ -132,15 +125,12 @@ void InstrumentDisplay::UpdateDisplay(cLayer* display) {
             else if (dec < 1000.0f) sprintf(strbuff, "%.1fms", dec);
             else sprintf(strbuff, "%.2fs", dec / 1000.0f);
 
-            WriteString(display, strbuff, xOffset, WAVEHEIGHT + (CHAR_HEIGHT + 4) * 2, ACCENT1);
+            WriteString(display, xOffset, WAVEHEIGHT + (CHAR_HEIGHT + 4) * 2, ACCENT1);
         } else if (edit == Instrument::s && !sliceEdit) {
-            sprintf(strbuff, "SUS");
-            WriteString(display, strbuff, xOffset, WAVEHEIGHT + CHAR_HEIGHT + 4, ACCENT2);
-            sprintf(strbuff, "%.2f%%", ACTIVEINST->GetSustain());
-            WriteString(display, strbuff, xOffset, WAVEHEIGHT + (CHAR_HEIGHT + 4) * 2, ACCENT1);
+            WriteString(display, xOffset, WAVEHEIGHT + CHAR_HEIGHT + 4, ACCENT2, "SUS");
+            WriteString(display, xOffset, WAVEHEIGHT + (CHAR_HEIGHT + 4) * 2, ACCENT1, "%.2f%%", ACTIVEINST->GetSustain());
         } else if (edit == Instrument::r && !sliceEdit) {
-            sprintf(strbuff, "REL");
-            WriteString(display, strbuff, xOffset, WAVEHEIGHT + CHAR_HEIGHT + 4, ACCENT2);
+            WriteString(display, xOffset, WAVEHEIGHT + CHAR_HEIGHT + 4, ACCENT2, "REL");
 
             float rel = ACTIVEINST->GetRelease() * 1000.0f;
 
@@ -148,7 +138,7 @@ void InstrumentDisplay::UpdateDisplay(cLayer* display) {
             else if (rel < 1000.0f) sprintf(strbuff, "%.1fms", rel);
             else sprintf(strbuff, "%.2fs", rel / 1000.0f);
 
-            WriteString(display, strbuff, xOffset, WAVEHEIGHT + (CHAR_HEIGHT + 4) * 2, ACCENT1);
+            WriteString(display, xOffset, WAVEHEIGHT + (CHAR_HEIGHT + 4) * 2, ACCENT1);
         }
 
         /**
@@ -159,28 +149,24 @@ void InstrumentDisplay::UpdateDisplay(cLayer* display) {
         }
         display->drawLine(320 - 80, 0, 320-80, 240, ACCENT2);
         display->drawFillRect(240, 0, 80, 21, ACCENT2);
-        sprintf(strbuff, "SAMPLES");
-        WriteString(display, strbuff, 320 - 76, CHAR_HEIGHT + 3, MAIN);
+        WriteString(display, 320 - 76, CHAR_HEIGHT + 3, MAIN, "SAMPLES");
         int yOffset = CHAR_HEIGHT + 4 + CHAR_HEIGHT + 8;
         for (int i = 0; i < INST_ROW_MAX; i++) {
             int pos = active + (i - scrRow);
             if (pos >= (int) instruments->size() || pos < 0)
                 continue;
-            sprintf(strbuff, "%d.%-15s", pos, instruments->at(pos)->GetName());
             if (i == scrRow) {
-                WriteString(display, strbuff, WAVEWIDTH + 4, yOffset, ACCENT1);
+                WriteString(display, WAVEWIDTH + 4, yOffset, ACCENT1, "%d.%.8s", pos, instruments->at(pos)->GetName());
             } else {
-                WriteString(display, strbuff, WAVEWIDTH + 4, yOffset, MAIN);
+                WriteString(display, WAVEWIDTH + 4, yOffset, MAIN, "%d.%.8s", pos, instruments->at(pos)->GetName());
             }
             yOffset += CHAR_HEIGHT + 8;
         }
     }
     else {
         display->drawRect(80, 60, 160, 120, 1, ACCENT2);
-        sprintf(strbuff, "NO SAMPLES");
-        WriteString(display, strbuff, 160 - (5 * CHAR_WIDTH), 120 - 2, MAIN);
-        sprintf(strbuff, "LOADED");
-        WriteString(display, strbuff, 160 - (3 * CHAR_WIDTH), 120 + CHAR_HEIGHT + 2, MAIN);
+        WriteString(display, 160 - (5 * CHAR_WIDTH), 120 - 2, MAIN, "NO SAMPLES");
+        WriteString(display, 160 - (3 * CHAR_WIDTH), 120 + CHAR_HEIGHT + 2, MAIN, "LOADED");
     }
 }
 

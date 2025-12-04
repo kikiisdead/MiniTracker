@@ -189,6 +189,16 @@ public:
     void SetStart(void* start) { samplePlayer.SetStart(start); }
 
     /**
+     * @brief Set the Pitch Offset of the instrument handler
+     * made for step fx
+     * 
+     * @param pitchOffset 
+     */
+    void SetPitchOffset(float pitchOffset) {
+        this->pitchOffset = pitchOffset;
+    }
+
+    /**
      * Increments the param to the next param
      */
     void NextParam();
@@ -223,6 +233,7 @@ private:
     float           sus;            /**< Sustain level in % */
     float           rel;            /**< Release time in ms */
     float           pitch;          /**< Pitch in semitones */
+    float           pitchOffset;    /**< Pitch offset */
     float           gain;           /**< Gain in dB */
     param           edit;           /**< The param to be edited */
     std::string     path;           /**< Path to the sample in file direction */

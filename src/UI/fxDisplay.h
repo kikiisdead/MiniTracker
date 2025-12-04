@@ -114,7 +114,6 @@ private:
     float                               samplerate;     /**< Samplerate */
     size_t                              currentLane;    /**< Index of the current Lane */
     size_t                              currentEffect;  /**< Index of current Effect */
-    char                                strbuff[20];    /**< string buffer for writing to display */
     InstrumentHandler                  *Lane;           /**< Pointer to active lane */
     Effect                             *effect;         /**< Pointer to active effect */
     std::vector<InstrumentHandler*>    *handler;        /**< Pointer to active instrument handler */

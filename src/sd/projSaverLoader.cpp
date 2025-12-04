@@ -85,30 +85,22 @@ void ProjSaverLoader::ReadPattern() {
         
         __disable_irq();
         sequencer->GetPatterns()->push_back(new Pattern);
-        sequencer->GetPatterns()->back()->index = patt;
+        sequencer->GetPatterns()->back()->setIndex(patt);
         __enable_irq();
 
         // Num Lanes
         int numLanes;
         f_read(fil, &numLanes, sizeof(numLanes), &bytesWritten);
-        __disable_irq();
-        sequencer->GetPatterns()->back()->numLanes = numLanes;
-        __enable_irq();
 
         for (int lane = 0; lane < numLanes; lane ++) {
             // LANE HEADER
             f_read(fil, &HEADER, sizeof(HEADER), &bytesWritten);
-            __disable_irq();
-            sequencer->GetPatterns()->back()->lanes.push_back(new Lane);
-            sequencer->GetPatterns()->back()->lanes.back()->index = lane;
-            __enable_irq();
 
             // LENGTH
             int sequenceLength; 
             f_read(fil, &sequenceLength, sizeof(sequenceLength), &bytesWritten);
-            __disable_irq();
-            sequencer->GetPatterns()->back()->lanes.back()->length = sequenceLength;
-            __enable_irq();
+
+            StepCluster<LANE_NUMBER>* cluster = sequencer->GetPatterns()->back()->getTail();
 
             for (int step = 0; step < sequenceLength; step++) {
                 // LANE HEADER
@@ -129,7 +121,13 @@ void ProjSaverLoader::ReadPattern() {
                 f_read(fil, &fxAmount, sizeof(fxAmount), &bytesWritten);
 
                 __disable_irq();
-                sequencer->GetPatterns()->back()->lanes.back()->sequence.push_back(new Step(inst, note, fx, fxAmount, step));
+                if (lane == 0) {
+                    sequencer->GetPatterns()->back()->push(step);
+                    cluster = sequencer->GetPatterns()->back()->getTail();
+                } else {
+                    cluster = cluster->next;
+                }
+                cluster->steps[lane]->Init(inst, note, fx, fxAmount, step);
                 __enable_irq();
             }
         }
@@ -311,16 +309,20 @@ void ProjSaverLoader::SaveProject(const char* name) {
                 Write(0x54544150); // "PATT"
 
                 // num lanes
-                Write(pattern->numLanes);
+                Write(LANE_NUMBER);
 
-                for (Lane* lane : pattern->lanes) {
+                for (int lane = 0; lane < LANE_NUMBER; lane ++) {
                     // LANE HEADER
                     Write(0x454E414C); // "LANE"
 
                     // pattern length
-                    Write(lane->length);
+                    Write(pattern->getSize());
 
-                    for (Step* step : lane->sequence) {
+                    StepCluster<LANE_NUMBER>* clust = pattern->getHead();
+
+                    do {
+                        Step* step = clust->steps[lane];
+
                         // STEP HEADER
                         Write(0x50455453); // "STEP"
 
@@ -335,7 +337,10 @@ void ProjSaverLoader::SaveProject(const char* name) {
 
                         // fx amount
                         Write(step->fxAmount);
+
+                        clust = clust->next;
                     }
+                    while (clust != pattern->getHead());
                 }
             }
         }

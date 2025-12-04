@@ -11,17 +11,23 @@
  * TODO
  * FatFS is still fucked and I don't know if its a problem on my end or not
  * Add step FX and shit
+ *  - PITCH UP
+ *  - PITCH DOWN
+ *  - FX AUTOMATION
  * Implement custom allocator before I die of memory fragmentation
+ * Check power draw  
+ * Figure out sleep mode
  * 
  * KNOWN BUGS / ISSUES
- *  - Noise from TFT and from SD card when loading / reading
+ *  - Noise from TFT and from SD card when loading / reading (hardware issue)
  *  - The position of the 5th slice disappears
  *  - Incorrectly reads 32 bit float wave files
  *  - Worried about memory fragmentation from EventQueue and patterns
  *     - Implement custom allocator?
+ *  - Get NullPointerException when trying to access non-existent lane on FX screen
  * 
  * CHANGES TO LIBRARY
- * SD_TIMEOUT in sd_diskio.c changed to 1000 ticks instead of 30 * 1000
+ * SD_TIMEOUT in sd_diskio.c changed to 1000 ticks instead of 30 * 1000 ticks
  * 
  * @version 0.1
  * @date 2025-10-22
@@ -54,25 +60,7 @@
 #include "src/sd/projSaverLoader.h"
 #include "src/globals.h"
 #include "src/UI/command.h"
-
-#define LANE_NUMBER 4
-
-/**
- * Update these macros based on your pin set up
- */
-
-#define UpPin 18
-#define DownPin 17
-#define LeftPin 16
-#define RightPin 15
-#define APin 19
-#define BPin 20
-#define ShiftPin 21
-#define PlayPin 22
-#define LeftShoulderPin 13
-#define RightShoulderPin 14
-
-#define USE_DAISYSP_LGPL 1
+#include "UserDefines.h"
 
 using namespace daisy;
 using namespace daisysp;
@@ -210,6 +198,20 @@ SampDisplay sampDisplay;
 
 SongDisplay songDisplay;
 
+
+volatile uint8_t StandbyActivate = 0;
+volatile uint8_t EnterStandbyFlag = 0; /**< Flag to engage standby, will need to turn breakouts off as well mainly  */
+volatile uint8_t LeaveStopFlag = 0;
+
+/**
+ * STANDBY MODE SETUP
+ * 
+ */
+// WAKE UP PIN IS PC1
+void Enter_Standby() {
+  EnterStandbyFlag = 1;
+}
+
 /**
  * BUTTONS
  * Callbacks
@@ -245,6 +247,12 @@ void LeftShoulderPress() {
 void RightShoulderPress() {
   eventQueue.push(new RightShoulderCommand);
 }
+void BothShoulderPress() {
+  EXTI_HandleTypeDef EXTI_Handle;
+  EXTI_Handle.Line = 0;
+  EXTI_Handle.PendingCallback = Enter_Standby;
+  HAL_EXTI_IRQHandler(&EXTI_Handle);
+}
 
 Button A;
 Button B;
@@ -257,7 +265,15 @@ Button Right;
 Button LeftShoulder;
 Button RightShoulder;
 
-bool shift;
+Button Standby;
+
+GPIO backlight;
+GPIO ampSD;
+GPIO headphoneDet;
+
+static bool shift;
+
+static float samplerate;
 
 std::vector<Button*> buttons;
 
@@ -271,9 +287,6 @@ void InputHandle() {
     buttons.at(i)->Update();
   }
 }
-
-GPIO ok;
-GPIO ok2;
 
 Limiter limiter;
 
@@ -306,67 +319,20 @@ void SAFE() {
   sequencer.Safe();
 }
 
-/** LOOP */
-void AudioCallback(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, size_t size) {
-  float outL = 0;
-  float outR = 0;
-  
-  if (!projSafe) return; // cutsoff audio processing during project load
-
-  InputHandle(); 
-
-  for (size_t i = 0; i < size; i++)
-  {
-    outL = 0;
-    outR = 0;
-
-    sequencer.Update();
-
-    for (InstrumentHandler* hand : handler) {
-      float tempL = 0.0f;
-      float tempR = 0.0f;
-      hand->Process(tempL, tempR);
-      outL += tempL * 0.5f;
-      outR += tempR * 0.5f;
-    }
-
-    songDisplay.Process(outL, outR);
-
-    out[0][i] = outL;
-    out[1][i] = outR;
-  }
-
-  limiter.ProcessBlock(out[0], size, 1.0f);
-  limiter.ProcessBlock(out[1], size, 1.0f);
-}
-
-int main(void) {
-
-  hw.Init();
-
-  /**
-   * Configuring TFT Display
-   */
-  INIT_DISPLAY(__Display);
-  __Display.setOrientation(Rotation::Degre_90);
-  DadGFX::cLayer* pMain = ADD_LAYER(MainLayer, 0, 0, 1);
-
-  DadGFX::cFont MainFont(&KodeMono_Regular8pt7b);
-
-  /**
-   * Initializing Seed Audio
-   */
+/**
+ * Initializing Seed Audio
+ */
+void SEED_AUDIO_INIT() {
   hw.SetAudioBlockSize(128); // number of samples handled per callback
   hw.SetAudioSampleRate(SaiHandle::Config::SampleRate::SAI_48KHZ);
+  samplerate = hw.AudioSampleRate();
+}
 
-  float samplerate = hw.AudioSampleRate();
-
-  /**
-   * Initialize SDIO & waveFileLoader
-   */
-  ok.Init(seed::D29, GPIO::Mode::OUTPUT);
-  ok2.Init(seed::D28, GPIO::Mode::OUTPUT);
-
+/**
+ * Initialize SDIO & waveFileLoader
+ */
+void SDIO_INIT() {
+  
   SdmmcHandler::Config sd_cfg;
   sd_cfg.clock_powersave = true; // turn clock off when not in use to save power
   sd_cfg.speed = SdmmcHandler::Speed::VERY_FAST; // very fast because wav files are big
@@ -375,29 +341,21 @@ int main(void) {
   sd.Init(sd_cfg);
 
   // FatFS Interface
-  if (fsi.Init(FatFSInterface::Config::MEDIA_SD) == FatFSInterface::Result::OK) ok.Write(true);
+  fsi.Init(FatFSInterface::Config::MEDIA_SD);
 
   // Mount SD Card
   if (f_mount(&fsi.GetSDFileSystem(), "/", 1) == FR_OK) {
-    ok2.Write(true);
-
-    /**
-     * Initialize Wave File Loader
-     */
     sampleDirLoader.Init(file_buffer_allocate, "/Samples"); // building separate trees; this one loads sample file info
     projDirLoader.Init(file_buffer_allocate, "/Projects"); // building separate trees; this one loads project file info
     waveFileLoader.Init(samplerate, sample_buffer_allocate, &readFIL);
     projSaverLoader.Init("/Projects/", &readFIL, &writeFIL, &sequencer, &instruments, &handler, CLEAR, SAFE, &waveFileLoader);
   }
+}
 
-  /**
-   * Building instrument handlers
-   */
-  for (int i = 0; i < LANE_NUMBER; i ++) {
-    handler.push_back(new InstrumentHandler);
-    handler[i]->Init(&instruments, samplerate, &MainFont);
-  }
-
+/**
+ * Initialize Buttons
+ */
+void BUTTON_INIT() {
   /**
    * Initializing Buttons
    * sending callbacks and adding to buttons vector
@@ -440,6 +398,97 @@ int main(void) {
   RightShoulder.CallbackHandler(RightShoulderPress);
   buttons.push_back(&RightShoulder);
 
+  Standby.Init(hw.GetPin(StandbyPin), samplerate, false, Switch::PULL_NONE);
+  Standby.CallbackHandler(Enter_Standby);
+  buttons.push_back(&Standby);
+
+  GPIO_InitTypeDef GPIO_Init;
+  GPIO_Init.Pin = GPIO_PIN_7;
+  GPIO_Init.Mode = GPIO_MODE_INPUT;
+  GPIO_Init.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOB, &GPIO_Init);
+}
+
+/** LOOP */
+void AudioCallback(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, size_t size) {
+  float outL = 0;
+  float outR = 0;
+  
+  if (!projSafe) return; // cutsoff audio processing during project load
+
+  InputHandle(); 
+
+  for (size_t i = 0; i < size; i++)
+  {
+    outL = 0;
+    outR = 0;
+
+    sequencer.Update();
+
+    for (InstrumentHandler* hand : handler) {
+      float tempL = 0.0f;
+      float tempR = 0.0f;
+      hand->Process(tempL, tempR);
+      outL += tempL * 0.5f;
+      outR += tempR * 0.5f;
+    }
+
+    songDisplay.Process(outL, outR);
+
+    out[0][i] = outL;
+    out[1][i] = outR;
+  }
+
+  limiter.ProcessBlock(out[0], size, 1.0f);
+  limiter.ProcessBlock(out[1], size, 1.0f);
+}
+
+int main(void) {
+
+  hw.Init();
+
+  HAL_PWR_DisableWakeUpPin(PWR_WAKEUP_PIN1);
+
+  INIT_DISPLAY(__Display);
+  __Display.setOrientation(Rotation::Degre_90);
+  DadGFX::cLayer* pMain = ADD_LAYER(MainLayer, 0, 0, 1);
+  DadGFX::cFont MainFont(&KodeMono_Regular8pt7b);
+  backlight.Init(seed::D7, GPIO::Mode::OUTPUT);
+  ampSD.Init(AmpSDPin, GPIO::Mode::OUTPUT);
+  ampSD.Write(false);
+  
+  int xOffset = 160 - ((11 * CHAR_WIDTH) / 2);
+  int yOffset = 120 - (CHAR_HEIGHT / 2);
+  pMain->eraseLayer(BACKGROUND);
+  pMain->setFont(&MainFont);
+  pMain->setCursor(xOffset, yOffset);
+  pMain->setTextFrontColor(ACCENT1);
+  char strbuff[20];
+  sprintf(strbuff, "Mini");
+  pMain->drawText(strbuff);
+  pMain->setTextFrontColor(ACCENT2);
+  pMain->setCursor(xOffset + (CHAR_WIDTH * 4), yOffset);
+  sprintf(strbuff, "Tracker");
+  pMain->drawText(strbuff);
+  __Display.flush();
+  backlight.Write(true);
+  System::Delay(150); // wait for it to finish sending
+
+  SEED_AUDIO_INIT();
+  ampSD.Write(true);
+
+  SDIO_INIT();
+
+  BUTTON_INIT();
+
+  /**
+   * Building instrument handlers
+   */
+  for (int i = 0; i < LANE_NUMBER; i ++) {
+    handler.push_back(new InstrumentHandler);
+    handler[i]->Init(&instruments, samplerate, &MainFont);
+  }
+
   /**
    * Initializing UI objects
    * and adding to interfaces vector
@@ -466,11 +515,18 @@ int main(void) {
 
   hw.StartAudio(AudioCallback);
 
+  uint32_t timeSinceEvent = System::GetNow();
+
   for (;;) {
     userInterface->UpdateDisplay(pMain); 
+    GPIO_PinState detState = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_7);
+    if (detState == GPIO_PIN_SET) {
+      pMain->drawFillRect(0, 0, 100, 100, MAIN);
+    }
     __Display.flush();
 
     while (eventQueue.size() != 0) {
+      timeSinceEvent = System::GetNow();
       Command* command = eventQueue.front(); 
       command->Execute(userInterface, shift);
       eventQueue.pop();
@@ -478,7 +534,22 @@ int main(void) {
     }
 
     
-    
+    if (System::GetNow() - timeSinceEvent >= (uint32_t) SLEEP_TIME) {
+      Enter_Standby();
+    }
+
+    if(EnterStandbyFlag)
+    {
+      // Enter Standby Mode!
+      EnterStandbyFlag = 0;
+      System::Delay(50); // debounce off button bc no debounce in standby state
+      // 1) Clear The Wakeup Flag
+      __HAL_PWR_CLEAR_FLAG(PWR_FLAG_WU);
+      // 2) Enable The WKUP1 Pin
+      HAL_PWR_EnableWakeUpPin(PWR_WAKEUP_PIN1);
+      // 3) Enter The Standby Mode
+      HAL_PWR_EnterSTANDBYMode();
+    } 
   }
 }
 

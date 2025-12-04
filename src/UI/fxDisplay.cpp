@@ -14,21 +14,17 @@ void FXDisplay::UpdateDisplay(cLayer* display) {
     display->drawFillRect(0, 0, 320, CHAR_HEIGHT + 7, BACKGROUND);
     display->drawFillRect(currentLane * (320 / 4), 0, 320/4, CHAR_HEIGHT + 7, ACCENT2);
 
-    sprintf(strbuff, "LANE 1");
-    if (currentLane == 0) WriteString(display, strbuff, 0 * (320 / 4) + 4, CHAR_HEIGHT + 2, MAIN);
-    else                  WriteString(display, strbuff, 0 * (320 / 4) + 4, CHAR_HEIGHT + 2, ACCENT1);
+    if (currentLane == 0) WriteString(display, 0 * (320 / 4) + 4, CHAR_HEIGHT + 2, MAIN, "LANE 1");
+    else                  WriteString(display, 0 * (320 / 4) + 4, CHAR_HEIGHT + 2, ACCENT1, "LANE 1");
 
-    sprintf(strbuff, "LANE 2");
-    if (currentLane == 1) WriteString(display, strbuff, 1 * (320 / 4) + 4, CHAR_HEIGHT + 2, MAIN);
-    else                  WriteString(display, strbuff, 1 * (320 / 4) + 4, CHAR_HEIGHT + 2, ACCENT1);
+    if (currentLane == 1) WriteString(display, 1 * (320 / 4) + 4, CHAR_HEIGHT + 2, MAIN, "LANE 2");
+    else                  WriteString(display, 1 * (320 / 4) + 4, CHAR_HEIGHT + 2, ACCENT1, "LANE 2");
 
-    sprintf(strbuff, "LANE 3");
-    if (currentLane == 2) WriteString(display, strbuff, 2 * (320 / 4) + 4, CHAR_HEIGHT + 2, MAIN);
-    else                  WriteString(display, strbuff, 2 * (320 / 4) + 4, CHAR_HEIGHT + 2, ACCENT1);
+    if (currentLane == 2) WriteString(display, 2 * (320 / 4) + 4, CHAR_HEIGHT + 2, MAIN, "LANE 3");
+    else                  WriteString(display, 2 * (320 / 4) + 4, CHAR_HEIGHT + 2, ACCENT1, "LANE 3");
 
-    sprintf(strbuff, "LANE 4");
-    if (currentLane == 3) WriteString(display, strbuff, 3 * (320 / 4) + 4, CHAR_HEIGHT + 2, MAIN);
-    else                  WriteString(display, strbuff, 3 * (320 / 4) + 4, CHAR_HEIGHT + 2, ACCENT1);
+    if (currentLane == 3) WriteString(display, 3 * (320 / 4) + 4, CHAR_HEIGHT + 2, MAIN, "LANE 4");
+    else                  WriteString(display, 3 * (320 / 4) + 4, CHAR_HEIGHT + 2, ACCENT1, "LANE 4");
     
 
     if (changeEffect) {
@@ -40,29 +36,23 @@ void FXDisplay::UpdateDisplay(cLayer* display) {
 
         display->drawFillRect(xOffset, (CHAR_HEIGHT + 4) * type + 3, 320/3, CHAR_HEIGHT + 4, ACCENT2);
 
-        sprintf(strbuff, "--");
-        if (type == 0) WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 1, MAIN);
-        else           WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 1, MAIN);
+        if (type == 0) WriteString(display, xOffset + 4, (CHAR_HEIGHT + 4) * 1, MAIN, "--");
+        else           WriteString(display, xOffset + 4, (CHAR_HEIGHT + 4) * 1, MAIN, "--");
 
-        sprintf(strbuff, "FILTER");
-        if (type == 1) WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 2, MAIN);
-        else           WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 2, MAIN);
+        if (type == 1) WriteString(display, xOffset + 4, (CHAR_HEIGHT + 4) * 2, MAIN, "FILTER");
+        else           WriteString(display, xOffset + 4, (CHAR_HEIGHT + 4) * 2, MAIN, "FILTER");
 
-        sprintf(strbuff, "DISTORTION");
-        if (type == 2) WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 3, MAIN);
-        else           WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 3, MAIN);
+        if (type == 2) WriteString(display, xOffset + 4, (CHAR_HEIGHT + 4) * 3, MAIN, "DISTORTION");
+        else           WriteString(display, xOffset + 4, (CHAR_HEIGHT + 4) * 3, MAIN, "DISTORTION");
 
-        sprintf(strbuff, "COMPRESSOR");
-        if (type == 3) WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 4, MAIN);
-        else           WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 4, MAIN);
+        if (type == 3) WriteString(display, xOffset + 4, (CHAR_HEIGHT + 4) * 4, MAIN, "COMPRESSOR");
+        else           WriteString(display, xOffset + 4, (CHAR_HEIGHT + 4) * 4, MAIN, "COMPRESSOR");
 
-        sprintf(strbuff, "AUTOPAN");
-        if (type == 4) WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 5, MAIN);
-        else           WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 5, MAIN);
+        if (type == 4) WriteString(display, xOffset + 4, (CHAR_HEIGHT + 4) * 5, MAIN, "AUTOPAN");
+        else           WriteString(display, xOffset + 4, (CHAR_HEIGHT + 4) * 5, MAIN, "AUTOPAN");
 
-        sprintf(strbuff, "REDUX");
-        if (type == 5) WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 6, MAIN);
-        else           WriteString(display, strbuff, xOffset + 4, (CHAR_HEIGHT + 4) * 6, MAIN);
+        if (type == 5) WriteString(display, xOffset + 4, (CHAR_HEIGHT + 4) * 6, MAIN, "REDUX");
+        else           WriteString(display, xOffset + 4, (CHAR_HEIGHT + 4) * 6, MAIN, "REDUX");
     }
 
 }

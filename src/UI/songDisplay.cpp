@@ -85,14 +85,11 @@ void SongDisplay::UpdateDisplay(cLayer* display) {
         display->drawFillRect(80 * (int) param, 200, 80, 40, ACCENT2);
     }
 
-    sprintf(strbuff, "SAVE");
-    WriteString(display, strbuff, 40 - (2 * CHAR_WIDTH), 220 + (0.5f * (float) CHAR_HEIGHT), MAIN);
+    WriteString(display, 40 - (2 * CHAR_WIDTH), 220 + (0.5f * (float) CHAR_HEIGHT), MAIN, "SAVE");
 
-    sprintf(strbuff, "SAVE AS");
-    WriteString(display, strbuff, 120 - (3.5f * (float) CHAR_WIDTH), 220 + (0.5f * (float) CHAR_HEIGHT), MAIN);
+    WriteString(display, 120 - (3.5f * (float) CHAR_WIDTH), 220 + (0.5f * (float) CHAR_HEIGHT), MAIN, "SAVE AS");
 
-    sprintf(strbuff, "LOAD");
-    WriteString(display, strbuff, 200 - (2 * CHAR_WIDTH), 220 + (0.5f * (float) CHAR_HEIGHT), MAIN);
+    WriteString(display, 200 - (2 * CHAR_WIDTH), 220 + (0.5f * (float) CHAR_HEIGHT), MAIN, "LOAD");
 
     /**
      * Drawing VOL and BPM
@@ -103,12 +100,9 @@ void SongDisplay::UpdateDisplay(cLayer* display) {
 
     if (param == VOL) display->drawFillRect(240, 200, 40, 40, ACCENT2);
 
-    sprintf(strbuff, "VOL");
-    WriteString(display, strbuff, 244, 200 + CHAR_HEIGHT + 4, MAIN);
+    WriteString(display, 244, 200 + CHAR_HEIGHT + 4, MAIN, "VOL");
 
-    sprintf(strbuff, "%.2f", vol);
-    WriteString(display, strbuff, 244, 200 + 2 * (CHAR_HEIGHT + 4), MAIN);
-   
+    WriteString(display, 244, 200 + 2 * (CHAR_HEIGHT + 4), MAIN, "%.2f", vol);
     
     __disable_irq();
     height = BPM / 300.0f;
@@ -118,17 +112,14 @@ void SongDisplay::UpdateDisplay(cLayer* display) {
 
     if (param == TEMPO) display->drawFillRect(280, 200, 40, 40, ACCENT2);
 
-    sprintf(strbuff, "BPM");
-    WriteString(display, strbuff, 284, 200 + CHAR_HEIGHT + 4, MAIN);
+    WriteString(display, 284, 200 + CHAR_HEIGHT + 4, MAIN, "BPM");
 
     __disable_irq();
-    sprintf(strbuff, "%.0f", BPM);
+    WriteString(display, 284, 200 + 2 * (CHAR_HEIGHT + 4), MAIN, "%.0f", BPM);
     __enable_irq();
-    WriteString(display, strbuff, 284, 200 + 2 * (CHAR_HEIGHT + 4), MAIN);
 
     if (!load && !saveas) {
-        sprintf(strbuff, "%s", projName.c_str());
-        WriteString(display, strbuff, 4, (CHAR_HEIGHT + 4), MAIN);
+        WriteString(display, 4, (CHAR_HEIGHT + 4), MAIN, "%s", projName.c_str());
     }
 
     /**
@@ -155,9 +146,7 @@ void SongDisplay::UpdateDisplay(cLayer* display) {
             else if (pos < 0) continue;
 
             Node<File>* node = currentNode->children.at(pos);
-            sprintf(strbuff, "%.24s", *node->data.name);
-            
-            WriteString(display, strbuff, x, y, MAIN);
+            WriteString(display, x, y, MAIN, "%.24s", *node->data.name);
             y += CHAR_HEIGHT + 8; 
         }
     }
@@ -170,8 +159,7 @@ void SongDisplay::UpdateDisplay(cLayer* display) {
         /**
          * Temp Name being written
          */
-        sprintf(strbuff, "%s%s", tempName.c_str(), "_");
-        WriteString(display, strbuff, 4, (CHAR_HEIGHT + 4), MAIN);
+        WriteString(display, 4, (CHAR_HEIGHT + 4), MAIN, "%s%s", tempName.c_str(), "_");
 
         if (keyboard[keyV][keyH] != nullptr) keyboard[keyV][keyH]->selected = true;
 

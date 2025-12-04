@@ -63,7 +63,25 @@ public:
      * @param y pos to write to
      * @param color the color of the text
      */
-    void WriteString(cLayer* display, char* strbuff, int x, int y, DadGFX::sColor color) {
+    void WriteString(cLayer* display, int x, int y, DadGFX::sColor color) {
+        display->setCursor(x, y);
+        display->setFont(MainFont);
+        display->setTextFrontColor(color);
+        display->drawText(strbuff);
+    }
+
+    /**
+     * Writes a string to a display layer
+     * @param display display / layer to be written
+     * @param x pos to write to
+     * @param y pos to write to
+     * @param color the color of the text
+     */
+    void WriteString(cLayer* display, int x, int y, DadGFX::sColor color, const char* fmt, ...) {
+        va_list args;
+        va_start(args, fmt);
+        vsnprintf(strbuff, 256, fmt, args);
+        va_end(args);
         display->setCursor(x, y);
         display->setFont(MainFont);
         display->setTextFrontColor(color);
@@ -106,6 +124,8 @@ protected:
     cFont*  MainFont;   /**< The main font used in screens */
     buttonInterface* next;  /**< Pointer to next ui screen */
     buttonInterface* prev;  /**< Pointer to prev ui screen */
+    
+    char strbuff[256]; /**< char buffer to write strings to the screen */
 };
 
 #endif

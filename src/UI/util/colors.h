@@ -2,11 +2,10 @@
 #ifndef COLORS_H
 #define COLORS_H
 
-/**
- * Color macros that are used in most UI objects for 
- * design consistency and ease of programming
- */
-
+/*************************************************
+ * COLOR MODE DEFINITIONS                        *
+ * change these definitions to change theme      *
+ *************************************************/
 #define LIGHTMODE
 // #define DARKMODE
 
@@ -32,7 +31,7 @@
 #ifdef LIGHTMODE
 
 #define MAIN sColor(51, 50, 47, 255)
-#define ALTMAIN sColor(51, 50, 47, 255)
+#define ALTMAIN sColor(186, 186, 186, 255)
 
 #define ACCENT1 sColor(217, 66, 147, 255)
 #define ALTACCENT1 sColor(103, 145, 191, 255)

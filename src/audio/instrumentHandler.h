@@ -73,13 +73,14 @@ public:
         if (tick.Process()) {
             if (currentStep != nullptr) {
                 // roll based on fx
-                if (currentStep->fx == 1 && activeInst != nullptr) {
+                if      (currentStep->fx == 1 && activeInst != nullptr) {
                     if (currentStep->fxAmount == 0) {
                         activeInst->Trigger(currentStep->note);
                     } else if (tickCount % currentStep->fxAmount == 0) {
                         activeInst->Trigger(currentStep->note);
                     }
                 } 
+  
             }
             
             tickCount += 1;
@@ -123,6 +124,13 @@ public:
             else if (step->instrument >= 0) {
                 if (step->instrument >= (int) instVector->size()) return;
                 activeInst = instVector->at(step->instrument);
+                if (step->fx == 2) {
+                    activeInst->SetPitchOffset(static_cast<float>(step->fxAmount) / 16.0f);
+                } else if (step->fx == 3) {
+                    activeInst->SetPitchOffset(static_cast<float>(step->fxAmount) / -16.0f);
+                } else {
+                    activeInst->SetPitchOffset(0.0f);
+                }
                 activeInst->Trigger(step->note);
             }
         }

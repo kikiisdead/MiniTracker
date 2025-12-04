@@ -148,8 +148,7 @@ void SampDisplay::UpdateDisplay(cLayer* display){
 
     display->drawFillRect(0, 0, sdramUsage * 240.0f, 20, ACCENT2);
 
-    sprintf(strbuff, "MEM USAGE");
-    WriteString(display, strbuff, 4, CHAR_HEIGHT + 3, MAIN);
+    WriteString(display, 4, CHAR_HEIGHT + 3, MAIN, "MEM USAGE");
 
 
     display->drawLine(80, 21, 80, 240, MAIN);
@@ -169,14 +168,13 @@ void SampDisplay::UpdateDisplay(cLayer* display){
 
         if (currentNode->parent->parent != nullptr) {
             for (Node<File>* node : currentNode->parent->parent->children) {
-                if (node->data.attrib & (AM_DIR)) sprintf(strbuff, "/%.7s", *node->data.name);
-                else sprintf(strbuff, "%.8s", *node->data.name);
-
                 if (node == currentNode->parent) {
                     display->drawFillRect(x - 3, y - (CHAR_HEIGHT + 2), 79, CHAR_HEIGHT + 8, ACCENT2);
                 }
 
-                WriteString(display, strbuff, x, y, MAIN);
+                if (node->data.attrib & (AM_DIR)) WriteString(display, x, y, MAIN, "/%.7s", *node->data.name);
+                else WriteString(display, x, y, MAIN, "%.8s", *node->data.name);
+
                 y += CHAR_HEIGHT + 8;
             }
             x += 80;
@@ -184,14 +182,13 @@ void SampDisplay::UpdateDisplay(cLayer* display){
 
         y = CHAR_HEIGHT + 4 + 18;
         for (Node<File>* node : currentNode->parent->children) {
-            if (node->data.attrib & (AM_DIR)) sprintf(strbuff, "/%.7s", *node->data.name);
-            else sprintf(strbuff, "%.8s", *node->data.name);
-
             if (node == currentNode) {
                 display->drawFillRect(x - 3, y - (CHAR_HEIGHT + 2), 79, CHAR_HEIGHT + 8, ACCENT2);
             }
 
-            WriteString(display, strbuff, x, y, MAIN);
+            if (node->data.attrib & (AM_DIR)) WriteString(display, x, y, MAIN, "/%.7s", *node->data.name);
+            else WriteString(display, x, y, MAIN, "%.8s", *node->data.name);
+
             y += CHAR_HEIGHT + 8;
         }
         x += 80;
@@ -210,10 +207,9 @@ void SampDisplay::UpdateDisplay(cLayer* display){
 
         Node<File>* node = currentNode->children.at(pos);
 
-        if (node->data.attrib & (AM_DIR)) sprintf(strbuff, "/%.7s", *node->data.name);
-        else sprintf(strbuff, "%.8s", *node->data.name);
+        if (node->data.attrib & (AM_DIR)) WriteString(display, x, y, MAIN, "/%.7s", *node->data.name);
+        else WriteString(display, x, y, MAIN, "%.8s", *node->data.name);
         
-        WriteString(display, strbuff, x, y, MAIN);
         y += CHAR_HEIGHT + 8; 
     }
     
@@ -227,19 +223,17 @@ void SampDisplay::UpdateDisplay(cLayer* display){
     
     display->drawLine(320 - 80, 0, 320-80, 240, ACCENT2);
     display->drawFillRect(240, 0, 80, 21, ACCENT2);
-    sprintf(strbuff, "LOADED");
-    WriteString(display, strbuff, 320 - 76, CHAR_HEIGHT + 3, MAIN);
+    WriteString(display, 320 - 76, CHAR_HEIGHT + 3, MAIN, "LOADED");
     int yOffset = CHAR_HEIGHT + 4 + CHAR_HEIGHT + 8;
     if (!instruments->empty()) {
         for (int i = 0; i < 11; i++) {
             int pos = selectedInst + (i - instRow);
             if (pos >= (int) instruments->size() || pos < 0)
                 continue;
-            sprintf(strbuff, "%d.%s", pos, instruments->at(pos)->GetName());
             if (i == instRow) {
-                WriteString(display, strbuff, WAVEWIDTH + 4, yOffset, ACCENT1);
+                WriteString(display, WAVEWIDTH + 4, yOffset, ACCENT1, "%d.%.8s", pos, instruments->at(pos)->GetName());
             } else {
-                WriteString(display, strbuff, WAVEWIDTH + 4, yOffset, MAIN);
+                WriteString(display, WAVEWIDTH + 4, yOffset, MAIN, "%d.%.8s", pos, instruments->at(pos)->GetName());
             }
             yOffset += CHAR_HEIGHT + 8;
         }

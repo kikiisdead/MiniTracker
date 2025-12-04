@@ -14,45 +14,45 @@
 using namespace daisy;
 
 
-/**
- * Lane described in 8 + x * 20
- * 4 bytes for Lane header
- * 4 bytes for length
- * x * 20 bytes for num of steps
- */
-class Lane {
-public:
-    Lane(){}
-    ~Lane(){
-        for (Step* step : sequence) {
-            delete step;
-        }
-        delete &sequence;
-    }
-    std::vector<Step*> sequence;
-    int length;
-    int index;
-};
+// /**
+//  * Lane described in 8 + x * 20
+//  * 4 bytes for Lane header
+//  * 4 bytes for length
+//  * x * 20 bytes for num of steps
+//  */
+// class Lane {
+// public:
+//     Lane(){}
+//     ~Lane(){
+//         for (Step* step : sequence) {
+//             delete step;
+//         }
+//         delete &sequence;
+//     }
+//     std::vector<Step*> sequence;
+//     int length;
+//     int index;
+// };
 
-/**
- * pattern described in 8 bytes + size of all lanes in pattern
- * 4 bytes pattern label
- * 4 bytes numlanes
- * then all the lanes
- */
-class Pattern {
-public:
-    Pattern(){}
-    ~Pattern(){
-        for (Lane* lane : lanes) {
-            delete lane;
-        }
-        delete &lanes;
-    }
-    std::vector<Lane*> lanes;
-    int numLanes;
-    int index;
-};
+// /**
+//  * pattern described in 8 bytes + size of all lanes in pattern
+//  * 4 bytes pattern label
+//  * 4 bytes numlanes
+//  * then all the lanes
+//  */
+// class Pattern {
+// public:
+//     Pattern(){}
+//     ~Pattern(){
+//         for (Lane* lane : lanes) {
+//             delete lane;
+//         }
+//         delete &lanes;
+//     }
+//     std::vector<Lane*> lanes;
+//     int numLanes;
+//     int index;
+// };
 
 /**
  * Sequencer
@@ -240,7 +240,7 @@ private:
      */
     Pattern    *activePattern;  /**< The active pattern being used */
     Step       *currentStep;    /**< The current step being used */
-    Lane       *currentLane;    /**< The current lane being used */
+    int         currentLane;
     int         currentPattern; /**< The current pattern within songOrder */
 
     /**
@@ -257,7 +257,6 @@ private:
     /**
      * Helpful fields that facilitate displaying items 
      */
-    char    strbuff[20];    /**< string buffer for use when printing strings to the screen */
     int     laneOffset;     /**< the lane offset position when displaying the lanes */
     bool    stepEdit_;      /**< controls whether steps can be edited or not */
     
@@ -268,7 +267,7 @@ private:
      * @param y the y offset
      * @param step a pointer to the step object being drawn
      */
-    void DrawStep( cLayer *display, int x, int y, Step* step);
+    void DrawStep( cLayer *display, int x, int y, Step* step, bool active );
 
     /**
      * Draws a square to the display for the song order
