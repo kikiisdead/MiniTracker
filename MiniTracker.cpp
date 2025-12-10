@@ -311,11 +311,13 @@ void CLEAR() {
   for (InstrumentHandler* hand : handler) {
     hand->ClearFX();
   }
+  ampSD.Write(false);
   projSafe = false;
 }
 
 void SAFE() {
   projSafe = true;
+  ampSD.Write(true);
   sequencer.Safe();
 }
 
@@ -521,7 +523,9 @@ int main(void) {
     userInterface->UpdateDisplay(pMain); 
     GPIO_PinState detState = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_7);
     if (detState == GPIO_PIN_SET) {
-      pMain->drawFillRect(0, 0, 100, 100, MAIN);
+      ampSD.Write(false);
+    } else {
+      ampSD.Write(true);
     }
     __Display.flush();
 

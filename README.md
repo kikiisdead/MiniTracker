@@ -4,7 +4,7 @@ a sample-based handheld hardware tracker built with the Daisy Seed inspired by R
 
 ## Video Demo
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/vmb1Rfg_a08?si=dH-W7hJLQ1btGEW2" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/gX7x-7s9yxE?si=0rlFT27yo3GZs5Nv" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 ## Installation
 
@@ -205,6 +205,7 @@ Next would be writing some kind of user manual as the controls are sometimes con
  - Get NullPointerException when trying to access non-existent lane on FX 
  - Add PCB and enclosure files to repository
  - PAM8302 Amp very noisy on output. 
+ - Headphone detect not working
 
 
 ### Changes to Library
