@@ -8,7 +8,7 @@ a sample-based handheld hardware tracker built with the Daisy Seed inspired by R
 
 ## Video Demo
 
-![](.media/demo.MOV)
+[![minitracker - epd final project](https://www.youtube.com/watch?v=gX7x-7s9yxE/0.jpg)](https://www.youtube.com/watch?v=gX7x-7s9yxE)
 
 ## Installation
 
