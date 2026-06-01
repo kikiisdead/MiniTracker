@@ -190,7 +190,12 @@ I had to mess around a lot with SPI transport to try to get the most efficient R
 
 ## To Do
 
-Biggest thing is running some kind of alpha test to find overlooked issues and improve user experience (optimizing controls for ease of use, implementing quality of life changes, etc). 
+ - Update Screen (RA8875 + 5.0" 40-pin TFT?)
+ - Update Enclosure (maybe get cnc machined?)
+ - update battery + charge circuit + battery life monitor
+ - Optimize codebase
+
+Next is running some kind of alpha test to find overlooked issues and improve user experience (optimizing controls for ease of use, implementing quality of life changes, etc). 
 
 Next would be writing some kind of user manual as the controls are sometimes convoluted (might also just be a UX problem).
 
